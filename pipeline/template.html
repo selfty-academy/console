@@ -229,12 +229,12 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
   <div class="champ">
     <label for="s-tpl-webi">Message de relance webi</label>
     <textarea id="s-tpl-webi"></textarea>
-    <div class="note">Variables : {prenom} {groupe}</div>
+    <div class="note">Variables : {prenom} {groupe} {live} (lien Meet du live)</div>
   </div>
   <div class="champ">
     <label for="s-tpl-cand">Message candidatures live</label>
     <textarea id="s-tpl-cand"></textarea>
-    <div class="note">Variables : {prenom}</div>
+    <div class="note">Variables : {prenom} {live}</div>
   </div>
   <div class="champ">
     <label for="s-tpl-call">Message rappel d'appel</label>
@@ -264,9 +264,9 @@ const esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;',
 
 /* ---------- réglages ---------- */
 const TPL_DEF = {
-  webi: "Coucou {prenom}, c'est Anaïs de la Selfty Academy 🌸\n\nPetit rappel : le live c'est CE SOIR à 18h ! Je me suis permise de t'ajouter au groupe WhatsApp du live, le lien de connexion y sera partagé juste avant :\n{groupe}\n\nÀ ce soir 💜",
-  cand: "Coucou {prenom}, c'est Anaïs 🌸\n\nMerci du fond du cœur pour ta candidature au coaching en direct. Cette fois on a choisi une autre personne, mais ta candidature m'a beaucoup touchée et je la garde précieusement : si on refait un live coaching un jour, tu fais partie des personnes à qui je penserai en premier.\n\nEt bien sûr on t'attend au live ce soir à 18h, ça va être fort 💜",
-  call: "Coucou {prenom}, c'est Anaïs 🌸 Petit rappel pour notre appel {quand}. À tout à l'heure !"
+  webi: "Coucou {prenom}, c'est Alex, l'associé d'Anaïs à la Selfty Academy 🌸\n\nPetit rappel : le live c'est CE SOIR à 18h ! Voici le lien pour nous rejoindre :\n{live}\n\nJe me suis permis de t'ajouter au groupe WhatsApp du live aussi :\n{groupe}\n\nÀ ce soir 💜",
+  cand: "Coucou {prenom}, c'est Alex, l'associé d'Anaïs à la Selfty Academy 🌸\n\nMerci pour ta candidature au coaching en direct. Cette fois on a choisi une autre personne, mais ta candidature nous a beaucoup plu et on la garde précieusement : si on refait un live coaching un jour, tu fais partie des personnes à qui on pensera en premier.\n\nEt bien sûr on t'attend au live ce soir à 18h, voici le lien :\n{live} 💜",
+  call: "Coucou {prenom}, c'est Alex de la Selfty Academy 🌸 Petit rappel pour notre appel {quand}. À tout à l'heure !"
 };
 const MEM = {};
 const store = {
@@ -332,7 +332,7 @@ function renderWebi(){
   if (qWebi) liste = liste.filter(i => (i.n+' '+i.mail).toLowerCase().includes(qWebi));
   $('l-webi').innerHTML = liste.length ? liste.map(i => {
     const ok = !!done[key(i)];
-    const msg = SET.tplWebi.replaceAll('{prenom}', i.n).replaceAll('{groupe}', SET.groupe);
+    const msg = SET.tplWebi.replaceAll('{prenom}', i.n).replaceAll('{groupe}', SET.groupe).replaceAll('{live}', DATA.webi.meet);
     return `<div class="ligne${ok?' done':''}">
       <div class="qui"><div class="nom">${esc(i.n)} <span class="tagmode${i.mode==='coaching'?' coach':''}">${i.mode==='coaching'?'candidat coaching':'inscrite'}</span></div>
         <div class="sub">${esc(i.mail)}</div></div>
@@ -364,7 +364,7 @@ function renderCand(){
   $('l-cand').innerHTML = liste.length ? liste.map(i => {
     const ok = !!done[key(i)];
     const complete = i.accord === 'oui';
-    const msg = SET.tplCand.replaceAll('{prenom}', i.n);
+    const msg = SET.tplCand.replaceAll('{prenom}', i.n).replaceAll('{live}', DATA.webi.meet);
     const rep = [['Sa situation', i.situation], ['Le sujet du coaching', i.sujet], ['Déjà essayé', i.deja]]
       .filter(([,v]) => v).map(([t,v]) => `<div class="rep"><b>${t}</b>${esc(v)}</div>`).join('');
     return `<div class="ligne${ok?' done':''}">
