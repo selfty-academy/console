@@ -1,0 +1,570 @@
+<title>Console Selfty</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Jost:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ink:#3A2A2A; --ink-soft:#5C4646; --muted:#8A7070;
+  --paper:#FAEEEE; --surface:#FFFDFB; --card:#F6DFDF; --rose:#F4DDDD; --border:#EBD2D2;
+  --mauve:#966868; --mauve-deep:#7E5252; --wa:#1E7A4E; --wa-deep:#16613D;
+  --ok:#4C7A5E; --warn:#A8763B; --danger:#A54848;
+  --r:14px; --shadow:0 1px 2px rgba(58,42,42,.06),0 6px 20px rgba(58,42,42,.05);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background-color:var(--paper);color:var(--ink);font:16px/1.55 "Jost",system-ui,sans-serif;
+  background-image:
+    radial-gradient(900px 480px at 88% -120px, rgba(150,104,104,.14), transparent 62%),
+    radial-gradient(760px 460px at -8% 12%, rgba(255,253,251,.75), transparent 60%),
+    radial-gradient(680px 420px at 108% 78%, rgba(234,217,234,.55), transparent 62%);
+  background-attachment:fixed}
+a{color:var(--mauve-deep)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 18px 80px}
+
+header{display:flex;align-items:center;gap:16px;padding:22px 0 14px;flex-wrap:wrap}
+header img{height:44px;width:auto;display:block}
+header .titre{flex:1;min-width:200px}
+header h1{font:600 24px/1.15 "Playfair Display",Georgia,serif;margin:0}
+header .maj{font-size:13px;color:var(--muted)}
+.btn-set{border:1px solid var(--border);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 14px;font:500 14px "Jost",sans-serif;cursor:pointer}
+.btn-set:hover{background:var(--rose)}
+
+.bandeau{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;margin-bottom:16px;font-size:14.5px;color:var(--ink-soft);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.bandeau strong{color:var(--ink)}
+.bandeau a{white-space:nowrap}
+
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 20px;position:sticky;top:0;background:rgba(250,238,238,.82);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);padding:10px 0;z-index:5}
+.tab{border:1px solid var(--border);background:var(--surface);color:var(--ink-soft);border-radius:999px;padding:9px 16px;font:500 14.5px "Jost",sans-serif;cursor:pointer;display:flex;align-items:center;gap:7px}
+.tab.on{background:var(--mauve);border-color:var(--mauve);color:#FFFDFB}
+.tab .bdg{background:var(--rose);color:var(--mauve-deep);border-radius:999px;padding:0 8px;font-size:12.5px;font-weight:600;min-width:20px;text-align:center}
+.tab.on .bdg{background:rgba(255,253,251,.25);color:#FFFDFB}
+.panel{display:none}
+.panel.on{display:block}
+
+h2{font:600 20px "Playfair Display",Georgia,serif;margin:26px 0 10px}
+.intro{color:var(--ink-soft);font-size:14.5px;margin:0 0 14px;max-width:68ch}
+
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+.pill{border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:6px 13px;font-size:13.5px;color:var(--ink-soft);cursor:pointer}
+.pill.on{background:var(--ink);color:#FFFDFB;border-color:var(--ink)}
+.pill b{font-variant-numeric:tabular-nums}
+input[type=search],input[type=text],input[type=tel],input[type=date],input[type=time],textarea{
+  border:1px solid var(--border);border-radius:10px;padding:9px 12px;font:15px "Jost",sans-serif;color:var(--ink);background:var(--surface);width:100%}
+textarea{min-height:96px;resize:vertical}
+input:focus,textarea:focus,button:focus-visible{outline:2px solid var(--mauve);outline-offset:1px}
+.search{max-width:260px}
+
+.liste{display:flex;flex-direction:column;gap:10px}
+.ligne{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px 16px;box-shadow:var(--shadow);display:grid;grid-template-columns:1.2fr 1fr .9fr auto;gap:6px 16px;align-items:center}
+.ligne.done{opacity:.6;background:rgba(255,253,251,.55)}
+.qui .nom{font-weight:600;font-size:16px}
+.qui .sub{font-size:13px;color:var(--muted)}
+.meta{font-size:13.5px;color:var(--ink-soft)}
+.meta b{display:block;font-weight:500;color:var(--ink)}
+.tagmode{display:inline-block;background:var(--rose);color:var(--mauve-deep);border-radius:999px;padding:1px 9px;font-size:12px;font-weight:600}
+.tagmode.coach{background:#EAD9EA;color:#6E4A6E}
+.actions{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.btn-wa{display:inline-flex;align-items:center;gap:7px;background:var(--wa);color:#fff;border-radius:999px;padding:8px 15px;font:500 14px "Jost",sans-serif;text-decoration:none;border:none;cursor:pointer}
+.btn-wa:hover{background:var(--wa-deep)}
+.btn-wa.off{background:#C9BBBB;pointer-events:none}
+.btn-wa svg{width:15px;height:15px;fill:currentColor}
+.chk{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;color:var(--ink-soft);cursor:pointer;user-select:none;white-space:nowrap}
+.chk input{width:17px;height:17px;accent-color:var(--mauve)}
+.btn-ghost{border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:7px 13px;font:500 13.5px "Jost",sans-serif;color:var(--ink-soft);cursor:pointer}
+.btn-ghost:hover{background:var(--rose)}
+.btn-danger{color:var(--danger);border-color:#E7C6C6}
+.vide{color:var(--muted);font-size:14.5px;padding:26px;text-align:center;background:rgba(255,253,251,.6);border:1px dashed var(--border);border-radius:var(--r)}
+
+details.sujet{grid-column:1/-1;font-size:14px;color:var(--ink-soft)}
+details.sujet summary{cursor:pointer;color:var(--mauve-deep);font-weight:500;font-size:13.5px}
+details.sujet .rep{margin:8px 0 2px;padding:10px 12px;background:var(--card);border-radius:10px;white-space:pre-wrap}
+details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:2px}
+.tag-ok{color:var(--ok);font-weight:600;font-size:13px}
+.tag-warn{color:var(--warn);font-weight:600;font-size:13px}
+.chip{display:inline-block;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+.src-form{background:#EAD9EA;color:#6E4A6E}
+.src-live{background:#F4DDDD;color:#7E5252}
+.src-webi{border:1px solid var(--border);color:var(--muted);background:transparent;font-weight:500}
+.kpis-mini{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:0 0 16px}
+.kpis-mini .kpi{padding:12px 14px}
+.kpis-mini .kpi .val{font-size:26px}
+.lhead{display:grid;grid-template-columns:1.2fr 1fr .9fr auto;gap:6px 16px;padding:0 16px 6px;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+@media (max-width:760px){.lhead{display:none}}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:22px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--shadow)}
+.kpi .val{font:600 32px/1.1 "Playfair Display",Georgia,serif;font-variant-numeric:tabular-nums;color:var(--mauve-deep)}
+.kpi .lab{font-size:13px;color:var(--ink-soft);margin-top:4px}
+.kpi .plus{font-size:12.5px;color:var(--muted);margin-top:2px}
+.carte{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);margin-bottom:18px}
+.carte h3{font:600 16px "Playfair Display",Georgia,serif;margin:0 0 12px}
+.chart-scroll{overflow-x:auto}
+.srcligne{display:grid;grid-template-columns:130px 1fr 46px;gap:10px;align-items:center;font-size:14px;margin-bottom:8px}
+.srcbar{height:12px;border-radius:999px;background:var(--rose);overflow:hidden}
+.srcbar i{display:block;height:100%;background:var(--mauve);border-radius:999px}
+.srcn{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-soft)}
+
+.form-call{display:grid;grid-template-columns:1.1fr 1fr .8fr .6fr 1.2fr auto;gap:10px;align-items:end;margin-bottom:18px}
+.form-call label{font-size:12.5px;color:var(--muted);display:block;margin-bottom:4px}
+.btn-add{background:var(--mauve);color:#FFFDFB;border:none;border-radius:10px;padding:10px 18px;font:500 15px "Jost",sans-serif;cursor:pointer}
+.btn-add:hover{background:var(--mauve-deep)}
+.quand{font-weight:600;font-size:15px}
+.quand.passe{color:var(--muted);text-decoration:line-through}
+
+#voile{position:fixed;inset:0;background:rgba(58,42,42,.35);display:none;z-index:20}
+#voile.on{display:block}
+#panneau{position:fixed;top:0;right:0;bottom:0;width:min(440px,94vw);background:var(--surface);z-index:21;transform:translateX(105%);transition:transform .25s ease;overflow-y:auto;padding:22px;border-left:1px solid var(--border)}
+@media (prefers-reduced-motion:reduce){#panneau{transition:none}}
+#panneau.on{transform:none}
+#panneau h2{margin-top:0}
+#panneau .champ{margin-bottom:16px}
+#panneau .champ label{font-size:13px;font-weight:500;display:block;margin-bottom:5px}
+#panneau .note{font-size:12.5px;color:var(--muted);margin-top:4px}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:#FFFDFB;border-radius:999px;padding:10px 20px;font-size:14px;z-index:30;opacity:0;transition:opacity .2s}
+.toast.on{opacity:1}
+
+@media (max-width:760px){
+  .ligne{grid-template-columns:1fr 1fr}
+  .actions{grid-column:1/-1;justify-content:flex-start}
+  .form-call{grid-template-columns:1fr 1fr}
+  .btn-add{grid-column:1/-1}
+  header img{height:36px}
+  input,textarea,select{font-size:16px}
+}
+</style>
+
+<div class="wrap">
+<header>
+  <img src="__LOGO__" alt="Selfty Academy">
+  <div class="titre">
+    <h1>Console de suivi</h1>
+    <div class="maj">Données du <span id="maj"></span></div>
+  </div>
+  <button class="btn-set" id="btn-maj" title="Relance la mise à jour des données">↻ Mettre à jour</button>
+  <button class="btn-set" id="btn-set">⚙️ Messages et liens</button>
+</header>
+
+<div class="bandeau" id="bandeau-webi"></div>
+
+<nav class="tabs" id="tabs"></nav>
+
+<!-- ===================== RELANCES WEBI ===================== -->
+<section class="panel" id="p-webi">
+  <p class="intro">Toutes les personnes inscrites au live, avec leur numéro. Clique sur le bouton WhatsApp : le message est pré-écrit (c'est ce soir + ajout au groupe), tu n'as plus qu'à envoyer. La coche « Relancée » se garde sur ce navigateur.</p>
+  <div class="pills" id="f-webi"></div>
+  <div style="margin:0 0 14px"><input type="search" id="q-webi" class="search" placeholder="Chercher un prénom, un mail…"></div>
+  <div class="liste" id="l-webi"></div>
+</section>
+
+<!-- ===================== CANDIDATURES LIVE ===================== -->
+<section class="panel" id="p-cand">
+  <p class="intro">Les personnes qui ont candidaté pour être coachées en direct. Une autre personne a été choisie : le message pré-écrit les prévient gentiment, garde leur candidature au chaud pour un prochain live coaching, et les invite quand même ce soir.</p>
+  <div class="pills" id="f-cand"></div>
+  <div class="liste" id="l-cand"></div>
+</section>
+
+<!-- ===================== ÉCOLE ===================== -->
+<section class="panel" id="p-ecole">
+  <p class="intro">Tous les gens intéressés par l'école, d'où qu'ils viennent : le formulaire école et la page du live. Le suivi (statut, qui prend, chaud pour closing, commentaires) vient du Sheet : mets-le à jour là-bas, la console suit à la prochaine mise à jour.</p>
+  <div class="kpis kpis-mini" id="ecole-stats"></div>
+  <div class="pills" id="f-ecole"></div>
+  <div style="margin:0 0 14px"><input type="search" id="q-ecole" class="search" placeholder="Chercher un nom, un mail…"></div>
+  <div class="liste" id="l-ecole"></div>
+</section>
+
+<!-- ===================== APPELS À VENIR ===================== -->
+<section class="panel" id="p-calls">
+  <p class="intro">Tes appels à venir, à remplir à la main. Le bouton WhatsApp envoie un rappel pré-écrit avant l'appel. Tout se garde sur ce navigateur.</p>
+  <div class="bandeau" id="bandeau-iclosed"></div>
+  <div class="carte">
+    <h3>Ajouter un appel</h3>
+    <div class="form-call">
+      <div><label for="c-nom">Prénom</label><input type="text" id="c-nom" placeholder="Marie"></div>
+      <div><label for="c-tel">Téléphone</label><input type="tel" id="c-tel" placeholder="06 12 34 56 78"></div>
+      <div><label for="c-date">Date</label><input type="date" id="c-date"></div>
+      <div><label for="c-heure">Heure</label><input type="time" id="c-heure"></div>
+      <div><label for="c-note">Sujet / note</label><input type="text" id="c-note" placeholder="Candidature école, suite du live…"></div>
+      <button class="btn-add" id="c-add">Ajouter</button>
+    </div>
+    <div class="liste" id="l-calls"></div>
+  </div>
+</section>
+
+<!-- ===================== DATAS ===================== -->
+<section class="panel" id="p-data">
+  <div class="kpis" id="kpis"></div>
+  <div class="carte">
+    <h3>Inscriptions par jour</h3>
+    <div class="chart-scroll" id="chart"></div>
+  </div>
+  <div class="carte">
+    <h3>D'où viennent les inscrites</h3>
+    <div id="sources"></div>
+  </div>
+</section>
+</div>
+
+<!-- ===================== PANNEAU RÉGLAGES ===================== -->
+<div id="voile"></div>
+<aside id="panneau" aria-label="Réglages">
+  <h2>Messages et liens</h2>
+  <div class="champ">
+    <label for="s-tpl-webi">Message de relance webi</label>
+    <textarea id="s-tpl-webi"></textarea>
+    <div class="note">Variables : {prenom} {groupe}</div>
+  </div>
+  <div class="champ">
+    <label for="s-tpl-cand">Message candidatures live</label>
+    <textarea id="s-tpl-cand"></textarea>
+    <div class="note">Variables : {prenom}</div>
+  </div>
+  <div class="champ">
+    <label for="s-tpl-call">Message rappel d'appel</label>
+    <textarea id="s-tpl-call"></textarea>
+    <div class="note">Variables : {prenom} {quand}</div>
+  </div>
+  <div class="champ">
+    <label for="s-groupe">Lien du groupe WhatsApp</label>
+    <input type="text" id="s-groupe">
+  </div>
+  <div class="champ">
+    <label for="s-iclosed">Lien iClosed (page de résa ou tableau de bord)</label>
+    <input type="text" id="s-iclosed" placeholder="https://app.iclosed.io/…">
+    <div class="note">Pas encore branché : colle le lien ici et le bouton « Ouvrir iClosed » apparaîtra dans l'onglet Appels.</div>
+  </div>
+  <div style="display:flex;gap:10px">
+    <button class="btn-add" id="s-save">Enregistrer</button>
+    <button class="btn-ghost" id="s-reset">Remettre les messages d'origine</button>
+  </div>
+</aside>
+<div class="toast" id="toast"></div>
+
+<script>
+const DATA = __DATA__;
+const $ = id => document.getElementById(id);
+const esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- réglages ---------- */
+const TPL_DEF = {
+  webi: "Coucou {prenom}, c'est Anaïs de la Selfty Academy 🌸\n\nPetit rappel : le live c'est CE SOIR à 18h ! Je me suis permise de t'ajouter au groupe WhatsApp du live, le lien de connexion y sera partagé juste avant :\n{groupe}\n\nÀ ce soir 💜",
+  cand: "Coucou {prenom}, c'est Anaïs 🌸\n\nMerci du fond du cœur pour ta candidature au coaching en direct. Cette fois on a choisi une autre personne, mais ta candidature m'a beaucoup touchée et je la garde précieusement : si on refait un live coaching un jour, tu fais partie des personnes à qui je penserai en premier.\n\nEt bien sûr on t'attend au live ce soir à 18h, ça va être fort 💜",
+  call: "Coucou {prenom}, c'est Anaïs 🌸 Petit rappel pour notre appel {quand}. À tout à l'heure !"
+};
+const MEM = {};
+const store = {
+  get: (k, d) => { try { const v = localStorage.getItem('sc-'+k); return v===null ? d : JSON.parse(v); } catch(e){ return k in MEM ? MEM[k] : d; } },
+  set: (k, v) => { MEM[k] = v; try { localStorage.setItem('sc-'+k, JSON.stringify(v)); } catch(e){} }
+};
+let SET = Object.assign({tplWebi:TPL_DEF.webi, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
+
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),2200); }
+function waUrl(tel, msg){ return 'https://wa.me/'+tel+'?text='+encodeURIComponent(msg); }
+const WA_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2Zm5.4 14.1c-.2.7-1.3 1.3-1.9 1.4-.5.1-1.1.2-3.4-.7-2.9-1.2-4.7-4.1-4.9-4.3-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.4.6c-.1.2-.3.4-.1.7.1.3.7 1.2 1.6 1.9 1.1.9 2 1.2 2.3 1.4.3.1.5.1.6-.1l1-1.1c.2-.2.4-.2.6-.1l2 1c.3.1.5.2.5.3.1.1.1.7-.1 1.3Z"/></svg>';
+
+/* ---------- onglets ---------- */
+const TABS = [
+  {id:'webi',  lab:'Relances webi'},
+  {id:'cand',  lab:'Candidatures live'},
+  {id:'ecole', lab:'École'},
+  {id:'calls', lab:'Appels à venir'},
+  {id:'data',  lab:'Datas'}
+];
+let tabOn = store.get('tab','webi');
+function renderTabs(){
+  const done = store.get('relwebi', {});
+  const doneC = store.get('relcand', {});
+  const bWebi = DATA.inscrits.filter(i => i.tel && !done[key(i)]).length;
+  const bCand = DATA.cands.filter(i => !doneC[key(i)]).length;
+  const bCalls = calls().filter(c => !c.fait).length;
+  const bEcole = DATA.ecole.filter(e => !e.statut && !e.chaud).length;
+  const b = {webi:bWebi, cand:bCand, ecole:bEcole, calls:bCalls, data:null};
+  $('tabs').innerHTML = TABS.map(t =>
+    `<button class="tab${t.id===tabOn?' on':''}" data-t="${t.id}">${t.lab}${b[t.id]!==null?` <span class="bdg">${b[t.id]}</span>`:''}</button>`).join('');
+  TABS.forEach(t => $('p-'+t.id).classList.toggle('on', t.id===tabOn));
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('.tab'); if(!t) return;
+  tabOn = t.dataset.t; store.set('tab', tabOn); renderTabs();
+});
+
+/* ---------- bandeau webi ---------- */
+$('maj').textContent = DATA.maj;
+$('bandeau-webi').innerHTML = `<strong>${esc(DATA.webi.label)}</strong>
+  <a href="${esc(DATA.webi.meet)}" target="_blank" rel="noopener">Lien Meet du live</a>
+  <a href="${esc(SET.groupe)}" target="_blank" rel="noopener">Groupe WhatsApp</a>
+  <a href="${esc(DATA.webi.lp)}" target="_blank" rel="noopener">Page d'inscription</a>`;
+
+/* ---------- relances webi ---------- */
+const key = i => (i.mail || i.tel || i.n).toLowerCase();
+let fWebi = 'a', qWebi = '';
+function renderWebi(){
+  const done = store.get('relwebi', {});
+  const tous = DATA.inscrits;
+  const sansTel = tous.filter(i => !i.tel);
+  const aFaire = tous.filter(i => i.tel && !done[key(i)]);
+  const faits = tous.filter(i => i.tel && done[key(i)]);
+  $('f-webi').innerHTML = [
+    ['a', `À relancer <b>${aFaire.length}</b>`],
+    ['r', `Relancées <b>${faits.length}</b>`],
+    ['t', `Toutes <b>${tous.length}</b>`],
+    ['s', `Sans numéro <b>${sansTel.length}</b>`]
+  ].map(([v,l]) => `<button class="pill${fWebi===v?' on':''}" data-f="${v}">${l}</button>`).join('');
+  let liste = fWebi==='a' ? aFaire : fWebi==='r' ? faits : fWebi==='s' ? sansTel : tous;
+  if (qWebi) liste = liste.filter(i => (i.n+' '+i.mail).toLowerCase().includes(qWebi));
+  $('l-webi').innerHTML = liste.length ? liste.map(i => {
+    const ok = !!done[key(i)];
+    const msg = SET.tplWebi.replaceAll('{prenom}', i.n).replaceAll('{groupe}', SET.groupe);
+    return `<div class="ligne${ok?' done':''}">
+      <div class="qui"><div class="nom">${esc(i.n)} <span class="tagmode${i.mode==='coaching'?' coach':''}">${i.mode==='coaching'?'candidat coaching':'inscrite'}</span></div>
+        <div class="sub">${esc(i.mail)}</div></div>
+      <div class="meta"><b>${i.tel ? '+'+i.tel : 'Pas de numéro'}</b>${esc(i.statut || '')}</div>
+      <div class="meta"><b>${esc(i.date)}</b>${esc(i.src)}</div>
+      <div class="actions">
+        ${i.tel ? `<a class="btn-wa" href="${waUrl(i.tel, msg)}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}
+        <label class="chk"><input type="checkbox" data-relwebi="${esc(key(i))}" ${ok?'checked':''}> Relancée</label>
+      </div>
+    </div>`;
+  }).join('') : `<div class="vide">Personne ici pour l'instant.</div>`;
+}
+$('f-webi').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fWebi = p.dataset.f; renderWebi(); }});
+$('q-webi').addEventListener('input', e => { qWebi = e.target.value.trim().toLowerCase(); renderWebi(); });
+
+/* ---------- candidatures ---------- */
+let fCand = 'a';
+function renderCand(){
+  const done = store.get('relcand', {});
+  const tous = DATA.cands;
+  const aFaire = tous.filter(i => !done[key(i)]);
+  const faits = tous.filter(i => done[key(i)]);
+  $('f-cand').innerHTML = [
+    ['a', `À prévenir <b>${aFaire.length}</b>`],
+    ['r', `Prévenues <b>${faits.length}</b>`],
+    ['t', `Toutes <b>${tous.length}</b>`]
+  ].map(([v,l]) => `<button class="pill${fCand===v?' on':''}" data-f="${v}">${l}</button>`).join('');
+  const liste = fCand==='a' ? aFaire : fCand==='r' ? faits : tous;
+  $('l-cand').innerHTML = liste.length ? liste.map(i => {
+    const ok = !!done[key(i)];
+    const complete = i.accord === 'oui';
+    const msg = SET.tplCand.replaceAll('{prenom}', i.n);
+    const rep = [['Sa situation', i.situation], ['Le sujet du coaching', i.sujet], ['Déjà essayé', i.deja]]
+      .filter(([,v]) => v).map(([t,v]) => `<div class="rep"><b>${t}</b>${esc(v)}</div>`).join('');
+    return `<div class="ligne${ok?' done':''}">
+      <div class="qui"><div class="nom">${esc(i.n)}</div><div class="sub">${esc(i.mail)}</div></div>
+      <div class="meta"><b>${i.tel ? '+'+i.tel : 'Pas de numéro'}</b>${esc(i.date)}</div>
+      <div class="meta">${complete ? '<span class="tag-ok">Candidature complète</span>' : '<span class="tag-warn">Pas finalisée</span>'}</div>
+      <div class="actions">
+        ${i.tel ? `<a class="btn-wa" href="${waUrl(i.tel, msg)}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}
+        <label class="chk"><input type="checkbox" data-relcand="${esc(key(i))}" ${ok?'checked':''}> Prévenue</label>
+      </div>
+      ${rep ? `<details class="sujet"><summary>Voir sa candidature</summary>${rep}</details>` : ''}
+    </div>`;
+  }).join('') : `<div class="vide">Personne ici.</div>`;
+}
+$('f-cand').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fCand = p.dataset.f; renderCand(); }});
+
+document.addEventListener('change', e => {
+  const w = e.target.dataset.relwebi, c = e.target.dataset.relcand;
+  if (w){ const d = store.get('relwebi', {}); e.target.checked ? d[w]=1 : delete d[w]; store.set('relwebi', d); renderWebi(); renderTabs(); }
+  if (c){ const d = store.get('relcand', {}); e.target.checked ? d[c]=1 : delete d[c]; store.set('relcand', d); renderCand(); renderTabs(); }
+});
+
+/* ---------- école ---------- */
+let fEcole = 't', qEcole = '';
+function chaudBadge(c){
+  const l = c.toLowerCase();
+  if (l.startsWith('chaud')) return '<span class="tag-ok">🔥 Chaud</span>';
+  if (l.startsWith('a rappeler') || l.startsWith('à rappeler')) return '<span class="tag-warn">À rappeler</span>';
+  if (l.startsWith('tiède') || l.startsWith('tiede')) return '<span class="tag-warn">Tiède</span>';
+  if (l) return '<span class="sub" style="color:var(--muted);font-size:13px">'+esc(c)+'</span>';
+  return '';
+}
+function srcChips(e){
+  return (e.src==='Page du live' ? '<span class="chip src-live">Page du live</span>' : '<span class="chip src-form">Formulaire école</span>')
+    + (e.webi ? ' <span class="chip src-webi">aussi inscrite au webi</span>' : '');
+}
+function renderEcole(){
+  const tous = DATA.ecole;
+  const aTraiter = tous.filter(e => !e.statut && !e.chaud);
+  const chauds = tous.filter(e => /^(chaud|a rappeler|à rappeler|tiède|tiede)/i.test(e.chaud));
+  const faits = tous.filter(e => e.statut || e.chaud);
+  const nbForm = tous.filter(e => e.src!=='Page du live').length;
+  const nbLive = tous.filter(e => e.src==='Page du live').length;
+  const nbWebi = tous.filter(e => e.webi).length;
+  $('ecole-stats').innerHTML = [
+    [DATA.ecoleUniques, 'personnes en liste d\'attente'],
+    [nbForm, 'via le formulaire école'],
+    [nbLive, 'via la page du live'],
+    [nbWebi, 'aussi inscrites au webi'],
+    [chauds.length, 'chauds / à rappeler'],
+  ].map(([v,l]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div></div>`).join('');
+  $('f-ecole').innerHTML = [
+    ['t', `Tous <b>${tous.length}</b>`],
+    ['a', `À traiter <b>${aTraiter.length}</b>`],
+    ['c', `Chauds / à rappeler <b>${chauds.length}</b>`],
+    ['f', `Déjà traités <b>${faits.length}</b>`]
+  ].map(([v,l]) => `<button class="pill${fEcole===v?' on':''}" data-f="${v}">${l}</button>`).join('');
+  let liste = fEcole==='a' ? aTraiter : fEcole==='c' ? chauds : fEcole==='f' ? faits : tous;
+  if (qEcole) liste = liste.filter(e => (e.n+' '+e.mail).toLowerCase().includes(qEcole));
+  const head = `<div class="lhead"><span>Qui</span><span>Contact · pris par</span><span>Suivi</span><span></span></div>`;
+  $('l-ecole').innerHTML = liste.length ? head + liste.map(e => {
+    const rep = [...e.detail.map(([t,v]) => `<div class="rep"><b>${esc(t)}</b>${esc(v)}</div>`),
+                 e.comm ? `<div class="rep"><b>Commentaire</b>${esc(e.comm)}</div>` : '',
+                 ...e.notes.map(([t,v]) => `<div class="rep"><b>Notes d'appel · ${esc(t)}</b>${esc(v)}</div>`),
+                 e.rec ? `<div class="rep"><b>Enregistrement</b><a href="${esc(e.rec)}" target="_blank" rel="noopener">${esc(e.rec)}</a></div>` : ''
+                ].filter(Boolean).join('');
+    return `<div class="ligne">
+      <div class="qui"><div class="nom">${esc(e.n)}</div><div class="sub">${esc(e.mail)}</div><div style="margin-top:4px">${srcChips(e)}</div></div>
+      <div class="meta"><b>${e.tel ? '+'+e.tel : 'Pas de numéro'}</b>${esc(e.date)}${e.qui ? ' · pris par '+esc(e.qui) : ''}</div>
+      <div class="meta">${chaudBadge(e.chaud)}${e.statut ? `<span class="sub" style="display:block;color:var(--muted);font-size:12.5px">${esc(e.statut.length>60 ? e.statut.slice(0,60)+'…' : e.statut)}</span>` : (!e.chaud ? '<span class="tag-warn">Nouveau</span>' : '')}</div>
+      <div class="actions">${e.tel ? `<a class="btn-wa" href="https://wa.me/${e.tel}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}</div>
+      ${rep ? `<details class="sujet"><summary>Voir sa fiche</summary>${rep}</details>` : ''}
+    </div>`;
+  }).join('') : `<div class="vide">Personne ici.</div>`;
+}
+$('f-ecole').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fEcole = p.dataset.f; renderEcole(); }});
+$('q-ecole').addEventListener('input', e => { qEcole = e.target.value.trim().toLowerCase(); renderEcole(); });
+
+/* ---------- appels à venir ---------- */
+const calls = () => store.get('calls', []);
+function normTel(s){
+  s = String(s||'').trim(); const plus = s.startsWith('+');
+  let d = s.replace(/\D/g,''); if(!d) return '';
+  if (plus) return d;
+  if (d.startsWith('00')) return d.slice(2);
+  if (d.startsWith('0') && d.length===10) return '33'+d.slice(1);
+  if (d.length===9 && '67'.includes(d[0])) return '33'+d;
+  return d;
+}
+function quandTxt(c){
+  if(!c.date) return c.heure || 'bientôt';
+  const d = new Date(c.date+'T'+(c.heure||'12:00'));
+  const auj = new Date(); auj.setHours(0,0,0,0);
+  const jour = new Date(d); jour.setHours(0,0,0,0);
+  const diff = Math.round((jour-auj)/86400000);
+  const h = c.heure ? ' à '+c.heure.replace(':','h') : '';
+  if (diff===0) return "aujourd'hui"+h;
+  if (diff===1) return 'demain'+h;
+  return 'le '+d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+h;
+}
+function renderCalls(){
+  const ic = SET.iclosed ? ` <a class="btn-ghost" href="${esc(SET.iclosed)}" target="_blank" rel="noopener" style="text-decoration:none">Ouvrir iClosed ↗</a>` : '';
+  $('bandeau-iclosed').innerHTML = SET.iclosed
+    ? `<strong>iClosed</strong> Les résas se prennent sur iClosed, reporte-les ici pour les suivre.${ic}`
+    : `<strong>iClosed pas encore branché.</strong> Envoie à Alex le compte ou le lien iClosed de Selfty et les résas arriveront ici toutes seules. En attendant, colle le lien dans ⚙️ pour avoir un bouton d'accès rapide.`;
+  const l = calls().slice().sort((a,b) => (a.date+a.heure).localeCompare(b.date+b.heure));
+  $('l-calls').innerHTML = l.length ? l.map(c => {
+    const msg = SET.tplCall.replaceAll('{prenom}', c.nom).replaceAll('{quand}', quandTxt(c));
+    const passe = c.date && new Date(c.date+'T'+(c.heure||'23:59')) < new Date();
+    return `<div class="ligne${c.fait?' done':''}">
+      <div class="qui"><div class="nom">${esc(c.nom)}</div><div class="sub">${esc(c.note||'')}</div></div>
+      <div class="meta"><b class="quand${passe&&!c.fait?' passe':''}">${quandTxt(c)}</b>${c.tel?'+'+c.tel:''}</div>
+      <div class="meta">${c.rappel ? '<span class="tag-ok">Rappel envoyé</span>' : ''}</div>
+      <div class="actions">
+        ${c.tel ? `<a class="btn-wa" href="${waUrl(c.tel,msg)}" target="_blank" rel="noopener">${WA_SVG} Rappel</a>` : ''}
+        <label class="chk"><input type="checkbox" data-call-rappel="${c.id}" ${c.rappel?'checked':''}> Rappel envoyé</label>
+        <label class="chk"><input type="checkbox" data-call-fait="${c.id}" ${c.fait?'checked':''}> Appel fait</label>
+        <button class="btn-ghost btn-danger" data-call-del="${c.id}">Suppr.</button>
+      </div>
+    </div>`;
+  }).join('') : `<div class="vide">Aucun appel prévu. Ajoute le premier au-dessus.</div>`;
+}
+$('c-add').addEventListener('click', () => {
+  const nom = $('c-nom').value.trim();
+  if (!nom) return toast('Il manque le prénom');
+  const l = calls();
+  l.push({id:Date.now(), nom, tel:normTel($('c-tel').value), date:$('c-date').value, heure:$('c-heure').value, note:$('c-note').value.trim(), rappel:false, fait:false});
+  store.set('calls', l);
+  ['c-nom','c-tel','c-date','c-heure','c-note'].forEach(i => $(i).value='');
+  renderCalls(); renderTabs(); toast('Appel ajouté');
+});
+document.addEventListener('change', e => {
+  const r = e.target.dataset.callRappel, f = e.target.dataset.callFait;
+  if (r||f){ const l = calls(); const c = l.find(x => String(x.id)===(r||f)); if(c){ if(r) c.rappel = e.target.checked; if(f) c.fait = e.target.checked; store.set('calls', l); renderCalls(); renderTabs(); } }
+});
+document.addEventListener('click', e => {
+  const d = e.target.dataset.callDel;
+  if (d){ store.set('calls', calls().filter(x => String(x.id)!==d)); renderCalls(); renderTabs(); }
+});
+
+/* ---------- datas ---------- */
+function renderData(){
+  const s = DATA.stats;
+  const conv = s.visites ? (100*s.inscrits/s.visites).toFixed(1).replace('.',',') : '?';
+  const kpis = [
+    [s.visites, 'visites sur la page du live', Math.round(100*s.vMobile/Math.max(1,s.visites))+' % sur mobile'],
+    [s.inscrits, 'inscrites au live', conv+' % des visites'],
+    [s.coaching, 'candidatures au coaching live', '1 place'],
+    [DATA.ecoleUniques, "en liste d'attente de l'école", "détail dans l'onglet École"],
+    [s.mailsEnvoyes+' / '+s.mailsTotal, 'mails de la campagne envoyés', 'compte selfty.academy'],
+  ];
+  $('kpis').innerHTML = kpis.map(([v,l,p]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div>${p?`<div class="plus">${p}</div>`:''}</div>`).join('');
+
+  const pj = s.parJour, max = Math.max(1, ...pj.map(x => x[1]));
+  const bw = 34, W = pj.length*bw+10, H = 150;
+  $('chart').innerHTML = `<svg width="${W}" height="${H+34}" role="img" aria-label="Inscriptions par jour">` +
+    pj.map(([d,n],i) => {
+      const h = Math.max(3, n/max*H*0.82), x = 5+i*bw;
+      return `<rect x="${x}" y="${H-h}" width="${bw-9}" height="${h}" rx="5" fill="#966868"></rect>
+        <text x="${x+(bw-9)/2}" y="${H-h-6}" text-anchor="middle" font-size="12" font-weight="600" fill="#3A2A2A">${n}</text>
+        <text x="${x+(bw-9)/2}" y="${H+18}" text-anchor="middle" font-size="10.5" fill="#8A7070">${d}</text>`;
+    }).join('') + '</svg>';
+
+  const src = Object.entries(s.sources), smax = Math.max(1, ...src.map(x => x[1]));
+  $('sources').innerHTML = src.map(([n,v]) =>
+    `<div class="srcligne"><span>${esc(n)}</span><span class="srcbar"><i style="width:${100*v/smax}%"></i></span><span class="srcn">${v}</span></div>`).join('');
+
+}
+
+/* ---------- panneau réglages ---------- */
+function openSet(o){ $('voile').classList.toggle('on', o); $('panneau').classList.toggle('on', o); }
+$('btn-set').addEventListener('click', () => {
+  $('s-tpl-webi').value = SET.tplWebi; $('s-tpl-cand').value = SET.tplCand; $('s-tpl-call').value = SET.tplCall;
+  $('s-groupe').value = SET.groupe; $('s-iclosed').value = SET.iclosed;
+  openSet(true);
+});
+$('voile').addEventListener('click', () => openSet(false));
+$('s-save').addEventListener('click', () => {
+  SET = {tplWebi:$('s-tpl-webi').value, tplCand:$('s-tpl-cand').value, tplCall:$('s-tpl-call').value, groupe:$('s-groupe').value.trim(), iclosed:$('s-iclosed').value.trim()};
+  store.set('reglages', SET); openSet(false); renderWebi(); renderCand(); renderCalls(); toast('Enregistré');
+});
+$('s-reset').addEventListener('click', () => {
+  $('s-tpl-webi').value = TPL_DEF.webi; $('s-tpl-cand').value = TPL_DEF.cand; $('s-tpl-call').value = TPL_DEF.call; $('s-groupe').value = DATA.webi.groupe;
+});
+
+renderTabs(); renderWebi(); renderCand(); renderEcole(); renderCalls(); renderData();
+
+/* ---------- MAJ : bouton + auto-reload ETag ---------- */
+/* La page vit sur GitHub Pages ; un workflow (cron 3 h en journée + Run workflow)
+   reconstruit index.html. Ici : bouton -> ouvre la page du workflow, puis la
+   console surveille l'ETag de la page et se recharge toute seule dès que la
+   nouvelle version est en ligne (aussi en continu, comme la console I3). */
+const SUR_PAGES = location.hostname.endsWith('github.io');
+const WORKFLOW_URL = 'https://github.com/selfty-academy/console/actions/workflows/refresh.yml';
+let etagRef = null, watchFast = 0;
+async function getEtag(){
+  try {
+    const r = await fetch(location.pathname + '?nocache=' + Date.now(), {method:'HEAD', cache:'no-store'});
+    return r.headers.get('etag') || r.headers.get('last-modified');
+  } catch(e){ return null; }
+}
+async function checkNew(){
+  if (!SUR_PAGES) return;
+  const e = await getEtag();
+  if (e && etagRef && e !== etagRef) location.replace(location.pathname + '?v=' + Date.now());
+  if (e && !etagRef) etagRef = e;
+}
+if (SUR_PAGES){
+  getEtag().then(e => etagRef = e);
+  setInterval(() => { if (watchFast > 0){ watchFast--; checkNew(); } }, 10000);
+  setInterval(checkNew, 60000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkNew(); });
+}
+$('btn-maj').addEventListener('click', () => {
+  if (SUR_PAGES){
+    window.open(WORKFLOW_URL, '_blank');
+    watchFast = 30;
+    toast('Clique « Run workflow » sur GitHub : la console se rechargera toute seule (2-3 min)');
+  } else {
+    toast('Depuis l\'artifact : demande la mise à jour à Alex, ou utilise la version GitHub Pages');
+  }
+});
+</script>
