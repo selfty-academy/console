@@ -269,6 +269,57 @@ for i in sorted(inscrits, key=lambda x: x["ts"]):
 
 sources = Counter(i["src"] for i in inscrits)
 
+# ---- iClosed : tous les calls bookés (passés, à venir, annulés) ----
+import os
+import urllib.request
+
+ic_key = os.environ.get("ICLOSED_KEY", "")
+if not ic_key and (HERE / "iclosed-key.txt").exists():
+    ic_key = (HERE / "iclosed-key.txt").read_text().strip()
+icalls, ic_ok = [], False
+if ic_key:
+    try:
+        raw = []
+        for page in range(0, 20):  # pages 0-indexées, 100 par page, garde-fou 2000 calls
+            req = urllib.request.Request(
+                f"https://public.api.iclosed.io/v1/eventCalls?limit=100&page={page}",
+                headers={"Authorization": "Bearer " + ic_key})
+            batch = json.load(urllib.request.urlopen(req, timeout=30)).get("data", {}).get("eventCalls", [])
+            raw += batch
+            if len(batch) < 100:
+                break
+        seen_ids = set()
+        for c in raw:
+            if c.get("id") in seen_ids:
+                continue
+            seen_ids.add(c.get("id"))
+            quest = []
+            for q in c.get("secondaryAnswers") or []:
+                ans = " / ".join(str(a.get("answer") or "") for a in (q.get("answer") or []) if a.get("answer"))
+                if ans:
+                    quest.append([str(q.get("statement") or "?").strip(), ans])
+            task = (c.get("task") or [{}])[0]
+            icalls.append({
+                "id": c.get("id"),
+                "n": str(c.get("inviteeName") or "?").strip(),
+                "mail": str(c.get("inviteeEmail") or "").strip().lower(),
+                "tel": norm_phone(c.get("phoneNumber")),
+                "utc": c.get("dateTimeUTC") or "",
+                "link": c.get("locationLinkInvitee") or "",
+                "event": str((c.get("event") or {}).get("name") or "").strip(),
+                "closer": str((c.get("user") or {}).get("firstName") or "").strip(),
+                "cancel": bool(c.get("cancelReason")) or c.get("eventType") == "CANCELLED",
+                "cancelWhy": str(c.get("cancelReason") or "").strip(),
+                "outcome": str(task.get("outcome") or "").strip(),
+                "notes": str(task.get("notes") or c.get("notes") or "").strip(),
+                "quest": quest,
+            })
+        ic_ok = True
+        print(f"iClosed : {len(icalls)} calls")
+    except Exception as ex:
+        print("iClosed fetch KO (on garde la console sans) :", ex)
+
+
 data = {
     "maj": datetime.datetime.now().strftime("%d/%m/%Y %H:%M"),
     "webi": {
@@ -283,6 +334,7 @@ data = {
     "laDeja": la_deja,
     "ecole": ecole,
     "ecoleUniques": ecole_uniques,
+    "icalls": {"ok": ic_ok, "calls": sorted(icalls, key=lambda x: x["utc"])},
     "compta": {
         "ok": compta_ok,
         "sheetUrl": "https://docs.google.com/spreadsheets/d/1CUiT962_dGEAWhydaboYmC23ir8gA-CtZyUXB4gErIc/edit",
@@ -314,7 +366,6 @@ except Exception:
     logo = "data:image/png;base64," + base64.b64encode((HERE / "logo-selfty-encre.png").read_bytes()).decode()
 
 # Pont Apps Script (suivi école éditable) : pont.json local ou env (CI)
-import os
 pont = {"url": "", "key": ""}
 pont_file = HERE / "pont.json"
 if pont_file.exists():

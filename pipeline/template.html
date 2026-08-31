@@ -178,10 +178,15 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 
 <!-- ===================== APPELS À VENIR ===================== -->
 <section class="panel" id="p-calls">
-  <p class="intro">Tes appels à venir, à remplir à la main. Le bouton WhatsApp envoie un rappel pré-écrit avant l'appel. Tout se garde sur ce navigateur.</p>
+  <p class="intro">Les calls bookés sur iClosed arrivent ici tout seuls (mise à jour toutes les 3h et bouton ↻), passés comme à venir. Le bouton WhatsApp envoie un rappel pré-écrit avec le lien de la visio. Tu peux aussi ajouter un appel à la main en dessous.</p>
   <div class="bandeau" id="bandeau-iclosed"></div>
   <div class="carte">
-    <h3>Ajouter un appel</h3>
+    <h3>Calls iClosed</h3>
+    <div class="pills" id="f-icalls"></div>
+    <div class="liste" id="l-icalls"></div>
+  </div>
+  <div class="carte">
+    <h3>Ajouter un appel à la main</h3>
     <div class="form-call">
       <div><label for="c-nom">Prénom</label><input type="text" id="c-nom" placeholder="Marie"></div>
       <div><label for="c-tel">Téléphone</label><input type="tel" id="c-tel" placeholder="06 12 34 56 78"></div>
@@ -312,7 +317,9 @@ function renderTabs(){
   const doneC = store.get('relcand', {});
   const bWebi = DATA.inscrits.filter(i => i.tel && !done[key(i)]).length;
   const bCand = DATA.cands.filter(i => !doneC[key(i)]).length;
-  const bCalls = calls().filter(c => !c.fait).length;
+  const icd = store.get('icdone', {});
+  const bIc = DATA.icalls.calls.filter(c => !c.cancel && c.utc && new Date(c.utc) > new Date() && !icd[c.id]).length;
+  const bCalls = calls().filter(c => !c.fait).length + bIc;
   const bEcole = DATA.ecole.filter(e => !e.statut && !e.chaud).length;
   const b = {webi:bWebi, cand:bCand, ecole:bEcole, calls:bCalls, compta:null, data:null};
   $('tabs').innerHTML = TABS.map(t =>
@@ -545,11 +552,60 @@ function quandTxt(c){
   if (diff===1) return 'demain'+h;
   return 'le '+d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+h;
 }
+/* ---------- calls iClosed ---------- */
+let fIcalls = 'v';
+function quandUtc(utc){
+  if (!utc) return {txt:'?', passe:false};
+  const d = new Date(utc);
+  const h = d.toLocaleTimeString('fr-FR', {timeZone:'Europe/Paris', hour:'2-digit', minute:'2-digit'}).replace(':','h');
+  const jour = d.toLocaleDateString('fr-FR', {timeZone:'Europe/Paris', weekday:'long', day:'numeric', month:'long'});
+  const auj = new Date(); const diff = Math.round((new Date(d.toDateString()) - new Date(auj.toDateString()))/86400000);
+  const quand = diff===0 ? "aujourd'hui" : diff===1 ? 'demain' : diff===-1 ? 'hier' : 'le '+jour;
+  return {txt: quand+' à '+h, passe: d < auj};
+}
+function renderICalls(){
+  const IC = DATA.icalls;
+  $('bandeau-iclosed').innerHTML = IC.ok
+    ? `<strong>Connecté à iClosed ✅</strong> ${IC.calls.length} call${IC.calls.length>1?'s':''} booké${IC.calls.length>1?'s':''} au total. <a href="https://app.iclosed.io" target="_blank" rel="noopener">Ouvrir iClosed ↗</a>`
+    : `<strong>iClosed injoignable à la dernière mise à jour.</strong> Les calls affichés peuvent dater ; relance une mise à jour avec ↻.`;
+  const done = store.get('icdone', {});
+  const enrich = IC.calls.map(c => ({...c, q: quandUtc(c.utc)}));
+  const avenir = enrich.filter(c => !c.cancel && !c.q.passe);
+  const passes = enrich.filter(c => !c.cancel && c.q.passe);
+  const annules = enrich.filter(c => c.cancel);
+  $('f-icalls').innerHTML = [
+    ['v', `À venir <b>${avenir.length}</b>`],
+    ['p', `Passés <b>${passes.length}</b>`],
+    ['x', `Annulés <b>${annules.length}</b>`]
+  ].map(([v,l]) => `<button class="pill${fIcalls===v?' on':''}" data-f="${v}">${l}</button>`).join('');
+  let liste = fIcalls==='v' ? avenir : fIcalls==='p' ? passes.slice().reverse() : annules;
+  $('l-icalls').innerHTML = liste.length ? liste.map(c => {
+    const ok = !!done[c.id];
+    let msg = SET.tplCall.replaceAll('{prenom}', c.n.split(' ')[0]).replaceAll('{quand}', c.q.txt);
+    if (c.link) msg += '\n\nLe lien pour nous rejoindre :\n' + c.link;
+    const rep = [...c.quest.map(([t,v]) => `<div class="rep"><b>${esc(t)}</b>${esc(v)}</div>`),
+                 c.notes ? `<div class="rep"><b>Notes iClosed</b>${esc(c.notes)}</div>` : '',
+                 c.cancelWhy ? `<div class="rep"><b>Raison de l'annulation</b>${esc(c.cancelWhy)}</div>` : ''].filter(Boolean).join('');
+    return `<div class="ligne${ok||c.cancel?' done':''}">
+      <div class="qui"><div class="nom">${esc(c.n)}</div><div class="sub">${esc(c.mail)}</div>
+        <div style="margin-top:4px"><span class="chip src-form">${esc(c.event||'iClosed')}</span>${c.outcome?` <span class="chip src-live">${esc(c.outcome)}</span>`:''}</div></div>
+      <div class="meta"><b class="quand${c.q.passe&&fIcalls==='v'?' passe':''}">${c.q.txt}</b>${c.tel?'+'+c.tel:''}</div>
+      <div class="meta">${c.cancel ? '<span class="tag-warn">Annulé</span>' : (c.link ? `<a href="${esc(c.link)}" target="_blank" rel="noopener">Lien visio ↗</a>` : '')}</div>
+      <div class="actions">
+        ${c.tel && !c.cancel ? `<a class="btn-wa" href="${waUrl(c.tel, msg)}" target="_blank" rel="noopener">${WA_SVG} Rappel</a>` : ''}
+        ${!c.cancel ? `<label class="chk"><input type="checkbox" data-icdone="${c.id}" ${ok?'checked':''}> Rappel envoyé</label>` : ''}
+      </div>
+      ${rep ? `<details class="sujet"><summary>Voir ses réponses au questionnaire</summary>${rep}</details>` : ''}
+    </div>`;
+  }).join('') : `<div class="vide">Rien ici pour l'instant.</div>`;
+}
+$('f-icalls').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fIcalls = p.dataset.f; renderICalls(); }});
+document.addEventListener('change', e => {
+  const d = e.target.dataset.icdone;
+  if (d){ const m = store.get('icdone', {}); e.target.checked ? m[d]=1 : delete m[d]; store.set('icdone', m); renderICalls(); renderTabs(); }
+});
+
 function renderCalls(){
-  const ic = SET.iclosed ? ` <a class="btn-ghost" href="${esc(SET.iclosed)}" target="_blank" rel="noopener" style="text-decoration:none">Ouvrir iClosed ↗</a>` : '';
-  $('bandeau-iclosed').innerHTML = SET.iclosed
-    ? `<strong>iClosed</strong> Les résas se prennent sur iClosed, reporte-les ici pour les suivre.${ic}`
-    : `<strong>iClosed pas encore branché.</strong> Envoie à Alex le compte ou le lien iClosed de Selfty et les résas arriveront ici toutes seules. En attendant, colle le lien dans ⚙️ pour avoir un bouton d'accès rapide.`;
   const l = calls().slice().sort((a,b) => (a.date+a.heure).localeCompare(b.date+b.heure));
   $('l-calls').innerHTML = l.length ? l.map(c => {
     const msg = SET.tplCall.replaceAll('{prenom}', c.nom).replaceAll('{quand}', quandTxt(c));
@@ -697,7 +753,7 @@ $('s-reset').addEventListener('click', () => {
   $('s-tpl-cand').value = TPL_DEF.cand; $('s-tpl-call').value = TPL_DEF.call; $('s-groupe').value = DATA.webi.groupe;
 });
 
-renderTabs(); renderWebi(); renderCand(); renderEcole(); renderCalls(); renderCompta(); renderData();
+renderTabs(); renderWebi(); renderCand(); renderEcole(); renderICalls(); renderCalls(); renderCompta(); renderData();
 
 /* ---------- MAJ : bouton + auto-reload ETag ---------- */
 /* La page vit sur GitHub Pages ; un workflow (cron 3 h en journée + Run workflow)

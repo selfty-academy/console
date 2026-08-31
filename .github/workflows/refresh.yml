@@ -26,6 +26,7 @@ jobs:
           TZ: Europe/Paris
           PONT_URL: ${{ secrets.PONT_URL }}
           PONT_KEY: ${{ secrets.PONT_KEY }}
+          ICLOSED_KEY: ${{ secrets.ICLOSED_KEY }}
         run: |
           cd pipeline
           python build.py
