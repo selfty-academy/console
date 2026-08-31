@@ -274,7 +274,7 @@ data = {
     "webi": {
         "label": "Live du lundi 31 août, 18h",
         "meet": "https://meet.google.com/oxf-vzjg-bhr",
-        "groupe": "https://chat.whatsapp.com/C028UBVju2XAx6RG9ShdXQ",
+        "groupe": "https://chat.whatsapp.com/JRCRXWKVg8qBUS0uUUTkCA?mode=gi_t",
         "lp": "https://selfty-academy.github.io/live-31-aout/",
     },
     "inscrits": sorted(inscrits, key=lambda x: x["ts"], reverse=True),
