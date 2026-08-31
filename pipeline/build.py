@@ -159,6 +159,11 @@ ecole_uniques = len({e["mail"] or e["n"] for e in ecole if "doublon" not in e["s
 webi_mails = {i["mail"].lower() for i in inscrits if i["mail"]}
 for e in ecole:
     e["webi"] = bool(e["mail"] and e["mail"] in webi_mails)
+# segments des inscrits webi : candidat coaching / intéressé école
+eco_mails = {e["mail"] for e in ecole if e["mail"]}
+for i in inscrits:
+    i["coach"] = i["mode"] == "coaching"
+    i["eco"] = bool(i["mail"] and i["mail"].lower() in eco_mails)
 
 # ---- Compta : onglets « Paiements » et « Charges » du Sheet École (optionnels) ----
 def read_tab(wb_, name):

@@ -150,6 +150,7 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 <!-- ===================== RELANCES WEBI ===================== -->
 <section class="panel" id="p-webi">
   <p class="intro">Toutes les personnes inscrites au live, avec leur numéro. Clique sur le bouton WhatsApp : le message est pré-écrit (c'est ce soir + ajout au groupe), tu n'as plus qu'à envoyer. La coche « Relancée » se garde sur ce navigateur.</p>
+  <div class="pills" id="f-webi-seg"></div>
   <div class="pills" id="f-webi"></div>
   <div style="margin:0 0 14px"><input type="search" id="q-webi" class="search" placeholder="Chercher un prénom, un mail…"></div>
   <div class="liste" id="l-webi"></div>
@@ -232,6 +233,16 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
     <div class="note">Variables : {prenom} {groupe} {live} (lien Meet du live)</div>
   </div>
   <div class="champ">
+    <label for="s-tpl-webi-coach">Message relance : live + coaching (leur dire non)</label>
+    <textarea id="s-tpl-webi-coach"></textarea>
+    <div class="note">Variables : {prenom} {groupe} {live}</div>
+  </div>
+  <div class="champ">
+    <label for="s-tpl-webi-ecole">Message relance : live + école (proposer le call one to one)</label>
+    <textarea id="s-tpl-webi-ecole"></textarea>
+    <div class="note">Variables : {prenom} {groupe} {live}</div>
+  </div>
+  <div class="champ">
     <label for="s-tpl-cand">Message candidatures live</label>
     <textarea id="s-tpl-cand"></textarea>
     <div class="note">Variables : {prenom} {live}</div>
@@ -265,6 +276,8 @@ const esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;',
 /* ---------- réglages ---------- */
 const TPL_DEF = {
   webi: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nPetit rappel : le live c'est CE SOIR à 18h ! Voici le lien pour nous rejoindre :\n{live}\n\nJe me suis permis de t'ajouter au groupe WhatsApp du live aussi :\n{groupe}\n\nÀ ce soir !",
+  webiCoach: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nMerci pour ta candidature au coaching en direct de ce soir. Cette fois on a choisi une autre personne, mais ta candidature nous a beaucoup plu et on la garde précieusement si on refait un live coaching.\n\nEt on t'attend quand même au live CE SOIR à 18h, voici le lien :\n{live}\n\nJe me suis permis de t'ajouter au groupe WhatsApp du live aussi :\n{groupe}\n\nÀ ce soir !",
+  webiEcole: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nJ'ai vu que tu t'étais inscrit(e) à la liste d'attente de l'école. Elle n'a pas encore ouvert, mais si tu veux, je te propose un call en one to one avec moi pour en parler : voir où tu en es et te présenter ce qu'on prépare. Dis-moi si ça te tente et je t'envoie un créneau.\n\nEt en attendant, le live c'est CE SOIR à 18h, voici le lien :\n{live}\n\nJe me suis permis de t'ajouter au groupe WhatsApp du live aussi :\n{groupe}\n\nÀ ce soir !",
   cand: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nMerci pour ta candidature au coaching en direct. Cette fois on a choisi une autre personne, mais ta candidature nous a beaucoup plu et on la garde précieusement : si on refait un live coaching un jour, tu fais partie des personnes à qui on pensera en premier.\n\nEt bien sûr on t'attend au live ce soir à 18h, voici le lien :\n{live}",
   call: "Hello {prenom}, c'est Alex de la Selfty Academy 🌸 Petit rappel pour notre appel {quand}. À tout à l'heure !"
 };
@@ -273,7 +286,7 @@ const store = {
   get: (k, d) => { try { const v = localStorage.getItem('sc-'+k); return v===null ? d : JSON.parse(v); } catch(e){ return k in MEM ? MEM[k] : d; } },
   set: (k, v) => { MEM[k] = v; try { localStorage.setItem('sc-'+k, JSON.stringify(v)); } catch(e){} }
 };
-let SET = Object.assign({tplWebi:TPL_DEF.webi, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
+let SET = Object.assign({tplWebi:TPL_DEF.webi, tplWebiCoach:TPL_DEF.webiCoach, tplWebiEcole:TPL_DEF.webiEcole, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
 
 function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),2200); }
 function waUrl(tel, msg){ return 'https://wa.me/'+tel+'?text='+encodeURIComponent(msg); }
@@ -315,10 +328,24 @@ $('bandeau-webi').innerHTML = `<strong>${esc(DATA.webi.label)}</strong>
 
 /* ---------- relances webi ---------- */
 const key = i => (i.mail || i.tel || i.n).toLowerCase();
-let fWebi = 'a', qWebi = '';
+/* segment d'un inscrit : coaching prime (le « non » est a envoyer avant le live),
+   sinon ecole (proposition de call one to one), sinon live seul */
+const segOf = i => i.coach ? 'c' : (i.eco ? 'e' : 'l');
+const segMsg = i => {
+  const tpl = i.coach ? SET.tplWebiCoach : (i.eco ? SET.tplWebiEcole : SET.tplWebi);
+  return tpl.replaceAll('{prenom}', i.n).replaceAll('{groupe}', SET.groupe).replaceAll('{live}', DATA.webi.meet);
+};
+let fWebi = 'a', segWebi = 't', qWebi = '';
 function renderWebi(){
   const done = store.get('relwebi', {});
-  const tous = DATA.inscrits;
+  let tous = DATA.inscrits;
+  $('f-webi-seg').innerHTML = [
+    ['t', `Tout le monde <b>${tous.length}</b>`],
+    ['l', `Live seul <b>${tous.filter(i => segOf(i)==='l').length}</b>`],
+    ['c', `Live + coaching <b>${tous.filter(i => segOf(i)==='c').length}</b>`],
+    ['e', `Live + école <b>${tous.filter(i => segOf(i)==='e').length}</b>`]
+  ].map(([v,l]) => `<button class="pill${segWebi===v?' on':''}" data-f="${v}">${l}</button>`).join('');
+  if (segWebi !== 't') tous = tous.filter(i => segOf(i) === segWebi);
   const sansTel = tous.filter(i => !i.tel);
   const aFaire = tous.filter(i => i.tel && !done[key(i)]);
   const faits = tous.filter(i => i.tel && done[key(i)]);
@@ -332,9 +359,11 @@ function renderWebi(){
   if (qWebi) liste = liste.filter(i => (i.n+' '+i.mail).toLowerCase().includes(qWebi));
   $('l-webi').innerHTML = liste.length ? liste.map(i => {
     const ok = !!done[key(i)];
-    const msg = SET.tplWebi.replaceAll('{prenom}', i.n).replaceAll('{groupe}', SET.groupe).replaceAll('{live}', DATA.webi.meet);
+    const msg = segMsg(i);
+    const tags = i.coach ? '<span class="tagmode coach">live + coaching</span>'
+      : (i.eco ? '<span class="tagmode" style="background:#EAD9EA;color:#6E4A6E">live + école</span>' : '<span class="tagmode">live seul</span>');
     return `<div class="ligne${ok?' done':''}">
-      <div class="qui"><div class="nom">${esc(i.n)} <span class="tagmode${i.mode==='coaching'?' coach':''}">${i.mode==='coaching'?'candidat coaching':'inscrite'}</span></div>
+      <div class="qui"><div class="nom">${esc(i.n)} ${tags}</div>
         <div class="sub">${esc(i.mail)}</div></div>
       <div class="meta"><b>${i.tel ? '+'+i.tel : 'Pas de numéro'}</b>${esc(i.statut || '')}</div>
       <div class="meta"><b>${esc(i.date)}</b>${esc(i.src)}</div>
@@ -346,6 +375,7 @@ function renderWebi(){
   }).join('') : `<div class="vide">Personne ici pour l'instant.</div>`;
 }
 $('f-webi').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fWebi = p.dataset.f; renderWebi(); }});
+$('f-webi-seg').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ segWebi = p.dataset.f; renderWebi(); }});
 $('q-webi').addEventListener('input', e => { qWebi = e.target.value.trim().toLowerCase(); renderWebi(); });
 
 /* ---------- candidatures ---------- */
@@ -602,17 +632,19 @@ function renderCompta(){
 /* ---------- panneau réglages ---------- */
 function openSet(o){ $('voile').classList.toggle('on', o); $('panneau').classList.toggle('on', o); }
 $('btn-set').addEventListener('click', () => {
-  $('s-tpl-webi').value = SET.tplWebi; $('s-tpl-cand').value = SET.tplCand; $('s-tpl-call').value = SET.tplCall;
+  $('s-tpl-webi').value = SET.tplWebi; $('s-tpl-webi-coach').value = SET.tplWebiCoach; $('s-tpl-webi-ecole').value = SET.tplWebiEcole;
+  $('s-tpl-cand').value = SET.tplCand; $('s-tpl-call').value = SET.tplCall;
   $('s-groupe').value = SET.groupe; $('s-iclosed').value = SET.iclosed;
   openSet(true);
 });
 $('voile').addEventListener('click', () => openSet(false));
 $('s-save').addEventListener('click', () => {
-  SET = {tplWebi:$('s-tpl-webi').value, tplCand:$('s-tpl-cand').value, tplCall:$('s-tpl-call').value, groupe:$('s-groupe').value.trim(), iclosed:$('s-iclosed').value.trim()};
+  SET = {tplWebi:$('s-tpl-webi').value, tplWebiCoach:$('s-tpl-webi-coach').value, tplWebiEcole:$('s-tpl-webi-ecole').value, tplCand:$('s-tpl-cand').value, tplCall:$('s-tpl-call').value, groupe:$('s-groupe').value.trim(), iclosed:$('s-iclosed').value.trim()};
   store.set('reglages', SET); openSet(false); renderWebi(); renderCand(); renderCalls(); toast('Enregistré');
 });
 $('s-reset').addEventListener('click', () => {
-  $('s-tpl-webi').value = TPL_DEF.webi; $('s-tpl-cand').value = TPL_DEF.cand; $('s-tpl-call').value = TPL_DEF.call; $('s-groupe').value = DATA.webi.groupe;
+  $('s-tpl-webi').value = TPL_DEF.webi; $('s-tpl-webi-coach').value = TPL_DEF.webiCoach; $('s-tpl-webi-ecole').value = TPL_DEF.webiEcole;
+  $('s-tpl-cand').value = TPL_DEF.cand; $('s-tpl-call').value = TPL_DEF.call; $('s-groupe').value = DATA.webi.groupe;
 });
 
 renderTabs(); renderWebi(); renderCand(); renderEcole(); renderCalls(); renderCompta(); renderData();
