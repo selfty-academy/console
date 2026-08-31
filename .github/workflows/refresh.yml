@@ -24,6 +24,8 @@ jobs:
       - name: Build + chiffrement
         env:
           TZ: Europe/Paris
+          PONT_URL: ${{ secrets.PONT_URL }}
+          PONT_KEY: ${{ secrets.PONT_KEY }}
         run: |
           cd pipeline
           python build.py

@@ -313,7 +313,17 @@ try:
 except Exception:
     logo = "data:image/png;base64," + base64.b64encode((HERE / "logo-selfty-encre.png").read_bytes()).decode()
 
+# Pont Apps Script (suivi école éditable) : pont.json local ou env (CI)
+import os
+pont = {"url": "", "key": ""}
+pont_file = HERE / "pont.json"
+if pont_file.exists():
+    pont.update(json.loads(pont_file.read_text()))
+pont["url"] = os.environ.get("PONT_URL", pont["url"])
+pont["key"] = os.environ.get("PONT_KEY", pont["key"])
+
 tpl = (HERE / "template.html").read_text()
-out = tpl.replace("__DATA__", json.dumps(data, ensure_ascii=False)).replace("__LOGO__", logo)
+out = (tpl.replace("__DATA__", json.dumps(data, ensure_ascii=False)).replace("__LOGO__", logo)
+       .replace("__PONT_URL__", pont["url"]).replace("__PONT_KEY__", pont["key"]))
 (HERE / "console.html").write_text(out)
 print(f"console.html : {len(inscrits)} inscrits, {len(cands)} candidatures live, {len(ecole)} lignes école ({ecole_uniques} personnes), {len(visites)} visites")

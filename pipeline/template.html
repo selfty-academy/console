@@ -84,6 +84,10 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 .src-form{background:#EAD9EA;color:#6E4A6E}
 .src-live{background:#F4DDDD;color:#7E5252}
 .src-webi{border:1px solid var(--border);color:var(--muted);background:transparent;font-weight:500}
+.suivi-form{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:10px}
+.suivi-form label{font-size:12.5px;color:var(--muted);display:block}
+.suivi-form select,.suivi-form input{border:1px solid var(--border);border-radius:10px;padding:8px 10px;font:14px "Jost",sans-serif;color:var(--ink);background:var(--surface);margin-top:3px}
+.suivi-form input{min-width:220px}
 .kpis-mini{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:0 0 16px}
 .kpis-mini .kpi{padding:12px 14px}
 .kpis-mini .kpi .val{font-size:26px}
@@ -270,6 +274,7 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 
 <script>
 const DATA = __DATA__;
+const PONT = { url: '__PONT_URL__', key: '__PONT_KEY__' };
 const $ = id => document.getElementById(id);
 const esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -432,8 +437,51 @@ function srcChips(e){
   return (e.src==='Page du live' ? '<span class="chip src-live">Page du live</span>' : '<span class="chip src-form">Formulaire école</span>')
     + (e.webi ? ' <span class="chip src-webi">aussi inscrite au webi</span>' : '');
 }
+const CHAUD_OPTS = ['', 'Chaud', 'Tiède', 'A rappeler', 'Hors cible', 'A pris une autre formation'];
+const STATUT_OPTS = ['', 'Contacté', 'A relancer', 'Appel fait', 'Ne répond pas', 'Faux numéro'];
+function effEco(e){
+  const FIX = store.get('ecofix', {});
+  const f = e.mail && FIX[e.mail];
+  if (!f) return e;
+  const caughtUp = (f.statut === undefined || e.statut === f.statut) && (f.chaud === undefined || e.chaud === f.chaud);
+  if (caughtUp || Date.now() - (f.when||0) > 3*86400000){ delete FIX[e.mail]; store.set('ecofix', FIX); return e; }
+  return Object.assign({}, e, {statut: f.statut !== undefined ? f.statut : e.statut, chaud: f.chaud !== undefined ? f.chaud : e.chaud});
+}
+function suiviEditor(e){
+  if (!PONT.url || !e.mail) return '';
+  const opts = (list, cur) => (list.includes(cur) ? list : list.concat([cur]))
+    .map(o => `<option value="${esc(o)}"${o===cur?' selected':''}>${o===''?'(vide)':esc(o.length>40?o.slice(0,40)+'…':o)}</option>`).join('');
+  return `<details class="sujet"><summary>✏️ Modifier le suivi</summary>
+    <div class="suivi-form" data-mail="${esc(e.mail)}" data-nom="${esc(e.n)}" data-tel="${esc(e.tel||'')}">
+      <label>Température<select class="sv-chaud">${opts(CHAUD_OPTS, e.chaud||'')}</select></label>
+      <label>Statut<select class="sv-statut">${opts(STATUT_OPTS, e.statut||'')}</select></label>
+      <label>Commentaire<input class="sv-comm" placeholder="Ajouté à la suite dans le Sheet"></label>
+      <button class="btn-add sv-save">Enregistrer</button>
+    </div></details>`;
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('.sv-save'); if (!b) return;
+  const f = b.closest('.suivi-form');
+  const payload = { what:'ecole_update', key:PONT.key, email:f.dataset.mail, nom:f.dataset.nom, tel:f.dataset.tel,
+    statut:f.querySelector('.sv-statut').value, chaud:f.querySelector('.sv-chaud').value,
+    commentaire:f.querySelector('.sv-comm').value.trim() };
+  b.disabled = true; b.textContent = 'Envoi…';
+  try {
+    const r = await fetch(PONT.url, { method:'POST', body: JSON.stringify(payload) });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'refus du pont');
+    const FIX = store.get('ecofix', {});
+    FIX[payload.email] = { statut: payload.statut, chaud: payload.chaud, when: Date.now() };
+    store.set('ecofix', FIX);
+    toast('Suivi enregistré dans le Sheet ✅');
+    renderEcole(); renderTabs();
+  } catch(err){
+    toast('Échec : ' + err.message);
+    b.disabled = false; b.textContent = 'Enregistrer';
+  }
+});
 function renderEcole(){
-  const tous = DATA.ecole;
+  const tous = DATA.ecole.map(effEco);
   const aTraiter = tous.filter(e => !e.statut && !e.chaud);
   const chauds = tous.filter(e => /^(chaud|a rappeler|à rappeler|tiède|tiede)/i.test(e.chaud));
   const faits = tous.filter(e => e.statut || e.chaud);
@@ -468,6 +516,7 @@ function renderEcole(){
       <div class="meta">${chaudBadge(e.chaud)}${e.statut ? `<span class="sub" style="display:block;color:var(--muted);font-size:12.5px">${esc(e.statut.length>60 ? e.statut.slice(0,60)+'…' : e.statut)}</span>` : (!e.chaud ? '<span class="tag-warn">Nouveau</span>' : '')}</div>
       <div class="actions">${e.tel ? `<a class="btn-wa" href="https://wa.me/${e.tel}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}</div>
       ${rep ? `<details class="sujet"><summary>Voir sa fiche</summary>${rep}</details>` : ''}
+      ${suiviEditor(e)}
     </div>`;
   }).join('') : `<div class="vide">Personne ici.</div>`;
 }
