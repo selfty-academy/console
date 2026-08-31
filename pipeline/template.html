@@ -371,6 +371,7 @@ function renderWebi(){
         ${i.tel ? `<a class="btn-wa" href="${waUrl(i.tel, msg)}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}
         <label class="chk"><input type="checkbox" data-relwebi="${esc(key(i))}" ${ok?'checked':''}> Relancée</label>
       </div>
+      ${i.det && i.det.length ? `<details class="sujet"><summary>Voir ses réponses au questionnaire</summary>${i.det.map(([t,v]) => `<div class="rep"><b>${esc(t)}</b>${esc(v)}</div>`).join('')}</details>` : ''}
     </div>`;
   }).join('') : `<div class="vide">Personne ici pour l'instant.</div>`;
 }

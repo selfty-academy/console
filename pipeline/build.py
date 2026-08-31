@@ -76,6 +76,15 @@ for r in real:
         "statut": str(r.get("Statut ") or "").strip(),
         "etape": r.get("Dernière étape") or "",
     }
+    det = []
+    for col, lab in [("Situation", "Sa situation"), ("Sujet du coaching", "Sujet du coaching"),
+                     ("Déjà essayé", "Déjà essayé"), ("Accord coaching live", "Accord coaching en direct"),
+                     ("LA1 · Parcours", "Parcours"), ("LA2 · Résultat idéal", "Résultat idéal"),
+                     ("LA3 · Envie d'apprendre", "Envie d'apprendre"), ("LA4 · Différence", "Ce qui ferait la différence")]:
+        v = str(r.get(col) or "").strip()
+        if v and v.lower() != "non":
+            det.append([lab, v])
+    base["det"] = det
     inscrits.append(base)
     if r.get("Mode") == "coaching":
         cands.append({**base,
@@ -161,9 +170,15 @@ for e in ecole:
     e["webi"] = bool(e["mail"] and e["mail"] in webi_mails)
 # segments des inscrits webi : candidat coaching / intéressé école
 eco_mails = {e["mail"] for e in ecole if e["mail"]}
+ecole_by_mail_all = {e["mail"]: e for e in reversed(ecole) if e["mail"]}
 for i in inscrits:
     i["coach"] = i["mode"] == "coaching"
     i["eco"] = bool(i["mail"] and i["mail"].lower() in eco_mails)
+    if i["eco"]:
+        fiche = ecole_by_mail_all.get(i["mail"].lower())
+        if fiche:
+            deja = {d[0] for d in i["det"]}
+            i["det"] += [d for d in fiche["detail"] if d[0] not in deja]
 
 # ---- Compta : onglets « Paiements » et « Charges » du Sheet École (optionnels) ----
 def read_tab(wb_, name):
