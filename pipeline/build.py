@@ -160,6 +160,67 @@ webi_mails = {i["mail"].lower() for i in inscrits if i["mail"]}
 for e in ecole:
     e["webi"] = bool(e["mail"] and e["mail"] in webi_mails)
 
+# ---- Compta : onglets « Paiements » et « Charges » du Sheet École (optionnels) ----
+def read_tab(wb_, name):
+    for ws_ in wb_.worksheets:
+        if ws_.title.strip().lower() == name:
+            h = [str(c.value or "").strip() for c in ws_[1]]
+            return [dict(zip(h, [c.value for c in r])) for r in ws_.iter_rows(min_row=2) if any(c.value for c in r)]
+    return None
+
+def eur(v):
+    if v is None:
+        return 0.0
+    if isinstance(v, (int, float)):
+        return float(v)
+    s = re.sub(r"[^\d,.\-]", "", str(v)).replace(",", ".")
+    try:
+        return float(s) if s else 0.0
+    except ValueError:
+        return 0.0
+
+paiements_rows = read_tab(ewb, "paiements")
+charges_rows = read_tab(ewb, "charges")
+compta_ok = paiements_rows is not None or charges_rows is not None
+paiements, charges = [], []
+for r in (paiements_rows or []):
+    if not (r.get("Client") or r.get("E-mail")):
+        continue
+    dt = r.get("Date")
+    paiements.append({
+        "date": fmt_date(dt) if isinstance(dt, datetime.datetime) else str(dt or "").strip(),
+        "ts": dt.isoformat() if isinstance(dt, datetime.datetime) else "",
+        "client": str(r.get("Client") or "").strip(),
+        "mail": str(r.get("E-mail") or "").strip().lower(),
+        "montant": eur(r.get("Montant")),
+        "total": eur(r.get("Prix total")),
+        "note": str(r.get("Note") or "").strip(),
+    })
+for r in (charges_rows or []):
+    if not (r.get("Poste") or r.get("Montant")):
+        continue
+    dt = r.get("Date")
+    charges.append({
+        "date": fmt_date(dt) if isinstance(dt, datetime.datetime) else str(dt or "").strip(),
+        "ts": dt.isoformat() if isinstance(dt, datetime.datetime) else "",
+        "poste": str(r.get("Poste") or "?").strip(),
+        "montant": eur(r.get("Montant")),
+        "note": str(r.get("Note") or "").strip(),
+    })
+# lien automatique paiements -> suivi des appels (fiche école par e-mail)
+ecole_by_mail = {e["mail"]: e for e in ecole if e["mail"]}
+clients = OrderedDict()
+for p in sorted(paiements, key=lambda x: x["ts"]):
+    k = p["mail"] or p["client"].lower()
+    c = clients.setdefault(k, {"nom": p["client"] or p["mail"], "mail": p["mail"],
+                              "paiements": [], "recu": 0.0, "total": 0.0})
+    c["paiements"].append({"date": p["date"], "montant": p["montant"], "note": p["note"]})
+    c["recu"] += p["montant"]
+    c["total"] = max(c["total"], p["total"])
+    suivi = ecole_by_mail.get(p["mail"])
+    if suivi:
+        c["appel"] = {"qui": suivi["qui"], "statut": suivi["statut"], "chaud": suivi["chaud"]}
+
 # Visites
 vws = wb["Visites"]
 visites = [[c.value for c in r] for r in vws.iter_rows(min_row=2) if any(c.value for c in r)]
@@ -202,6 +263,13 @@ data = {
     "laDeja": la_deja,
     "ecole": ecole,
     "ecoleUniques": ecole_uniques,
+    "compta": {
+        "ok": compta_ok,
+        "sheetUrl": "https://docs.google.com/spreadsheets/d/1CUiT962_dGEAWhydaboYmC23ir8gA-CtZyUXB4gErIc/edit",
+        "clients": list(clients.values()),
+        "paiements": paiements,
+        "charges": sorted(charges, key=lambda x: x["ts"], reverse=True),
+    },
     "stats": {
         "visites": len(visites),
         "vMobile": v_mobile,

@@ -189,6 +189,25 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
   </div>
 </section>
 
+<!-- ===================== COMPTA ===================== -->
+<section class="panel" id="p-compta">
+  <p class="intro">Les entrées (paiements clients) et les sorties (charges : ads, outils…). Tout se saisit dans le Sheet École, onglets « Paiements » et « Charges » : la console fait les comptes et relie chaque client à son appel du suivi école.</p>
+  <div class="bandeau" id="compta-setup" style="display:none"></div>
+  <div class="kpis" id="compta-kpis"></div>
+  <div class="carte">
+    <h3>Clients et paiements</h3>
+    <div class="liste" id="l-clients"></div>
+  </div>
+  <div class="carte">
+    <h3>Par mois</h3>
+    <div id="compta-mois"></div>
+  </div>
+  <div class="carte">
+    <h3>Charges</h3>
+    <div id="l-charges"></div>
+  </div>
+</section>
+
 <!-- ===================== DATAS ===================== -->
 <section class="panel" id="p-data">
   <div class="kpis" id="kpis"></div>
@@ -266,6 +285,7 @@ const TABS = [
   {id:'cand',  lab:'Candidatures live'},
   {id:'ecole', lab:'École'},
   {id:'calls', lab:'Appels à venir'},
+  {id:'compta', lab:'Compta'},
   {id:'data',  lab:'Datas'}
 ];
 let tabOn = store.get('tab','webi');
@@ -276,7 +296,7 @@ function renderTabs(){
   const bCand = DATA.cands.filter(i => !doneC[key(i)]).length;
   const bCalls = calls().filter(c => !c.fait).length;
   const bEcole = DATA.ecole.filter(e => !e.statut && !e.chaud).length;
-  const b = {webi:bWebi, cand:bCand, ecole:bEcole, calls:bCalls, data:null};
+  const b = {webi:bWebi, cand:bCand, ecole:bEcole, calls:bCalls, compta:null, data:null};
   $('tabs').innerHTML = TABS.map(t =>
     `<button class="tab${t.id===tabOn?' on':''}" data-t="${t.id}">${t.lab}${b[t.id]!==null?` <span class="bdg">${b[t.id]}</span>`:''}</button>`).join('');
   TABS.forEach(t => $('p-'+t.id).classList.toggle('on', t.id===tabOn));
@@ -514,6 +534,71 @@ function renderData(){
 
 }
 
+/* ---------- compta ---------- */
+const EUR = n => n.toLocaleString('fr-FR', {maximumFractionDigits:0}) + ' €';
+function renderCompta(){
+  const C = DATA.compta;
+  if (!C.ok){
+    $('compta-setup').style.display = 'flex';
+    $('compta-setup').innerHTML = `<strong>À brancher :</strong> ajoute deux onglets dans le
+      <a href="${esc(C.sheetUrl)}" target="_blank" rel="noopener">Sheet École</a> :
+      « Paiements » (colonnes Date, Client, E-mail, Montant, Prix total, Note) et
+      « Charges » (colonnes Date, Poste, Montant, Note). La console les lira à la prochaine mise à jour.`;
+  }
+  const cls = C.clients;
+  const encaisse = cls.reduce((s,c) => s+c.recu, 0);
+  const contracte = cls.reduce((s,c) => s+Math.max(c.total, c.recu), 0);
+  const chargesT = C.charges.reduce((s,c) => s+c.montant, 0);
+  const nbPaie = C.paiements.length;
+  $('compta-kpis').innerHTML = [
+    [cls.length, 'clients', nbPaie + ' paiement' + (nbPaie>1?'s':'') + ' reçus'],
+    [EUR(encaisse), 'encaissé', ''],
+    [EUR(contracte), 'contracté', EUR(Math.max(0, contracte-encaisse)) + ' encore à encaisser'],
+    [EUR(chargesT), 'de charges', ''],
+    [EUR(encaisse-chargesT), 'de résultat net', 'encaissé moins charges'],
+  ].map(([v,l,p]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div>${p?`<div class="plus">${p}</div>`:''}</div>`).join('');
+
+  $('l-clients').innerHTML = cls.length ? cls.map(c => {
+    const reste = Math.max(0, Math.max(c.total, c.recu) - c.recu);
+    const paie = c.paiements.map(p => `<span class="chip src-form" title="${esc(p.note)}">${esc(p.date.split(' ')[0])} · ${EUR(p.montant)}</span>`).join(' ');
+    const lien = c.appel ? `<span class="chip src-live">Suivi appels${c.appel.qui ? ' · ' + esc(c.appel.qui) : ''}</span>` : '';
+    return `<div class="ligne">
+      <div class="qui"><div class="nom">${esc(c.nom)}</div><div class="sub">${esc(c.mail)}</div><div style="margin-top:4px">${lien}</div></div>
+      <div class="meta"><b>${c.paiements.length} paiement${c.paiements.length>1?'s':''}</b><div style="margin-top:4px;display:flex;gap:5px;flex-wrap:wrap">${paie}</div></div>
+      <div class="meta"><b>${EUR(c.recu)} encaissé${c.total ? ' / ' + EUR(c.total) : ''}</b>${reste ? `<span class="tag-warn">reste ${EUR(reste)}</span>` : '<span class="tag-ok">soldé</span>'}</div>
+      <div class="actions"></div>
+    </div>`;
+  }).join('') : `<div class="vide">Pas encore de client saisi. Chaque vente = une ligne par paiement dans l'onglet « Paiements » du Sheet.</div>`;
+
+  const mois = {};
+  C.paiements.forEach(p => { if(p.ts){ const m = p.ts.slice(0,7); (mois[m] = mois[m] || {e:0,c:0}).e += p.montant; }});
+  C.charges.forEach(p => { if(p.ts){ const m = p.ts.slice(0,7); (mois[m] = mois[m] || {e:0,c:0}).c += p.montant; }});
+  const mk = Object.keys(mois).sort().reverse();
+  const MOIS_FR = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+  $('compta-mois').innerHTML = mk.length ? mk.map(m => {
+    const d = mois[m], lab = MOIS_FR[+m.slice(5,7)-1] + ' ' + m.slice(0,4);
+    return `<div class="srcligne" style="grid-template-columns:110px 1fr 1fr 1fr">
+      <span>${lab}</span>
+      <span class="srcn" style="text-align:left;color:var(--ok)">+ ${EUR(d.e)}</span>
+      <span class="srcn" style="text-align:left;color:var(--danger)">− ${EUR(d.c)}</span>
+      <span class="srcn" style="text-align:left;font-weight:600">= ${EUR(d.e-d.c)}</span>
+    </div>`;
+  }).join('') : `<div class="vide">Rien à additionner pour l'instant.</div>`;
+
+  const parPoste = {};
+  C.charges.forEach(c => parPoste[c.poste] = (parPoste[c.poste]||0) + c.montant);
+  const pk = Object.entries(parPoste).sort((a,b) => b[1]-a[1]);
+  const pmax = Math.max(1, ...pk.map(x => x[1]));
+  $('l-charges').innerHTML = pk.length ?
+    pk.map(([n,v]) => `<div class="srcligne"><span>${esc(n)}</span><span class="srcbar"><i style="width:${100*v/pmax}%"></i></span><span class="srcn">${EUR(v)}</span></div>`).join('')
+    + `<div style="margin-top:12px" class="liste">` + C.charges.map(c => `<div class="ligne" style="grid-template-columns:1fr 1fr 1fr auto">
+        <div class="qui"><div class="nom" style="font-size:14.5px">${esc(c.poste)}</div><div class="sub">${esc(c.note)}</div></div>
+        <div class="meta"><b>${esc(c.date.split(' ')[0])}</b></div>
+        <div class="meta"><b>− ${EUR(c.montant)}</b></div><div class="actions"></div>
+      </div>`).join('') + `</div>`
+    : `<div class="vide">Aucune charge saisie. Ads, outils, presta : une ligne par dépense dans l'onglet « Charges » du Sheet.</div>`;
+}
+
 /* ---------- panneau réglages ---------- */
 function openSet(o){ $('voile').classList.toggle('on', o); $('panneau').classList.toggle('on', o); }
 $('btn-set').addEventListener('click', () => {
@@ -530,7 +615,7 @@ $('s-reset').addEventListener('click', () => {
   $('s-tpl-webi').value = TPL_DEF.webi; $('s-tpl-cand').value = TPL_DEF.cand; $('s-tpl-call').value = TPL_DEF.call; $('s-groupe').value = DATA.webi.groupe;
 });
 
-renderTabs(); renderWebi(); renderCand(); renderEcole(); renderCalls(); renderData();
+renderTabs(); renderWebi(); renderCand(); renderEcole(); renderCalls(); renderCompta(); renderData();
 
 /* ---------- MAJ : bouton + auto-reload ETag ---------- */
 /* La page vit sur GitHub Pages ; un workflow (cron 3 h en journée + Run workflow)
