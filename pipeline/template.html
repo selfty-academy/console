@@ -378,7 +378,7 @@ function renderTabs(){
   const bWebi = DATA.inscrits.filter(i => i.tel && !done[key(i)]).length;
   const bCand = DATA.cands.filter(i => !doneC[key(i)]).length;
   const icd = store.get('icdone', {});
-  const bIc = DATA.icalls.calls.filter(c => !c.cancel && c.utc && new Date(c.utc) > new Date() && !icd[c.id]).length;
+  const bIc = DATA.icalls.calls.filter(c => !c.cancel && c.utc && new Date(c.utc) > new Date() && !icd[c.id] && effTrk(c).s !== 'Call test').length;
   const bCalls = calls().filter(c => !c.fait).length + bIc;
   const bEcole = DATA.ecole.filter(e => !e.statut && !e.chaud).length;
   const schd = store.get('scholdone', {});
@@ -653,6 +653,7 @@ function renderAgenda(){
   const items = [];
   IC.calls.forEach(c => {
     if (c.cancel) return;
+    if (effTrk(c).s === 'Call test') return;
     const q = quandUtc(c.utc);
     if (q.passe) return;
     let msg = SET.tplCall.replaceAll('{prenom}', c.n.split(' ')[0]).replaceAll('{quand}', q.txt);
@@ -667,6 +668,7 @@ function renderAgenda(){
       <div class="actions">
         ${c.tel ? `<a class="btn-wa" href="${waUrl(c.tel, msg)}" target="_blank" rel="noopener">${WA_SVG} Rappel</a>` : ''}
         <label class="chk"><input type="checkbox" data-icdone="${c.id}" ${done[c.id]?'checked':''}> Rappel envoyé</label>
+        <button class="btn-ghost ic-test" data-id="${esc(c.id)}" data-nom="${esc(c.n)}" data-mail="${esc(c.mail)}" data-tel="${esc(c.tel||'')}" data-utc="${esc(c.utc)}">Call test 🧪</button>
       </div>
       ${icQuest(c)}
     </div>`});
@@ -713,6 +715,26 @@ document.addEventListener('change', e => {
   const d = e.target.dataset.icdone, s = e.target.dataset.scholdone;
   if (d){ const m = store.get('icdone', {}); e.target.checked ? m[d]=1 : delete m[d]; store.set('icdone', m); renderAgenda(); renderTabs(); }
   if (s){ const m = store.get('scholdone', {}); e.target.checked ? m[s]=1 : delete m[s]; store.set('scholdone', m); renderSchol(); renderTabs(); }
+});
+
+document.addEventListener('click', async e => {
+  const b = e.target.closest('.ic-test'); if (!b) return;
+  if (!confirm('Marquer ce call comme test ? Il disparaîtra de toutes les datas.')) return;
+  b.disabled = true; b.textContent = 'Envoi…';
+  try {
+    const r = await fetch(PONT.url, { method:'POST', body: JSON.stringify({ what:'call_track', key:PONT.key,
+      id:b.dataset.id, nom:b.dataset.nom, email:b.dataset.mail, tel:b.dataset.tel, utc:b.dataset.utc, showup:'Call test' }) });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'refus du pont');
+    const F = store.get('trackfix', {});
+    F[b.dataset.id] = { s:'Call test', r:'', prix:0, np:0, q:0, when: Date.now() };
+    store.set('trackfix', F);
+    toast('Call test enregistré 🧪 il disparaît de toutes les datas');
+    renderAgenda(); renderTrack(); renderTabs();
+  } catch(err){
+    toast('Échec : ' + err.message);
+    b.disabled = false; b.textContent = 'Call test 🧪';
+  }
 });
 
 /* ---------- tracking closing (calls passés à remplir) ---------- */
