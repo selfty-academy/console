@@ -201,7 +201,7 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 
 <!-- ===================== AGENDA CALLS ===================== -->
 <section class="panel" id="p-calls">
-  <p class="intro">L'agenda des prochains calls : tout ce qui est booké sur iClosed arrive ici tout seul (mise à jour auto toutes les 30 min + bouton ↻). Le bouton WhatsApp envoie un rappel pré-écrit avec le lien de la visio. Une fois le call passé, il bascule dans « Tracking » pour être rempli.</p>
+  <p class="intro">L'agenda des prochains calls : tout ce qui est booké sur iClosed arrive ici tout seul (mise à jour auto toutes les 30 min + bouton ↻). Le bouton WhatsApp envoie un rappel pré-écrit avec le lien de la visio. Une fois le call passé, il bascule dans « Calls effectués » pour être rempli.</p>
   <div class="bandeau" id="bandeau-iclosed"></div>
   <div id="agenda"></div>
   <div class="carte">
@@ -228,7 +228,7 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 
 <!-- ===================== CLIENTES ===================== -->
 <section class="panel" id="p-clients">
-  <p class="intro">Le suivi des clientes signées. Une vente marquée dans « Tracking » crée la fiche toute seule ; tu peux aussi en ajouter une à la main. Statut et notes s'écrivent dans l'onglet « Clients » du Sheet, l'encaissé vient de l'onglet « Paiements » de la Compta.</p>
+  <p class="intro">Le suivi des clientes signées. Une vente marquée dans « Calls effectués » crée la fiche toute seule ; tu peux aussi en ajouter une à la main. Statut et notes s'écrivent dans l'onglet « Clients » du Sheet, l'encaissé vient de l'onglet « Paiements » de la Compta.</p>
   <div class="kpis kpis-mini" id="clients-kpis"></div>
   <div class="liste" id="l-cli"></div>
   <div class="carte">
@@ -361,17 +361,17 @@ const WA_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10
 
 /* ---------- onglets ---------- */
 const TABS = [
+  {id:'track', lab:'Calls effectués'},
+  {id:'calls', lab:'Agenda calls'},
+  {id:'clients', lab:'Clientes'},
   {id:'webi',  lab:'Relances webi'},
   {id:'cand',  lab:'Candidatures live'},
   {id:'ecole', lab:'École'},
   {id:'schol', lab:'Scholarship'},
-  {id:'calls', lab:'Agenda calls'},
-  {id:'track', lab:'Tracking'},
-  {id:'clients', lab:'Clientes'},
-  {id:'compta', lab:'Compta'},
-  {id:'data',  lab:'Datas'}
+  {id:'data',  lab:'Datas'},
+  {id:'compta', lab:'Compta'}
 ];
-let tabOn = store.get('tab','calls');
+let tabOn = store.get('tab','track');
 function renderTabs(){
   const done = store.get('relwebi', {});
   const doneC = store.get('relcand', {});
