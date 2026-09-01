@@ -91,6 +91,17 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 .suivi-form input{min-width:220px}
 .suivi-form textarea{display:block;width:100%;min-height:70px;resize:vertical}
 .form-cli{grid-template-columns:1fr 1.2fr 1fr .9fr .6fr auto}
+.tk-form{grid-column:1/-1;background:var(--card);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:9px;margin-top:4px}
+.tk-row{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.tk-lab{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);min-width:72px}
+.tk-pill{border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:7px 14px;font:500 14px "Jost",sans-serif;color:var(--ink-soft);cursor:pointer}
+.tk-pill.on{background:var(--mauve);border-color:var(--mauve);color:#FFFDFB}
+.tk-pill[data-val="Présente"].on,.tk-pill[data-val="Vente"].on{background:var(--ok);border-color:var(--ok)}
+.tk-pill[data-val="No-show"].on{background:var(--danger);border-color:var(--danger)}
+.tk-pill[data-val="Call test"].on{background:var(--ink);border-color:var(--ink)}
+.tk-pill.tk-mini{padding:6px 11px;font-size:13.5px}
+.tk-form textarea{min-height:60px;background:var(--surface)}
+.tk-prix{border:1px solid var(--border);border-radius:10px;padding:8px 10px;font:15px "Jost",sans-serif;color:var(--ink);background:var(--surface);max-width:130px}
 .kpis-mini{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:0 0 16px}
 .kpis-mini .kpi{padding:12px 14px}
 .kpis-mini .kpi .val{font-size:26px}
@@ -209,7 +220,7 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 
 <!-- ===================== TRACKING CLOSING ===================== -->
 <section class="panel" id="p-track">
-  <p class="intro">Dès qu'un call est passé, il arrive ici pour être rempli : présente ou pas, vente ou pas, et le recap de ce qui s'est dit (retranscription, objections…). Tout s'écrit dans l'onglet « Suivi Calls » du Sheet École. Une vente crée automatiquement la fiche dans « Clientes ».</p>
+  <p class="intro">Dès qu'un call est passé, il arrive ici pour être rempli en 3 clics : show-up, résultat, qualif /10, plus la retranscription et ton commentaire. Tout s'écrit dans l'onglet « Suivi Calls » du Sheet École. Une vente crée automatiquement la fiche dans « Clientes », et « Call test 🧪 » fait disparaître le call de toutes les datas.</p>
   <div class="kpis kpis-mini" id="track-stats"></div>
   <div class="pills" id="f-track"></div>
   <div class="liste" id="l-track"></div>
@@ -705,15 +716,16 @@ document.addEventListener('change', e => {
 });
 
 /* ---------- tracking closing (calls passés à remplir) ---------- */
-const trackList = () => DATA.icalls.calls.filter(c => !c.cancel && quandUtc(c.utc).passe);
+const trackList = () => DATA.icalls.calls.filter(c => !c.cancel && quandUtc(c.utc).passe && effTrk(c).s !== 'Call test');
 function effTrk(c){
   const F = store.get('trackfix', {});
   const f = F[c.id];
-  const base = c.trk || {s:'', r:'', prix:0, recap:''};
+  const base = c.trk || {s:'', r:'', prix:0, np:0, q:0, retrans:'', comment:''};
   if (!f) return base;
   const caught = (f.s===undefined || base.s===f.s) && (f.r===undefined || base.r===f.r);
   if (caught || Date.now()-(f.when||0) > 3*86400000){ delete F[c.id]; store.set('trackfix', F); return base; }
-  return Object.assign({}, base, {s:f.s!==undefined?f.s:base.s, r:f.r!==undefined?f.r:base.r, prix:f.prix!==undefined?f.prix:base.prix});
+  return Object.assign({}, base, {s:f.s!==undefined?f.s:base.s, r:f.r!==undefined?f.r:base.r,
+    prix:f.prix!==undefined?f.prix:base.prix, np:f.np!==undefined?f.np:base.np, q:f.q!==undefined?f.q:base.q});
 }
 const SHOW_OPTS = ['', 'Présente', 'No-show', 'Reporté', 'Annulé'];
 const RES_OPTS = ['', 'Vente', 'Pas de vente', 'Follow-up', 'Pas pitché'];
@@ -727,6 +739,8 @@ function renderTrack(){
   const presentes = tous.filter(x => x.t.s==='Présente' || (x.t.r && !x.t.s));
   const ventes = tous.filter(x => x.t.r==='Vente');
   const ca = ventes.reduce((s,x) => s+(x.t.prix||0), 0);
+  const qs = tous.filter(x => x.t.q);
+  const qmoy = qs.length ? (qs.reduce((s,x) => s+x.t.q, 0)/qs.length).toFixed(1).replace('.',',') : '·';
   $('track-stats').innerHTML = [
     [tous.length, 'calls passés'],
     [aRemplir.length, 'à remplir'],
@@ -734,6 +748,7 @@ function renderTrack(){
     [ventes.length, 'vente'+(ventes.length>1?'s':'')],
     [EUR(ca), 'CA signé'],
     [(presentes.length ? Math.round(100*ventes.length/presentes.length) : 0)+' %', 'closing / présentes'],
+    [qmoy, 'qualif moyenne /10'],
   ].map(([v,l]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div></div>`).join('');
   $('f-track').innerHTML = [
     ['a', `À remplir <b>${aRemplir.length}</b>`],
@@ -745,43 +760,71 @@ function renderTrack(){
     const vente = t.r === 'Vente';
     return `<div class="ligne">
       <div class="qui"><div class="nom">${esc(c.n)}</div><div class="sub">${esc(c.mail)}</div>
-        <div style="margin-top:4px"><span class="chip src-form">${esc(c.event||'iClosed')}</span>${t.r?` <span class="chip ${vente?'src-live':'src-webi'}">${esc(t.r)}${vente&&t.prix?' · '+EUR(t.prix):''}</span>`:''}</div></div>
+        <div style="margin-top:4px"><span class="chip src-form">${esc(c.event||'iClosed')}</span>${t.r?` <span class="chip ${vente?'src-live':'src-webi'}">${esc(t.r)}${vente&&t.prix?' · '+EUR(t.prix):''}${vente&&t.np?' · '+t.np+'x':''}</span>`:''}${t.q?` <span class="chip src-webi">qualif ${t.q}/10</span>`:''}</div></div>
       <div class="meta"><b>${q.txt}</b>${c.tel?'+'+c.tel:''}</div>
       <div class="meta">${t.s ? (t.s==='Présente' ? '<span class="tag-ok">Présente</span>' : '<span class="tag-warn">'+esc(t.s)+'</span>') : '<span class="tag-warn">À remplir</span>'}</div>
       <div class="actions">${c.tel ? `<a class="btn-wa" href="https://wa.me/${c.tel}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}</div>
       ${icQuest(c)}
-      ${t.recap ? `<details class="sujet"><summary>Voir le recap déjà enregistré</summary><div class="rep">${esc(t.recap)}</div></details>` : ''}
-      <details class="sujet"${!t.s && !t.r ? ' open' : ''}><summary>✍️ Remplir le call</summary>
-      <div class="suivi-form tk-form" data-id="${esc(c.id)}" data-nom="${esc(c.n)}" data-mail="${esc(c.mail)}" data-tel="${esc(c.tel||'')}" data-utc="${esc(c.utc)}">
-        <label>Show-up<select class="tk-show">${selOpts(SHOW_OPTS, t.s||'')}</select></label>
-        <label>Résultat<select class="tk-res">${selOpts(RES_OPTS, t.r||'')}</select></label>
-        <label>Prix (€)<input class="tk-prix" style="min-width:90px" inputmode="numeric" value="${t.prix||''}"></label>
-        <label style="flex:1;min-width:230px;width:100%">Recap du call (ajouté à la suite)<textarea class="tk-recap" placeholder="Ce qui s'est dit, la retranscription, les objections…"></textarea></label>
-        <button class="btn-add tk-save">Enregistrer dans le Sheet</button>
-      </div></details>
+      ${t.retrans || t.comment ? `<details class="sujet"><summary>Voir ce qui est déjà enregistré</summary>${t.retrans?`<div class="rep"><b>Retranscription</b>${esc(t.retrans)}</div>`:''}${t.comment?`<div class="rep"><b>Commentaire</b>${esc(t.comment)}</div>`:''}</details>` : ''}
+      <div class="tk-form" data-id="${esc(c.id)}" data-nom="${esc(c.n)}" data-mail="${esc(c.mail)}" data-tel="${esc(c.tel||'')}" data-utc="${esc(c.utc)}" data-show="${esc(t.s||'')}" data-res="${esc(t.r||'')}" data-np="${t.np||''}" data-qualif="${t.q||''}">
+        <div class="tk-row"><span class="tk-lab">Show-up</span>
+          ${SHOW_OPTS.filter(Boolean).map(o => `<button class="tk-pill${t.s===o?' on':''}" data-group="show" data-val="${esc(o)}">${esc(o)}</button>`).join('')}
+          <button class="tk-pill${t.s==='Call test'?' on':''}" data-group="show" data-val="Call test">Call test 🧪</button></div>
+        <div class="tk-row"><span class="tk-lab">Résultat</span>
+          ${RES_OPTS.filter(Boolean).map(o => `<button class="tk-pill${t.r===o?' on':''}" data-group="res" data-val="${esc(o)}">${o==='Vente'?'Vente 🎉':esc(o)}</button>`).join('')}</div>
+        <div class="tk-row tk-prix-row"${vente?'':' style="display:none"'}><span class="tk-lab">Prix (€)</span><input class="tk-prix" inputmode="numeric" value="${t.prix||''}"><span class="tk-lab" style="min-width:auto">payé en</span>${[1,2,3,4].map(n => `<button class="tk-pill tk-mini${t.np===n?' on':''}" data-group="np" data-val="${n}">${n}x</button>`).join('')}</div>
+        <div class="tk-row"><span class="tk-lab">Qualifiée</span>${[1,2,3,4,5,6,7,8,9,10].map(n => `<button class="tk-pill tk-mini${t.q===n?' on':''}" data-group="qualif" data-val="${n}">${n}</button>`).join('')}<span style="font-size:12.5px;color:var(--muted)">/10</span></div>
+        <textarea class="tk-retrans" placeholder="Retranscription du call : ce qui s'est dit… (ajoutée à la suite dans le Sheet)"></textarea>
+        <textarea class="tk-comment" placeholder="Commentaire : ton avis, les objections, la prochaine étape…"></textarea>
+        <div class="tk-row"><button class="btn-add tk-save">Enregistrer dans le Sheet</button></div>
+      </div>
     </div>`;
   }).join('') : `<div class="vide">Rien ici pour l'instant. Les calls arrivent dès qu'ils sont passés.</div>`;
 }
 $('f-track').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fTrack = p.dataset.f; renderTrack(); }});
+document.addEventListener('click', e => {
+  const p = e.target.closest('.tk-pill'); if (!p) return;
+  const f = p.closest('.tk-form');
+  const g = p.dataset.group, v = p.dataset.val;
+  const nv = (f.dataset[g] || '') === v ? '' : v;   // re-clic = désélection
+  f.dataset[g] = nv;
+  f.querySelectorAll('.tk-pill').forEach(b => { if (b.dataset.group === g) b.classList.toggle('on', b.dataset.val === nv); });
+  if (g === 'res' && nv && !f.dataset.show){
+    f.dataset.show = 'Présente';
+    f.querySelectorAll('.tk-pill[data-group="show"]').forEach(b => b.classList.toggle('on', b.dataset.val === 'Présente'));
+  }
+  if (g === 'show' && nv === 'Call test'){
+    f.dataset.res = '';
+    f.querySelectorAll('.tk-pill[data-group="res"]').forEach(b => b.classList.remove('on'));
+  }
+  f.querySelector('.tk-prix-row').style.display = f.dataset.res === 'Vente' ? '' : 'none';
+});
 document.addEventListener('click', async e => {
   const b = e.target.closest('.tk-save'); if (!b) return;
   const f = b.closest('.tk-form');
-  const showup = f.querySelector('.tk-show').value;
-  const resultat = f.querySelector('.tk-res').value;
+  const showup = f.dataset.show || '';
+  const resultat = f.dataset.res || '';
+  const np = f.dataset.np || '';
+  const qualif = f.dataset.qualif || '';
   const prixRaw = f.querySelector('.tk-prix').value.trim().replace(',','.');
-  const recap = f.querySelector('.tk-recap').value.trim();
-  if (!showup && !resultat && !recap) return toast('Rien à enregistrer');
+  const retrans = f.querySelector('.tk-retrans').value.trim();
+  const comment = f.querySelector('.tk-comment').value.trim();
+  if (!showup && !resultat && !qualif && !retrans && !comment) return toast('Rien à enregistrer');
   const payload = { what:'call_track', key:PONT.key, id:f.dataset.id, nom:f.dataset.nom, email:f.dataset.mail,
-    tel:f.dataset.tel, utc:f.dataset.utc, showup, resultat, prix: prixRaw==='' ? '' : (parseFloat(prixRaw)||0), recap };
+    tel:f.dataset.tel, utc:f.dataset.utc, showup, resultat, prix: prixRaw==='' ? '' : (parseFloat(prixRaw)||0),
+    npaie: np, qualif, retrans, comment };
   b.disabled = true; b.textContent = 'Envoi…';
   try {
     const r = await fetch(PONT.url, { method:'POST', body: JSON.stringify(payload) });
     const j = await r.json();
     if (!j.ok) throw new Error(j.error || 'refus du pont');
     const F = store.get('trackfix', {});
-    F[f.dataset.id] = { s: showup, r: resultat, prix: prixRaw==='' ? 0 : (parseFloat(prixRaw)||0), when: Date.now() };
+    F[f.dataset.id] = { s: showup, r: resultat, prix: prixRaw==='' ? 0 : (parseFloat(prixRaw)||0),
+      np: parseInt(np)||0, q: parseInt(qualif)||0, when: Date.now() };
     store.set('trackfix', F);
-    if (resultat === 'Vente'){
+    if (showup === 'Call test'){
+      toast('Call test enregistré 🧪 il disparaît de toutes les datas');
+    } else if (resultat === 'Vente'){
       const P = store.get('clipend', []);
       if (!P.some(x => x.mail === f.dataset.mail))
         P.push({n:f.dataset.nom, mail:f.dataset.mail, tel:f.dataset.tel, prix: parseFloat(prixRaw)||0, when: Date.now()});

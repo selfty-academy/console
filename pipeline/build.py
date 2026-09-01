@@ -238,7 +238,10 @@ for r in (track_rows or []):
         "s": str(r.get("Show-up") or "").strip(),
         "r": str(r.get("Résultat") or "").strip(),
         "prix": eur(r.get("Prix")),
-        "recap": str(r.get("Recap") or "").strip(),
+        "np": int(eur(r.get("Nb paiements")) or 0),
+        "q": int(eur(r.get("Qualif /10")) or 0),
+        "retrans": str(r.get("Retranscription") or "").strip(),
+        "comment": str(r.get("Commentaire") or "").strip(),
     }
 
 # ---- Clientes signées (onglet « Clients », créé par le pont à la 1re vente) ----
@@ -357,15 +360,17 @@ if ic_key:
             })
         ic_ok = True
         print(f"iClosed : {len(icalls)} calls")
-        # dump minimal pour notify_calls.py (notif Telegram des nouveaux bookings)
-        (HERE / "icalls.json").write_text(json.dumps(
-            [{"id": c["id"], "n": c["n"], "utc": c["utc"], "event": c["event"], "cancel": c["cancel"]}
-             for c in icalls], ensure_ascii=False))
     except Exception as ex:
         print("iClosed fetch KO (on garde la console sans) :", ex)
-# suivi closing du Sheet accroché à chaque call
+# suivi closing du Sheet accroché à chaque call ; « Call test » = exclu de partout
 for c in icalls:
     c["trk"] = track.get(str(c["id"]))
+icalls = [c for c in icalls if not (c["trk"] and c["trk"]["s"].lower() == "call test")]
+if ic_ok:
+    # dump minimal pour notify_calls.py (notif Telegram des nouveaux bookings)
+    (HERE / "icalls.json").write_text(json.dumps(
+        [{"id": c["id"], "n": c["n"], "utc": c["utc"], "event": c["event"], "cancel": c["cancel"]}
+         for c in icalls], ensure_ascii=False))
 
 # ---- Scholarship : candidatures Tally (form Np1Gy0, compte perso Alex) ----
 try:
