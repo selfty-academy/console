@@ -227,6 +227,42 @@ for r in (charges_rows or []):
         "montant": eur(r.get("Montant")),
         "note": str(r.get("Note") or "").strip(),
     })
+# ---- Suivi calls (onglet « Suivi Calls », écrit par la console via le pont) ----
+track_rows = read_tab(ewb, "suivi calls")
+track = {}
+for r in (track_rows or []):
+    cid = str(r.get("Call ID") or "").strip()
+    if not cid or cid.upper().startswith("TEST"):
+        continue
+    track[cid] = {
+        "s": str(r.get("Show-up") or "").strip(),
+        "r": str(r.get("Résultat") or "").strip(),
+        "prix": eur(r.get("Prix")),
+        "recap": str(r.get("Recap") or "").strip(),
+    }
+
+# ---- Clientes signées (onglet « Clients », créé par le pont à la 1re vente) ----
+clients_rows = read_tab(ewb, "clients")
+clientes = []
+for r in (clients_rows or []):
+    mail = str(r.get("E-mail") or "").strip().lower()
+    nom = str(r.get("Nom") or "").strip()
+    if (not mail and not nom) or mail in TEST_EMAILS:
+        continue
+    dt = r.get("Date signature")
+    clientes.append({
+        "n": nom or mail,
+        "mail": mail,
+        "tel": norm_phone(r.get("Téléphone")),
+        "date": dt.strftime("%d/%m/%Y") if isinstance(dt, datetime.datetime) else str(dt or "").strip(),
+        "ts": dt.isoformat() if isinstance(dt, datetime.datetime) else "",
+        "offre": str(r.get("Offre") or "").strip(),
+        "prix": eur(r.get("Prix")),
+        "statut": str(r.get("Statut") or "").strip(),
+        "notes": str(r.get("Notes") or "").strip(),
+    })
+clientes.sort(key=lambda c: c["ts"], reverse=True)
+
 # lien automatique paiements -> suivi des appels (fiche école par e-mail)
 ecole_by_mail = {e["mail"]: e for e in ecole if e["mail"]}
 clients = OrderedDict()
@@ -240,6 +276,11 @@ for p in sorted(paiements, key=lambda x: x["ts"]):
     suivi = ecole_by_mail.get(p["mail"])
     if suivi:
         c["appel"] = {"qui": suivi["qui"], "statut": suivi["statut"], "chaud": suivi["chaud"]}
+# paiements -> fiches clientes (encaissé / contracté)
+for c in clientes:
+    p = clients.get(c["mail"])
+    c["recu"] = p["recu"] if p else 0.0
+    c["total"] = max(c["prix"], p["total"] if p else 0.0, c["recu"])
 
 # Visites
 vws = wb["Visites"]
@@ -316,8 +357,104 @@ if ic_key:
             })
         ic_ok = True
         print(f"iClosed : {len(icalls)} calls")
+        # dump minimal pour notify_calls.py (notif Telegram des nouveaux bookings)
+        (HERE / "icalls.json").write_text(json.dumps(
+            [{"id": c["id"], "n": c["n"], "utc": c["utc"], "event": c["event"], "cancel": c["cancel"]}
+             for c in icalls], ensure_ascii=False))
     except Exception as ex:
         print("iClosed fetch KO (on garde la console sans) :", ex)
+# suivi closing du Sheet accroché à chaque call
+for c in icalls:
+    c["trk"] = track.get(str(c["id"]))
+
+# ---- Scholarship : candidatures Tally (form Np1Gy0, compte perso Alex) ----
+try:
+    from zoneinfo import ZoneInfo
+    TZ_PARIS = ZoneInfo("Europe/Paris")
+except Exception:
+    TZ_PARIS = None
+
+def iso_paris(at):
+    try:
+        d = datetime.datetime.fromisoformat(at.replace("Z", "+00:00"))
+        if TZ_PARIS:
+            d = d.astimezone(TZ_PARIS)
+        return d.strftime("%d/%m %H:%M")
+    except Exception:
+        return ""
+
+ty_key = os.environ.get("TALLY_API_KEY", "")
+if not ty_key and (HERE / "tally-key.txt").exists():
+    ty_key = (HERE / "tally-key.txt").read_text().strip()
+schol_subs, schol_ok, schol_stats = [], False, {}
+SCHOL_SKIP = TEST_EMAILS | {"test@test.fr"}
+ID_PRENOM, ID_NOM, ID_MAIL, ID_TEL, ID_INSTA, ID_HIDDEN = "yE0EXd", "XMRM5z", "8PJPNr", "0JbJVA", "zr0rEg", "g7Q7bJ"
+
+def ty_txt(a):
+    if a is None:
+        return ""
+    if isinstance(a, list):
+        return " · ".join(str(x) for x in a if not isinstance(x, dict))
+    return str(a).strip()
+
+if ty_key:
+    try:
+        qlabels, raw_subs, page = {}, [], 1
+        while True:
+            req = urllib.request.Request(
+                f"https://api.tally.so/forms/Np1Gy0/submissions?filter=all&page={page}",
+                headers={"Authorization": "Bearer " + ty_key,
+                         "User-Agent": "curl/8.4.0"})  # Cloudflare bloque l'UA Python
+            d = json.load(urllib.request.urlopen(req, timeout=30))
+            for q in d.get("questions") or []:
+                qlabels[q["id"]] = (str(q.get("title") or "?").strip(), str(q.get("type") or ""))
+            raw_subs += d.get("submissions") or []
+            schol_stats = d.get("totalNumberOfSubmissionsPerFilter") or {}
+            if not d.get("hasMore"):
+                break
+            page += 1
+        for s in raw_subs:
+            a = {r.get("questionId"): r.get("answer") for r in s.get("responses") or []}
+            mail = ty_txt(a.get(ID_MAIL)).lower()
+            if mail in SCHOL_SKIP:
+                continue
+            # personne n'a rien rempli d'identifiable : du bruit, on saute
+            if not mail and not ty_txt(a.get(ID_PRENOM)) and not ty_txt(a.get(ID_TEL)):
+                continue
+            det, files = [], []
+            for r in s.get("responses") or []:
+                qid = r.get("questionId")
+                if qid in (ID_PRENOM, ID_NOM, ID_MAIL, ID_TEL, ID_INSTA, ID_HIDDEN):
+                    continue
+                lab, qtype = qlabels.get(qid, ("?", ""))
+                ans = r.get("answer")
+                if qtype == "FILE_UPLOAD" and isinstance(ans, list):
+                    files += [{"n": str(f.get("name") or "fichier"), "u": str(f.get("url") or "")}
+                              for f in ans if isinstance(f, dict)]
+                    continue
+                v = ty_txt(ans)
+                if v:
+                    det.append([lab, v])
+            hid = a.get(ID_HIDDEN) if isinstance(a.get(ID_HIDDEN), dict) else {}
+            at = str(s.get("submittedAt") or "")
+            schol_subs.append({
+                "id": s.get("id"),
+                "n": (ty_txt(a.get(ID_PRENOM)) + " " + ty_txt(a.get(ID_NOM))).strip() or mail or "?",
+                "mail": mail,
+                "tel": norm_phone(ty_txt(a.get(ID_TEL))),
+                "insta": ty_txt(a.get(ID_INSTA)).lstrip("@"),
+                "at": at,
+                "date": iso_paris(at),
+                "done": bool(s.get("isCompleted")),
+                "src": str(hid.get("source") or "").strip(),
+                "det": det,
+                "files": files,
+            })
+        schol_subs.sort(key=lambda x: x["at"], reverse=True)
+        schol_ok = True
+        print(f"Scholarship Tally : {len(schol_subs)} candidature(s)")
+    except Exception as ex:
+        print("Tally scholarship KO (on garde la console sans) :", ex)
 
 
 data = {
@@ -335,6 +472,13 @@ data = {
     "ecole": ecole,
     "ecoleUniques": ecole_uniques,
     "icalls": {"ok": ic_ok, "calls": sorted(icalls, key=lambda x: x["utc"])},
+    "suivi": {
+        "trackOk": track_rows is not None,
+        "clientsOk": clients_rows is not None,
+        "clientes": clientes,
+    },
+    "schol": {"ok": schol_ok, "url": "https://tally.so/r/Np1Gy0",
+              "stats": schol_stats, "subs": schol_subs},
     "compta": {
         "ok": compta_ok,
         "sheetUrl": "https://docs.google.com/spreadsheets/d/1CUiT962_dGEAWhydaboYmC23ir8gA-CtZyUXB4gErIc/edit",

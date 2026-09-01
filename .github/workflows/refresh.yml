@@ -2,7 +2,8 @@ name: Refresh console
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 6,9,12,15,18 * * *'   # ~8h, 11h, 14h, 17h, 20h heure de Paris (été)
+    # toutes les 30 min en journée (minutes décalées : GitHub throttle les crons de l'heure pile)
+    - cron: '7,37 5-20 * * *'   # ~7h-22h heure de Paris (été)
 permissions:
   contents: write
 concurrency: refresh
@@ -27,13 +28,19 @@ jobs:
           PONT_URL: ${{ secrets.PONT_URL }}
           PONT_KEY: ${{ secrets.PONT_KEY }}
           ICLOSED_KEY: ${{ secrets.ICLOSED_KEY }}
+          TALLY_API_KEY: ${{ secrets.TALLY_API_KEY }}
         run: |
           cd pipeline
           python build.py
           python encrypt_page.py console.html ../index.html "${{ secrets.PAGE_CODE }}" "Console Selfty"
+      - name: Notif Telegram nouveaux calls
+        env:
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          TG_CHAT: ${{ secrets.TG_CHAT }}
+        run: python pipeline/notify_calls.py
       - name: Publier
         run: |
           git config user.name "console-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add index.html
+          git add index.html pipeline/state-icalls.json
           git diff --cached --quiet || { git commit -m "MAJ auto console"; git push; }

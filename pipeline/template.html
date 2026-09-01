@@ -1,4 +1,5 @@
 <title>Console Selfty</title>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Jost:wght@400;500;600&display=swap">
 <style>
@@ -86,8 +87,10 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 .src-webi{border:1px solid var(--border);color:var(--muted);background:transparent;font-weight:500}
 .suivi-form{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:10px}
 .suivi-form label{font-size:12.5px;color:var(--muted);display:block}
-.suivi-form select,.suivi-form input{border:1px solid var(--border);border-radius:10px;padding:8px 10px;font:14px "Jost",sans-serif;color:var(--ink);background:var(--surface);margin-top:3px}
+.suivi-form select,.suivi-form input,.suivi-form textarea{border:1px solid var(--border);border-radius:10px;padding:8px 10px;font:14px "Jost",sans-serif;color:var(--ink);background:var(--surface);margin-top:3px}
 .suivi-form input{min-width:220px}
+.suivi-form textarea{display:block;width:100%;min-height:70px;resize:vertical}
+.form-cli{grid-template-columns:1fr 1.2fr 1fr .9fr .6fr auto}
 .kpis-mini{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:0 0 16px}
 .kpis-mini .kpi{padding:12px 14px}
 .kpis-mini .kpi .val{font-size:26px}
@@ -176,15 +179,20 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
   <div class="liste" id="l-ecole"></div>
 </section>
 
-<!-- ===================== APPELS À VENIR ===================== -->
+<!-- ===================== SCHOLARSHIP ===================== -->
+<section class="panel" id="p-schol">
+  <p class="intro">Les candidatures à la bourse (<i>scholarship</i>) arrivent ici toutes seules depuis le formulaire Tally. Date limite le 15 septembre, réponse promise avant cette date. Le bouton WhatsApp relance celles qui n'ont pas fini leur candidature.</p>
+  <div class="bandeau" id="bandeau-schol"></div>
+  <div class="kpis kpis-mini" id="schol-stats"></div>
+  <div class="pills" id="f-schol"></div>
+  <div class="liste" id="l-schol"></div>
+</section>
+
+<!-- ===================== AGENDA CALLS ===================== -->
 <section class="panel" id="p-calls">
-  <p class="intro">Les calls bookés sur iClosed arrivent ici tout seuls (mise à jour toutes les 3h et bouton ↻), passés comme à venir. Le bouton WhatsApp envoie un rappel pré-écrit avec le lien de la visio. Tu peux aussi ajouter un appel à la main en dessous.</p>
+  <p class="intro">L'agenda des prochains calls : tout ce qui est booké sur iClosed arrive ici tout seul (mise à jour auto toutes les 30 min + bouton ↻). Le bouton WhatsApp envoie un rappel pré-écrit avec le lien de la visio. Une fois le call passé, il bascule dans « Tracking » pour être rempli.</p>
   <div class="bandeau" id="bandeau-iclosed"></div>
-  <div class="carte">
-    <h3>Calls iClosed</h3>
-    <div class="pills" id="f-icalls"></div>
-    <div class="liste" id="l-icalls"></div>
-  </div>
+  <div id="agenda"></div>
   <div class="carte">
     <h3>Ajouter un appel à la main</h3>
     <div class="form-call">
@@ -195,7 +203,33 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
       <div><label for="c-note">Sujet / note</label><input type="text" id="c-note" placeholder="Candidature école, suite du live…"></div>
       <button class="btn-add" id="c-add">Ajouter</button>
     </div>
-    <div class="liste" id="l-calls"></div>
+  </div>
+  <details class="sujet" style="margin-top:4px"><summary>Voir les calls annulés</summary><div class="liste" id="l-annules" style="margin-top:10px"></div></details>
+</section>
+
+<!-- ===================== TRACKING CLOSING ===================== -->
+<section class="panel" id="p-track">
+  <p class="intro">Dès qu'un call est passé, il arrive ici pour être rempli : présente ou pas, vente ou pas, et le recap de ce qui s'est dit (retranscription, objections…). Tout s'écrit dans l'onglet « Suivi Calls » du Sheet École. Une vente crée automatiquement la fiche dans « Clientes ».</p>
+  <div class="kpis kpis-mini" id="track-stats"></div>
+  <div class="pills" id="f-track"></div>
+  <div class="liste" id="l-track"></div>
+</section>
+
+<!-- ===================== CLIENTES ===================== -->
+<section class="panel" id="p-clients">
+  <p class="intro">Le suivi des clientes signées. Une vente marquée dans « Tracking » crée la fiche toute seule ; tu peux aussi en ajouter une à la main. Statut et notes s'écrivent dans l'onglet « Clients » du Sheet, l'encaissé vient de l'onglet « Paiements » de la Compta.</p>
+  <div class="kpis kpis-mini" id="clients-kpis"></div>
+  <div class="liste" id="l-cli"></div>
+  <div class="carte">
+    <h3>Ajouter une cliente à la main</h3>
+    <div class="form-call form-cli">
+      <div><label for="cl-nom">Prénom + nom</label><input type="text" id="cl-nom"></div>
+      <div><label for="cl-mail">E-mail</label><input type="text" id="cl-mail"></div>
+      <div><label for="cl-tel">Téléphone</label><input type="tel" id="cl-tel"></div>
+      <div><label for="cl-offre">Offre</label><input type="text" id="cl-offre" placeholder="Selfty Academy"></div>
+      <div><label for="cl-prix">Prix (€)</label><input type="text" id="cl-prix" inputmode="numeric"></div>
+      <button class="btn-add" id="cl-add">Ajouter</button>
+    </div>
   </div>
 </section>
 
@@ -262,6 +296,16 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
     <div class="note">Variables : {prenom} {quand}</div>
   </div>
   <div class="champ">
+    <label for="s-tpl-schol-rel">Message scholarship : candidature pas finie</label>
+    <textarea id="s-tpl-schol-rel"></textarea>
+    <div class="note">Variables : {prenom} {lien} (lien du formulaire)</div>
+  </div>
+  <div class="champ">
+    <label for="s-tpl-schol-ok">Message scholarship : candidature bien reçue</label>
+    <textarea id="s-tpl-schol-ok"></textarea>
+    <div class="note">Variables : {prenom}</div>
+  </div>
+  <div class="champ">
     <label for="s-groupe">Lien du groupe WhatsApp</label>
     <input type="text" id="s-groupe">
   </div>
@@ -289,14 +333,16 @@ const TPL_DEF = {
   webiCoach: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nMerci pour ta candidature au coaching en direct de ce soir. Cette fois on a choisi une autre personne, mais ta candidature nous a beaucoup plu et on la garde précieusement si on refait un live coaching.\n\nEt on t'attend quand même au live CE SOIR à 18h, voici le lien :\n{live}\n\nSi tu n'y es pas, voici le lien du groupe WhatsApp du live :\n{groupe}\n\nÀ ce soir !",
   webiEcole: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nJ'ai vu que tu t'étais inscrit(e) à la liste d'attente de l'école. Elle n'a pas encore ouvert, mais si tu veux, je te propose un call avec moi pour en parler : voir où tu en es et te présenter ce qu'on prépare. Dis-moi si ça te tente et je t'envoie un créneau.\n\nEt en attendant, le live c'est CE SOIR à 18h, voici le lien :\n{live}\n\nSi tu n'y es pas, voici le lien du groupe WhatsApp du live :\n{groupe}\n\nÀ ce soir !",
   cand: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nMerci pour ta candidature au coaching en direct. Cette fois on a choisi une autre personne, mais ta candidature nous a beaucoup plu et on la garde précieusement : si on refait un live coaching un jour, tu fais partie des personnes à qui on pensera en premier.\n\nEt bien sûr on t'attend au live ce soir à 18h, voici le lien :\n{live}",
-  call: "Hello {prenom}, c'est Alex de la Selfty Academy 🌸 Petit rappel pour notre appel {quand}. À tout à l'heure !"
+  call: "Hello {prenom}, c'est Alex de la Selfty Academy 🌸 Petit rappel pour notre appel {quand}. À tout à l'heure !",
+  scholRel: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nJ'ai vu que tu avais commencé ta candidature pour la bourse mais qu'elle n'est pas allée au bout. Les candidatures ferment le 15 septembre : si tu veux ta chance, tu peux la finir ici :\n{lien}\n\nEt si tu bloques quelque part, dis-moi !",
+  scholOk: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nOn a bien reçu ta candidature pour la bourse, merci pour ta confiance. Anaïs lit tout personnellement : tu auras une réponse avant le 15 septembre."
 };
 const MEM = {};
 const store = {
   get: (k, d) => { try { const v = localStorage.getItem('sc-'+k); return v===null ? d : JSON.parse(v); } catch(e){ return k in MEM ? MEM[k] : d; } },
   set: (k, v) => { MEM[k] = v; try { localStorage.setItem('sc-'+k, JSON.stringify(v)); } catch(e){} }
 };
-let SET = Object.assign({tplWebi:TPL_DEF.webi, tplWebiCoach:TPL_DEF.webiCoach, tplWebiEcole:TPL_DEF.webiEcole, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
+let SET = Object.assign({tplWebi:TPL_DEF.webi, tplWebiCoach:TPL_DEF.webiCoach, tplWebiEcole:TPL_DEF.webiEcole, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, tplScholRel:TPL_DEF.scholRel, tplScholOk:TPL_DEF.scholOk, groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
 
 function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),2200); }
 function waUrl(tel, msg){ return 'https://wa.me/'+tel+'?text='+encodeURIComponent(msg); }
@@ -307,11 +353,14 @@ const TABS = [
   {id:'webi',  lab:'Relances webi'},
   {id:'cand',  lab:'Candidatures live'},
   {id:'ecole', lab:'École'},
-  {id:'calls', lab:'Appels à venir'},
+  {id:'schol', lab:'Scholarship'},
+  {id:'calls', lab:'Agenda calls'},
+  {id:'track', lab:'Tracking'},
+  {id:'clients', lab:'Clientes'},
   {id:'compta', lab:'Compta'},
   {id:'data',  lab:'Datas'}
 ];
-let tabOn = store.get('tab','webi');
+let tabOn = store.get('tab','calls');
 function renderTabs(){
   const done = store.get('relwebi', {});
   const doneC = store.get('relcand', {});
@@ -321,7 +370,11 @@ function renderTabs(){
   const bIc = DATA.icalls.calls.filter(c => !c.cancel && c.utc && new Date(c.utc) > new Date() && !icd[c.id]).length;
   const bCalls = calls().filter(c => !c.fait).length + bIc;
   const bEcole = DATA.ecole.filter(e => !e.statut && !e.chaud).length;
-  const b = {webi:bWebi, cand:bCand, ecole:bEcole, calls:bCalls, compta:null, data:null};
+  const schd = store.get('scholdone', {});
+  const bSchol = DATA.schol.subs.filter(s => !schd[s.id]).length;
+  const bTrack = trackList().filter(c => { const t = effTrk(c); return !t.s && !t.r; }).length;
+  const bCli = clientes().filter(c => !c.statut || c.statut === 'Signée').length;
+  const b = {webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, calls:bCalls, track:bTrack, clients:bCli, compta:null, data:null};
   $('tabs').innerHTML = TABS.map(t =>
     `<button class="tab${t.id===tabOn?' on':''}" data-t="${t.id}">${t.lab}${b[t.id]!==null?` <span class="bdg">${b[t.id]}</span>`:''}</button>`).join('');
   TABS.forEach(t => $('p-'+t.id).classList.toggle('on', t.id===tabOn));
@@ -552,8 +605,7 @@ function quandTxt(c){
   if (diff===1) return 'demain'+h;
   return 'le '+d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+h;
 }
-/* ---------- calls iClosed ---------- */
-let fIcalls = 'v';
+/* ---------- calls iClosed : helpers ---------- */
 function quandUtc(utc){
   if (!utc) return {txt:'?', passe:false};
   const d = new Date(utc);
@@ -563,56 +615,60 @@ function quandUtc(utc){
   const quand = diff===0 ? "aujourd'hui" : diff===1 ? 'demain' : diff===-1 ? 'hier' : 'le '+jour;
   return {txt: quand+' à '+h, passe: d < auj};
 }
-function renderICalls(){
+function dayKey(d){ return d.toLocaleDateString('fr-CA', {timeZone:'Europe/Paris'}); }
+function dayLabel(k){
+  if (!k) return 'Sans date';
+  const auj = dayKey(new Date());
+  const dem = dayKey(new Date(Date.now()+86400000));
+  const d = new Date(k+'T12:00:00');
+  const lab = d.toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long'});
+  if (k===auj) return "Aujourd'hui · "+lab;
+  if (k===dem) return 'Demain · '+lab;
+  return lab.charAt(0).toUpperCase()+lab.slice(1);
+}
+function icQuest(c){
+  const rep = [...c.quest.map(([t,v]) => `<div class="rep"><b>${esc(t)}</b>${esc(v)}</div>`),
+               c.notes ? `<div class="rep"><b>Notes iClosed</b>${esc(c.notes)}</div>` : ''].filter(Boolean).join('');
+  return rep ? `<details class="sujet"><summary>Voir ses réponses au questionnaire</summary>${rep}</details>` : '';
+}
+
+/* ---------- agenda des prochains calls ---------- */
+function renderAgenda(){
   const IC = DATA.icalls;
   $('bandeau-iclosed').innerHTML = IC.ok
     ? `<strong>Connecté à iClosed ✅</strong> ${IC.calls.length} call${IC.calls.length>1?'s':''} booké${IC.calls.length>1?'s':''} au total. <a href="https://app.iclosed.io" target="_blank" rel="noopener">Ouvrir iClosed ↗</a>`
     : `<strong>iClosed injoignable à la dernière mise à jour.</strong> Les calls affichés peuvent dater ; relance une mise à jour avec ↻.`;
   const done = store.get('icdone', {});
-  const enrich = IC.calls.map(c => ({...c, q: quandUtc(c.utc)}));
-  const avenir = enrich.filter(c => !c.cancel && !c.q.passe);
-  const passes = enrich.filter(c => !c.cancel && c.q.passe);
-  const annules = enrich.filter(c => c.cancel);
-  $('f-icalls').innerHTML = [
-    ['v', `À venir <b>${avenir.length}</b>`],
-    ['p', `Passés <b>${passes.length}</b>`],
-    ['x', `Annulés <b>${annules.length}</b>`]
-  ].map(([v,l]) => `<button class="pill${fIcalls===v?' on':''}" data-f="${v}">${l}</button>`).join('');
-  let liste = fIcalls==='v' ? avenir : fIcalls==='p' ? passes.slice().reverse() : annules;
-  $('l-icalls').innerHTML = liste.length ? liste.map(c => {
-    const ok = !!done[c.id];
-    let msg = SET.tplCall.replaceAll('{prenom}', c.n.split(' ')[0]).replaceAll('{quand}', c.q.txt);
+  const items = [];
+  IC.calls.forEach(c => {
+    if (c.cancel) return;
+    const q = quandUtc(c.utc);
+    if (q.passe) return;
+    let msg = SET.tplCall.replaceAll('{prenom}', c.n.split(' ')[0]).replaceAll('{quand}', q.txt);
     if (c.link) msg += '\n\nLe lien pour nous rejoindre :\n' + c.link;
-    const rep = [...c.quest.map(([t,v]) => `<div class="rep"><b>${esc(t)}</b>${esc(v)}</div>`),
-                 c.notes ? `<div class="rep"><b>Notes iClosed</b>${esc(c.notes)}</div>` : '',
-                 c.cancelWhy ? `<div class="rep"><b>Raison de l'annulation</b>${esc(c.cancelWhy)}</div>` : ''].filter(Boolean).join('');
-    return `<div class="ligne${ok||c.cancel?' done':''}">
+    const heure = c.utc ? new Date(c.utc).toLocaleTimeString('fr-FR',{timeZone:'Europe/Paris',hour:'2-digit',minute:'2-digit'}).replace(':','h') : '?';
+    items.push({key: c.utc ? dayKey(new Date(c.utc)) : '', sort: c.utc || '9999',
+      html: `<div class="ligne${done[c.id]?' done':''}">
       <div class="qui"><div class="nom">${esc(c.n)}</div><div class="sub">${esc(c.mail)}</div>
-        <div style="margin-top:4px"><span class="chip src-form">${esc(c.event||'iClosed')}</span>${c.outcome?` <span class="chip src-live">${esc(c.outcome)}</span>`:''}</div></div>
-      <div class="meta"><b class="quand${c.q.passe&&fIcalls==='v'?' passe':''}">${c.q.txt}</b>${c.tel?'+'+c.tel:''}</div>
-      <div class="meta">${c.cancel ? '<span class="tag-warn">Annulé</span>' : (c.link ? `<a href="${esc(c.link)}" target="_blank" rel="noopener">Lien visio ↗</a>` : '')}</div>
+        <div style="margin-top:4px"><span class="chip src-form">${esc(c.event||'iClosed')}</span></div></div>
+      <div class="meta"><b class="quand">${heure}</b>${c.tel?'+'+c.tel:''}</div>
+      <div class="meta">${c.link ? `<a href="${esc(c.link)}" target="_blank" rel="noopener">Lien visio ↗</a>` : ''}</div>
       <div class="actions">
-        ${c.tel && !c.cancel ? `<a class="btn-wa" href="${waUrl(c.tel, msg)}" target="_blank" rel="noopener">${WA_SVG} Rappel</a>` : ''}
-        ${!c.cancel ? `<label class="chk"><input type="checkbox" data-icdone="${c.id}" ${ok?'checked':''}> Rappel envoyé</label>` : ''}
+        ${c.tel ? `<a class="btn-wa" href="${waUrl(c.tel, msg)}" target="_blank" rel="noopener">${WA_SVG} Rappel</a>` : ''}
+        <label class="chk"><input type="checkbox" data-icdone="${c.id}" ${done[c.id]?'checked':''}> Rappel envoyé</label>
       </div>
-      ${rep ? `<details class="sujet"><summary>Voir ses réponses au questionnaire</summary>${rep}</details>` : ''}
-    </div>`;
-  }).join('') : `<div class="vide">Rien ici pour l'instant.</div>`;
-}
-$('f-icalls').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fIcalls = p.dataset.f; renderICalls(); }});
-document.addEventListener('change', e => {
-  const d = e.target.dataset.icdone;
-  if (d){ const m = store.get('icdone', {}); e.target.checked ? m[d]=1 : delete m[d]; store.set('icdone', m); renderICalls(); renderTabs(); }
-});
-
-function renderCalls(){
-  const l = calls().slice().sort((a,b) => (a.date+a.heure).localeCompare(b.date+b.heure));
-  $('l-calls').innerHTML = l.length ? l.map(c => {
-    const msg = SET.tplCall.replaceAll('{prenom}', c.nom).replaceAll('{quand}', quandTxt(c));
+      ${icQuest(c)}
+    </div>`});
+  });
+  calls().forEach(c => {
     const passe = c.date && new Date(c.date+'T'+(c.heure||'23:59')) < new Date();
-    return `<div class="ligne${c.fait?' done':''}">
-      <div class="qui"><div class="nom">${esc(c.nom)}</div><div class="sub">${esc(c.note||'')}</div></div>
-      <div class="meta"><b class="quand${passe&&!c.fait?' passe':''}">${quandTxt(c)}</b>${c.tel?'+'+c.tel:''}</div>
+    if (passe && c.fait) return;
+    const msg = SET.tplCall.replaceAll('{prenom}', c.nom).replaceAll('{quand}', quandTxt(c));
+    items.push({key: c.date || '', sort: (c.date||'9999')+'T'+(c.heure||'23:59'),
+      html: `<div class="ligne${c.fait?' done':''}">
+      <div class="qui"><div class="nom">${esc(c.nom)}</div><div class="sub">${esc(c.note||'')}</div>
+        <div style="margin-top:4px"><span class="chip src-live">ajouté à la main</span></div></div>
+      <div class="meta"><b class="quand${passe&&!c.fait?' passe':''}">${c.heure?c.heure.replace(':','h'):''}</b>${c.tel?'+'+c.tel:''}</div>
       <div class="meta">${c.rappel ? '<span class="tag-ok">Rappel envoyé</span>' : ''}</div>
       <div class="actions">
         ${c.tel ? `<a class="btn-wa" href="${waUrl(c.tel,msg)}" target="_blank" rel="noopener">${WA_SVG} Rappel</a>` : ''}
@@ -620,9 +676,259 @@ function renderCalls(){
         <label class="chk"><input type="checkbox" data-call-fait="${c.id}" ${c.fait?'checked':''}> Appel fait</label>
         <button class="btn-ghost btn-danger" data-call-del="${c.id}">Suppr.</button>
       </div>
+    </div>`});
+  });
+  items.sort((a,b) => a.sort.localeCompare(b.sort));
+  const groups = {};
+  items.forEach(it => (groups[it.key] = groups[it.key] || []).push(it));
+  const keys = Object.keys(groups).sort((a,b) => (a||'9999-99').localeCompare(b||'9999-99'));
+  $('agenda').innerHTML = keys.length ? keys.map(k =>
+    `<h2 style="margin:18px 0 8px">${dayLabel(k)} <span class="chip src-webi">${groups[k].length} call${groups[k].length>1?'s':''}</span></h2>
+     <div class="liste">${groups[k].map(it => it.html).join('')}</div>`).join('')
+    : `<div class="vide">Aucun call à venir. Ils arrivent ici tout seuls dès qu'ils sont bookés sur iClosed.</div>`;
+  const annules = IC.calls.filter(c => c.cancel);
+  $('l-annules').innerHTML = annules.length ? annules.map(c => {
+    const q = quandUtc(c.utc);
+    return `<div class="ligne done">
+      <div class="qui"><div class="nom">${esc(c.n)}</div><div class="sub">${esc(c.mail)}</div></div>
+      <div class="meta"><b>${q.txt}</b>${c.tel?'+'+c.tel:''}</div>
+      <div class="meta"><span class="tag-warn">Annulé</span></div>
+      <div class="actions"></div>
+      ${c.cancelWhy ? `<details class="sujet"><summary>Raison de l'annulation</summary><div class="rep">${esc(c.cancelWhy)}</div></details>` : ''}
     </div>`;
-  }).join('') : `<div class="vide">Aucun appel prévu. Ajoute le premier au-dessus.</div>`;
+  }).join('') : `<div class="vide">Aucun call annulé.</div>`;
 }
+document.addEventListener('change', e => {
+  const d = e.target.dataset.icdone, s = e.target.dataset.scholdone;
+  if (d){ const m = store.get('icdone', {}); e.target.checked ? m[d]=1 : delete m[d]; store.set('icdone', m); renderAgenda(); renderTabs(); }
+  if (s){ const m = store.get('scholdone', {}); e.target.checked ? m[s]=1 : delete m[s]; store.set('scholdone', m); renderSchol(); renderTabs(); }
+});
+
+/* ---------- tracking closing (calls passés à remplir) ---------- */
+const trackList = () => DATA.icalls.calls.filter(c => !c.cancel && quandUtc(c.utc).passe);
+function effTrk(c){
+  const F = store.get('trackfix', {});
+  const f = F[c.id];
+  const base = c.trk || {s:'', r:'', prix:0, recap:''};
+  if (!f) return base;
+  const caught = (f.s===undefined || base.s===f.s) && (f.r===undefined || base.r===f.r);
+  if (caught || Date.now()-(f.when||0) > 3*86400000){ delete F[c.id]; store.set('trackfix', F); return base; }
+  return Object.assign({}, base, {s:f.s!==undefined?f.s:base.s, r:f.r!==undefined?f.r:base.r, prix:f.prix!==undefined?f.prix:base.prix});
+}
+const SHOW_OPTS = ['', 'Présente', 'No-show', 'Reporté', 'Annulé'];
+const RES_OPTS = ['', 'Vente', 'Pas de vente', 'Follow-up', 'Pas pitché'];
+const selOpts = (list, cur) => (list.includes(cur) ? list : list.concat([cur]))
+  .map(o => `<option value="${esc(o)}"${o===cur?' selected':''}>${o===''?'—':esc(o)}</option>`).join('');
+let fTrack = 'a';
+function renderTrack(){
+  const tous = trackList().slice().reverse().map(c => ({c, t: effTrk(c), q: quandUtc(c.utc)}));
+  const aRemplir = tous.filter(x => !x.t.s && !x.t.r);
+  const remplis = tous.filter(x => x.t.s || x.t.r);
+  const presentes = tous.filter(x => x.t.s==='Présente' || (x.t.r && !x.t.s));
+  const ventes = tous.filter(x => x.t.r==='Vente');
+  const ca = ventes.reduce((s,x) => s+(x.t.prix||0), 0);
+  $('track-stats').innerHTML = [
+    [tous.length, 'calls passés'],
+    [aRemplir.length, 'à remplir'],
+    [presentes.length, 'présentes'],
+    [ventes.length, 'vente'+(ventes.length>1?'s':'')],
+    [EUR(ca), 'CA signé'],
+    [(presentes.length ? Math.round(100*ventes.length/presentes.length) : 0)+' %', 'closing / présentes'],
+  ].map(([v,l]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div></div>`).join('');
+  $('f-track').innerHTML = [
+    ['a', `À remplir <b>${aRemplir.length}</b>`],
+    ['r', `Remplis <b>${remplis.length}</b>`],
+    ['t', `Tous <b>${tous.length}</b>`]
+  ].map(([v,l]) => `<button class="pill${fTrack===v?' on':''}" data-f="${v}">${l}</button>`).join('');
+  const liste = fTrack==='a' ? aRemplir : fTrack==='r' ? remplis : tous;
+  $('l-track').innerHTML = liste.length ? liste.map(({c,t,q}) => {
+    const vente = t.r === 'Vente';
+    return `<div class="ligne">
+      <div class="qui"><div class="nom">${esc(c.n)}</div><div class="sub">${esc(c.mail)}</div>
+        <div style="margin-top:4px"><span class="chip src-form">${esc(c.event||'iClosed')}</span>${t.r?` <span class="chip ${vente?'src-live':'src-webi'}">${esc(t.r)}${vente&&t.prix?' · '+EUR(t.prix):''}</span>`:''}</div></div>
+      <div class="meta"><b>${q.txt}</b>${c.tel?'+'+c.tel:''}</div>
+      <div class="meta">${t.s ? (t.s==='Présente' ? '<span class="tag-ok">Présente</span>' : '<span class="tag-warn">'+esc(t.s)+'</span>') : '<span class="tag-warn">À remplir</span>'}</div>
+      <div class="actions">${c.tel ? `<a class="btn-wa" href="https://wa.me/${c.tel}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}</div>
+      ${icQuest(c)}
+      ${t.recap ? `<details class="sujet"><summary>Voir le recap déjà enregistré</summary><div class="rep">${esc(t.recap)}</div></details>` : ''}
+      <details class="sujet"${!t.s && !t.r ? ' open' : ''}><summary>✍️ Remplir le call</summary>
+      <div class="suivi-form tk-form" data-id="${esc(c.id)}" data-nom="${esc(c.n)}" data-mail="${esc(c.mail)}" data-tel="${esc(c.tel||'')}" data-utc="${esc(c.utc)}">
+        <label>Show-up<select class="tk-show">${selOpts(SHOW_OPTS, t.s||'')}</select></label>
+        <label>Résultat<select class="tk-res">${selOpts(RES_OPTS, t.r||'')}</select></label>
+        <label>Prix (€)<input class="tk-prix" style="min-width:90px" inputmode="numeric" value="${t.prix||''}"></label>
+        <label style="flex:1;min-width:230px;width:100%">Recap du call (ajouté à la suite)<textarea class="tk-recap" placeholder="Ce qui s'est dit, la retranscription, les objections…"></textarea></label>
+        <button class="btn-add tk-save">Enregistrer dans le Sheet</button>
+      </div></details>
+    </div>`;
+  }).join('') : `<div class="vide">Rien ici pour l'instant. Les calls arrivent dès qu'ils sont passés.</div>`;
+}
+$('f-track').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fTrack = p.dataset.f; renderTrack(); }});
+document.addEventListener('click', async e => {
+  const b = e.target.closest('.tk-save'); if (!b) return;
+  const f = b.closest('.tk-form');
+  const showup = f.querySelector('.tk-show').value;
+  const resultat = f.querySelector('.tk-res').value;
+  const prixRaw = f.querySelector('.tk-prix').value.trim().replace(',','.');
+  const recap = f.querySelector('.tk-recap').value.trim();
+  if (!showup && !resultat && !recap) return toast('Rien à enregistrer');
+  const payload = { what:'call_track', key:PONT.key, id:f.dataset.id, nom:f.dataset.nom, email:f.dataset.mail,
+    tel:f.dataset.tel, utc:f.dataset.utc, showup, resultat, prix: prixRaw==='' ? '' : (parseFloat(prixRaw)||0), recap };
+  b.disabled = true; b.textContent = 'Envoi…';
+  try {
+    const r = await fetch(PONT.url, { method:'POST', body: JSON.stringify(payload) });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'refus du pont');
+    const F = store.get('trackfix', {});
+    F[f.dataset.id] = { s: showup, r: resultat, prix: prixRaw==='' ? 0 : (parseFloat(prixRaw)||0), when: Date.now() };
+    store.set('trackfix', F);
+    if (resultat === 'Vente'){
+      const P = store.get('clipend', []);
+      if (!P.some(x => x.mail === f.dataset.mail))
+        P.push({n:f.dataset.nom, mail:f.dataset.mail, tel:f.dataset.tel, prix: parseFloat(prixRaw)||0, when: Date.now()});
+      store.set('clipend', P);
+      toast('Vente enregistrée 🎉 La fiche cliente est créée');
+    } else {
+      toast('Call enregistré dans le Sheet ✅');
+    }
+    renderTrack(); renderClients(); renderTabs();
+  } catch(err){
+    toast('Échec : ' + err.message);
+    b.disabled = false; b.textContent = 'Enregistrer dans le Sheet';
+  }
+});
+
+/* ---------- clientes signées ---------- */
+function clientes(){
+  const fromSheet = DATA.suivi.clientes;
+  const mails = new Set(fromSheet.map(c => c.mail));
+  const P = store.get('clipend', []);
+  const keep = P.filter(p => !mails.has(p.mail) && Date.now()-(p.when||0) < 3*86400000);
+  if (keep.length !== P.length) store.set('clipend', keep);
+  return fromSheet.concat(keep.map(p => ({n:p.n, mail:p.mail, tel:p.tel, date:'', ts:'', offre:'',
+    prix:p.prix||0, statut:'Signée', notes:'', recu:0, total:p.prix||0, pend:true})));
+}
+function effCli(c){
+  const F = store.get('clifix', {});
+  const f = c.mail && F[c.mail];
+  if (!f) return c;
+  if (c.statut === f.statut || Date.now()-(f.when||0) > 3*86400000){ delete F[c.mail]; store.set('clifix', F); return c; }
+  return Object.assign({}, c, {statut: f.statut});
+}
+const CLI_STATUTS = ['Signée', 'Onboarding', 'En cours', 'Terminée', 'En pause'];
+function renderClients(){
+  const tous = clientes().map(effCli);
+  const contracte = tous.reduce((s,c) => s+Math.max(c.total||0, c.prix||0), 0);
+  const encaisse = tous.reduce((s,c) => s+(c.recu||0), 0);
+  $('clients-kpis').innerHTML = [
+    [tous.length, 'cliente'+(tous.length>1?'s':'')+' signée'+(tous.length>1?'s':'')],
+    [EUR(contracte), 'contracté'],
+    [EUR(encaisse), 'encaissé'],
+    [EUR(Math.max(0, contracte-encaisse)), 'reste à encaisser'],
+  ].map(([v,l]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div></div>`).join('');
+  $('l-cli').innerHTML = tous.length ? tous.map(c => {
+    const total = Math.max(c.total||0, c.prix||0);
+    const reste = Math.max(0, total - (c.recu||0));
+    return `<div class="ligne">
+      <div class="qui"><div class="nom">${esc(c.n)}</div><div class="sub">${esc(c.mail)}</div>
+        <div style="margin-top:4px"><span class="chip src-live">${esc(c.statut||'Signée')}</span>${c.offre?` <span class="chip src-form">${esc(c.offre)}</span>`:''}${c.pend?' <span class="chip src-webi">en attente de la prochaine MAJ</span>':''}</div></div>
+      <div class="meta"><b>${c.date ? 'Signée le '+esc(c.date) : ''}</b>${c.tel?'+'+c.tel:''}</div>
+      <div class="meta"><b>${EUR(c.recu||0)} encaissé${total ? ' / '+EUR(total) : ''}</b>${reste ? `<span class="tag-warn">reste ${EUR(reste)}</span>` : '<span class="tag-ok">soldé</span>'}</div>
+      <div class="actions">${c.tel ? `<a class="btn-wa" href="https://wa.me/${c.tel}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}</div>
+      ${c.notes ? `<details class="sujet"><summary>Voir les notes</summary><div class="rep">${esc(c.notes)}</div></details>` : ''}
+      ${c.pend ? '' : `<details class="sujet"><summary>✏️ Modifier le suivi</summary>
+        <div class="suivi-form cli-form" data-mail="${esc(c.mail)}" data-nom="${esc(c.n)}">
+          <label>Statut<select class="cl-statut">${selOpts(CLI_STATUTS, c.statut||'Signée')}</select></label>
+          <label>Note<input class="cl-note" placeholder="Ajoutée à la suite dans le Sheet"></label>
+          <button class="btn-add cl-save">Enregistrer</button>
+        </div></details>`}
+    </div>`;
+  }).join('') : `<div class="vide">Pas encore de cliente signée. Dès qu'un call est marqué « Vente » dans Tracking, la fiche arrive ici.</div>`;
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('.cl-save'); if (!b) return;
+  const f = b.closest('.cli-form');
+  const statut = f.querySelector('.cl-statut').value;
+  const note = f.querySelector('.cl-note').value.trim();
+  b.disabled = true; b.textContent = 'Envoi…';
+  try {
+    const r = await fetch(PONT.url, { method:'POST', body: JSON.stringify({ what:'client_update', key:PONT.key, email:f.dataset.mail, nom:f.dataset.nom, statut, note }) });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'refus du pont');
+    const F = store.get('clifix', {});
+    F[f.dataset.mail] = { statut, when: Date.now() };
+    store.set('clifix', F);
+    toast('Suivi enregistré dans le Sheet ✅');
+    renderClients(); renderTabs();
+  } catch(err){
+    toast('Échec : ' + err.message);
+    b.disabled = false; b.textContent = 'Enregistrer';
+  }
+});
+$('cl-add').addEventListener('click', async () => {
+  const nom = $('cl-nom').value.trim(), mail = $('cl-mail').value.trim().toLowerCase();
+  if (!nom && !mail) return toast("Il manque le nom ou l'e-mail");
+  const tel = normTel($('cl-tel').value), offre = $('cl-offre').value.trim();
+  const prix = parseFloat($('cl-prix').value.trim().replace(',','.')) || 0;
+  const b = $('cl-add'); b.disabled = true; b.textContent = 'Envoi…';
+  try {
+    const r = await fetch(PONT.url, { method:'POST', body: JSON.stringify({ what:'client_update', key:PONT.key, email:mail, nom, tel, offre, prix: prix||'', statut:'Signée' }) });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'refus du pont');
+    const P = store.get('clipend', []);
+    if (!P.some(x => x.mail === mail)) P.push({n:nom||mail, mail, tel, prix, when:Date.now()});
+    store.set('clipend', P);
+    ['cl-nom','cl-mail','cl-tel','cl-offre','cl-prix'].forEach(i => $(i).value='');
+    toast('Cliente ajoutée dans le Sheet ✅');
+    renderClients(); renderTabs();
+  } catch(err){ toast('Échec : ' + err.message); }
+  b.disabled = false; b.textContent = 'Ajouter';
+});
+
+/* ---------- scholarship ---------- */
+let fSchol = 'a';
+function renderSchol(){
+  const S = DATA.schol;
+  $('bandeau-schol').innerHTML = (S.ok
+    ? `<strong>Connecté à Tally ✅</strong> Date limite des candidatures : <strong>15 septembre</strong>.`
+    : `<strong>Tally injoignable à la dernière mise à jour.</strong> Les candidatures affichées peuvent dater ; relance une mise à jour avec ↻.`)
+    + ` <a href="${esc(S.url)}" target="_blank" rel="noopener">Voir le formulaire ↗</a>`;
+  const done = store.get('scholdone', {});
+  const tous = S.subs;
+  const completes = tous.filter(s => s.done);
+  const partielles = tous.filter(s => !s.done);
+  const aTraiter = tous.filter(s => !done[s.id]);
+  $('schol-stats').innerHTML = [
+    [tous.length, 'candidatures'],
+    [completes.length, 'complètes'],
+    [partielles.length, 'pas finies'],
+    [aTraiter.length, 'à traiter'],
+  ].map(([v,l]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div></div>`).join('');
+  $('f-schol').innerHTML = [
+    ['a', `À traiter <b>${aTraiter.length}</b>`],
+    ['c', `Complètes <b>${completes.length}</b>`],
+    ['p', `Pas finies <b>${partielles.length}</b>`],
+    ['t', `Toutes <b>${tous.length}</b>`]
+  ].map(([v,l]) => `<button class="pill${fSchol===v?' on':''}" data-f="${v}">${l}</button>`).join('');
+  const liste = fSchol==='a' ? aTraiter : fSchol==='c' ? completes : fSchol==='p' ? partielles : tous;
+  $('l-schol').innerHTML = liste.length ? liste.map(s => {
+    const ok = !!done[s.id];
+    const msg = (s.done ? SET.tplScholOk : SET.tplScholRel).replaceAll('{prenom}', s.n.split(' ')[0]).replaceAll('{lien}', S.url);
+    const rep = [...s.det.map(([t,v]) => `<div class="rep"><b>${esc(t)}</b>${esc(v)}</div>`),
+                 ...s.files.map(f2 => `<div class="rep"><b>Justificatif</b><a href="${esc(f2.u)}" target="_blank" rel="noopener">${esc(f2.n)}</a></div>`)].join('');
+    return `<div class="ligne${ok?' done':''}">
+      <div class="qui"><div class="nom">${esc(s.n)}</div><div class="sub">${esc(s.mail)}${s.insta?' · @'+esc(s.insta):''}</div>
+        <div style="margin-top:4px">${s.done?'<span class="chip src-form">Complète</span>':'<span class="chip src-webi">Pas finie</span>'}${s.src?` <span class="chip src-live">${esc(s.src)}</span>`:''}</div></div>
+      <div class="meta"><b>${esc(s.date)}</b>${s.tel?'+'+s.tel:''}</div>
+      <div class="meta">${s.det.length} réponse${s.det.length>1?'s':''}${s.files.length?' + justificatif':''}</div>
+      <div class="actions">
+        ${s.tel ? `<a class="btn-wa" href="${waUrl(s.tel, msg)}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}
+        <label class="chk"><input type="checkbox" data-scholdone="${esc(s.id)}" ${ok?'checked':''}> Traitée</label>
+      </div>
+      ${rep ? `<details class="sujet"><summary>Voir sa candidature</summary>${rep}</details>` : ''}
+    </div>`;
+  }).join('') : `<div class="vide">Personne ici pour l'instant.</div>`;
+}
+$('f-schol').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fSchol = p.dataset.f; renderSchol(); }});
 $('c-add').addEventListener('click', () => {
   const nom = $('c-nom').value.trim();
   if (!nom) return toast('Il manque le prénom');
@@ -630,15 +936,15 @@ $('c-add').addEventListener('click', () => {
   l.push({id:Date.now(), nom, tel:normTel($('c-tel').value), date:$('c-date').value, heure:$('c-heure').value, note:$('c-note').value.trim(), rappel:false, fait:false});
   store.set('calls', l);
   ['c-nom','c-tel','c-date','c-heure','c-note'].forEach(i => $(i).value='');
-  renderCalls(); renderTabs(); toast('Appel ajouté');
+  renderAgenda(); renderTabs(); toast('Appel ajouté');
 });
 document.addEventListener('change', e => {
   const r = e.target.dataset.callRappel, f = e.target.dataset.callFait;
-  if (r||f){ const l = calls(); const c = l.find(x => String(x.id)===(r||f)); if(c){ if(r) c.rappel = e.target.checked; if(f) c.fait = e.target.checked; store.set('calls', l); renderCalls(); renderTabs(); } }
+  if (r||f){ const l = calls(); const c = l.find(x => String(x.id)===(r||f)); if(c){ if(r) c.rappel = e.target.checked; if(f) c.fait = e.target.checked; store.set('calls', l); renderAgenda(); renderTabs(); } }
 });
 document.addEventListener('click', e => {
   const d = e.target.dataset.callDel;
-  if (d){ store.set('calls', calls().filter(x => String(x.id)!==d)); renderCalls(); renderTabs(); }
+  if (d){ store.set('calls', calls().filter(x => String(x.id)!==d)); renderAgenda(); renderTabs(); }
 });
 
 /* ---------- datas ---------- */
@@ -740,23 +1046,26 @@ function openSet(o){ $('voile').classList.toggle('on', o); $('panneau').classLis
 $('btn-set').addEventListener('click', () => {
   $('s-tpl-webi').value = SET.tplWebi; $('s-tpl-webi-coach').value = SET.tplWebiCoach; $('s-tpl-webi-ecole').value = SET.tplWebiEcole;
   $('s-tpl-cand').value = SET.tplCand; $('s-tpl-call').value = SET.tplCall;
+  $('s-tpl-schol-rel').value = SET.tplScholRel; $('s-tpl-schol-ok').value = SET.tplScholOk;
   $('s-groupe').value = SET.groupe; $('s-iclosed').value = SET.iclosed;
   openSet(true);
 });
 $('voile').addEventListener('click', () => openSet(false));
 $('s-save').addEventListener('click', () => {
-  SET = {tplWebi:$('s-tpl-webi').value, tplWebiCoach:$('s-tpl-webi-coach').value, tplWebiEcole:$('s-tpl-webi-ecole').value, tplCand:$('s-tpl-cand').value, tplCall:$('s-tpl-call').value, groupe:$('s-groupe').value.trim(), iclosed:$('s-iclosed').value.trim()};
-  store.set('reglages', SET); openSet(false); renderWebi(); renderCand(); renderCalls(); toast('Enregistré');
+  SET = {tplWebi:$('s-tpl-webi').value, tplWebiCoach:$('s-tpl-webi-coach').value, tplWebiEcole:$('s-tpl-webi-ecole').value, tplCand:$('s-tpl-cand').value, tplCall:$('s-tpl-call').value, tplScholRel:$('s-tpl-schol-rel').value, tplScholOk:$('s-tpl-schol-ok').value, groupe:$('s-groupe').value.trim(), iclosed:$('s-iclosed').value.trim()};
+  store.set('reglages', SET); openSet(false); renderWebi(); renderCand(); renderAgenda(); renderSchol(); toast('Enregistré');
 });
 $('s-reset').addEventListener('click', () => {
   $('s-tpl-webi').value = TPL_DEF.webi; $('s-tpl-webi-coach').value = TPL_DEF.webiCoach; $('s-tpl-webi-ecole').value = TPL_DEF.webiEcole;
-  $('s-tpl-cand').value = TPL_DEF.cand; $('s-tpl-call').value = TPL_DEF.call; $('s-groupe').value = DATA.webi.groupe;
+  $('s-tpl-cand').value = TPL_DEF.cand; $('s-tpl-call').value = TPL_DEF.call;
+  $('s-tpl-schol-rel').value = TPL_DEF.scholRel; $('s-tpl-schol-ok').value = TPL_DEF.scholOk;
+  $('s-groupe').value = DATA.webi.groupe;
 });
 
-renderTabs(); renderWebi(); renderCand(); renderEcole(); renderICalls(); renderCalls(); renderCompta(); renderData();
+renderTabs(); renderWebi(); renderCand(); renderEcole(); renderSchol(); renderAgenda(); renderTrack(); renderClients(); renderCompta(); renderData();
 
 /* ---------- MAJ : bouton + auto-reload ETag ---------- */
-/* La page vit sur GitHub Pages ; un workflow (cron 3 h en journée + Run workflow)
+/* La page vit sur GitHub Pages ; un workflow (cron ~30 min en journée + Run workflow)
    reconstruit index.html. Ici : bouton -> ouvre la page du workflow, puis la
    console surveille l'ETag de la page et se recharge toute seule dès que la
    nouvelle version est en ligne (aussi en continu, comme la console I3). */
