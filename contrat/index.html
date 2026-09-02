@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Contrat Selfty Academy</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=Jost:wght@400;500;600&display=swap">
+<style>
+:root{--ink:#3A2A2A;--ink-soft:#5C4646;--muted:#8A7070;--paper:#FAEEEE;--surface:#FFFDFB;--rose:#F4DDDD;--border:#EBD2D2;--mauve:#966868;--mauve-deep:#7E5252;--ok:#4C7A5E;--danger:#A54848}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background-color:var(--paper);color:var(--ink);font:16px/1.55 "Jost",system-ui,sans-serif;
+  background-image:radial-gradient(900px 480px at 88% -120px, rgba(150,104,104,.14), transparent 62%),radial-gradient(760px 460px at -8% 12%, rgba(255,253,251,.75), transparent 60%);background-attachment:fixed;padding-bottom:90px}
+a{color:var(--mauve-deep)}
+.wrap{max-width:820px;margin:0 auto;padding:22px 16px 40px}
+.carte{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px 28px;box-shadow:0 1px 2px rgba(58,42,42,.06),0 6px 20px rgba(58,42,42,.05);margin-bottom:16px}
+@media (max-width:600px){.carte{padding:20px 16px}}
+.etat{text-align:center;color:var(--muted);font-size:15px}
+.etat.err{color:var(--danger)}
+.hello{background:var(--rose);border:none}
+.hello h2{font:600 22px/1.25 "Playfair Display",Georgia,serif;margin:0 0 8px}
+.hello p{margin:0 0 6px;font-size:15.5px}
+.hello p:last-child{margin:0}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.chip{background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:500;color:var(--mauve-deep)}
+/* bloc signature (inséré dans le contrat, dans #ct-sig-slot) */
+.signer{background:var(--rose);border-radius:14px;padding:20px 20px 18px;margin-top:8px}
+.signer h3{font:600 19px/1.25 "Playfair Display",Georgia,serif;margin:0 0 6px;color:var(--ink)}
+.signer .aide{font-size:14px;color:var(--ink-soft);margin:0 0 14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+@media (max-width:600px){.grid2{grid-template-columns:1fr}}
+label.f{display:block;font-size:12.5px;color:var(--muted)}
+label.f input{display:block;width:100%;margin-top:4px;border:1px solid var(--border);border-radius:10px;padding:10px 12px;font:16px "Jost",sans-serif;color:var(--ink);background:var(--surface)}
+input:focus,button:focus-visible{outline:2px solid var(--mauve);outline-offset:1px}
+.accept{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin:0 0 14px;cursor:pointer;font-size:15px;line-height:1.45}
+.accept input{width:20px;height:20px;accent-color:var(--mauve);flex:none;margin-top:2px}
+.pad-wrap{background:var(--surface);border:1px dashed var(--mauve);border-radius:12px;position:relative;margin-bottom:12px}
+.pad-wrap canvas{display:block;width:100%;height:190px;touch-action:none;cursor:crosshair;border-radius:12px}
+.pad-hint{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;color:var(--muted);font-size:14px;pointer-events:none}
+.pad-wrap.inked .pad-hint{display:none}
+.pad-base{position:absolute;left:24px;right:24px;bottom:42px;border-top:1px solid var(--border);pointer-events:none}
+.pad-clear{position:absolute;right:10px;top:10px;border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:5px 12px;font:500 13px "Jost",sans-serif;color:var(--ink-soft);cursor:pointer}
+.btn{display:block;width:100%;background:var(--mauve);color:#FFFDFB;border:none;border-radius:999px;padding:15px 20px;font:600 17px "Jost",sans-serif;cursor:pointer}
+.btn:hover{background:var(--mauve-deep)}
+.btn[disabled]{background:#C9BBBB;cursor:not-allowed}
+.small{font-size:12.5px;color:var(--muted);margin:10px 0 0;line-height:1.5}
+.err-msg{color:var(--danger);font-size:14px;margin:10px 0 0;display:none}
+/* cases à cocher du contrat : cliquables tant que pas signé */
+.ct .case.clic{cursor:pointer;user-select:none}
+.ct .case.clic:hover{border-color:var(--mauve)}
+/* état signé */
+.fini{background:var(--rose);border-radius:14px;padding:22px 20px;text-align:center;margin-top:8px}
+.fini h3{font:600 22px/1.25 "Playfair Display",Georgia,serif;margin:0 0 8px}
+.fini p{margin:0 0 8px;font-size:15.5px}
+.fini a.btn-pdf{display:inline-block;background:var(--ink);color:#FFFDFB;text-decoration:none;border-radius:999px;padding:11px 20px;font-weight:500;margin-top:6px}
+/* barre du bas */
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(250,238,238,.92);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);border-top:1px solid var(--border);padding:11px 16px;display:none;align-items:center;justify-content:center;gap:14px;z-index:5;font-size:14px;color:var(--ink-soft)}
+.bar.on{display:flex}
+.bar button{background:var(--mauve);color:#FFFDFB;border:none;border-radius:999px;padding:9px 16px;font:500 14px "Jost",sans-serif;cursor:pointer}
+.toast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);background:var(--ink);color:#FFFDFB;border-radius:999px;padding:10px 20px;font-size:14px;z-index:30;opacity:0;transition:opacity .2s;pointer-events:none;max-width:92vw;text-align:center}
+.toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="carte etat" id="etat">Chargement de ton contrat…</div>
+  <div class="carte hello" id="hello" hidden></div>
+  <div class="carte" id="doc" hidden></div>
+</div>
+
+<!-- bloc de signature : déplacé dans le contrat (#ct-sig-slot) une fois chargé -->
+<div class="signer" id="signer" hidden>
+  <h3>Signer le contrat</h3>
+  <p class="aide">Vérifie ton prénom et ton nom, coche la case, puis signe dans le cadre avec le doigt ou la souris.</p>
+  <div class="grid2">
+    <label class="f">Prénom<input id="s-prenom" autocomplete="given-name"></label>
+    <label class="f">Nom<input id="s-nom" autocomplete="family-name"></label>
+  </div>
+  <label class="accept"><input type="checkbox" id="s-accept"><span>J'ai lu et compris l'ensemble du Contrat et de ses annexes, et je les accepte sans réserve.</span></label>
+  <div class="pad-wrap" id="pad-wrap">
+    <canvas id="pad"></canvas>
+    <div class="pad-base"></div>
+    <div class="pad-hint">Signe ici</div>
+    <button class="pad-clear" id="pad-clear" type="button">Effacer</button>
+  </div>
+  <button class="btn" id="s-go" disabled>Signer le contrat</button>
+  <div class="err-msg" id="s-err"></div>
+  <p class="small">En cliquant sur « Signer le contrat », ta signature, la date, l'heure et ton adresse IP sont enregistrées comme preuve de ton consentement, et une copie PDF du contrat signé t'est envoyée par e-mail.</p>
+</div>
+
+<div class="bar" id="bar"><span>Lis le contrat, la signature est en bas de page</span><button id="bar-go" type="button">Aller à la signature ↓</button></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const PONT = 'https://script.google.com/macros/s/AKfycbzSGY_CBZTwfVlm0ruHUCtIWH_vf9Pe7pFoBOnyjfEnTydPfyRSssUIIUh4rfE9GHW7VQ/exec';
+const $ = id => document.getElementById(id);
+const esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),2600); }
+const token = new URLSearchParams(location.search).get('t') || '';
+let CT = null;
+
+function erreur(msg){
+  const e = $('etat'); e.classList.add('err'); e.innerHTML = msg; e.hidden = false;
+}
+
+async function charger(){
+  if (!token) return erreur('Ce lien est incomplet. Ouvre le lien reçu par e-mail, ou écris-nous à <a href="mailto:selfty.academy@gmail.com">selfty.academy@gmail.com</a>.');
+  let j;
+  try {
+    const r = await fetch(PONT + '?what=contract&t=' + encodeURIComponent(token), {cache:'no-store'});
+    j = await r.json();
+  } catch(e){ return erreur('Impossible de charger le contrat pour le moment. Réessaie dans une minute, ou écris-nous à <a href="mailto:selfty.academy@gmail.com">selfty.academy@gmail.com</a>.'); }
+  if (!j.ok) return erreur('Ce lien n\'est plus valide. Écris-nous à <a href="mailto:selfty.academy@gmail.com">selfty.academy@gmail.com</a> et on t\'en renvoie un.');
+  CT = j;
+  $('etat').hidden = true;
+  const signe = j.statut === 'Signé';
+  $('hello').innerHTML = signe
+    ? `<h2>Ton contrat est signé, ${esc(j.prenom)} ✅</h2><p>Signé le ${esc(j.signedAt)}. Tu as reçu ta copie PDF par e-mail${j.pdf ? `, et tu peux <a href="${esc(j.pdf)}" target="_blank" rel="noopener">la retrouver ici</a>` : ''}.</p>`
+    : `<h2>Bonjour ${esc(j.prenom)}, voici ton contrat</h2><p>Prends le temps de le lire tranquillement. La signature se fait tout en bas de la page, en une minute.</p>
+       <div class="chips"><span class="chip">Programme Selfty Academy</span><span class="chip">${j.prix ? esc(eur(j.prix)) + ' TTC' : 'Prix selon l\'article 4'}</span><span class="chip">Paiement en ${j.np || 1} fois</span></div>`;
+  $('hello').hidden = false;
+  $('doc').innerHTML = '<style>' + j.css + '</style>' + j.html;
+  $('doc').hidden = false;
+  const slot = $('doc').querySelector('#ct-sig-slot');
+  if (signe){
+    slot.innerHTML = `<div class="fini"><h3>Contrat signé le ${esc(j.signedAt)}</h3><p>Merci ${esc(j.prenom)}, tout est en ordre. Anaïs revient vers toi très vite pour la suite.</p>${j.pdf ? `<a class="btn-pdf" href="${esc(j.pdf)}" target="_blank" rel="noopener">Ouvrir le PDF signé</a>` : ''}</div>`;
+    return;
+  }
+  // cases A / B cliquables
+  $('doc').querySelectorAll('.case').forEach(c => { c.classList.add('clic'); c.addEventListener('click', () => c.classList.toggle('on')); });
+  const s = $('signer'); slot.appendChild(s); s.hidden = false;
+  $('s-prenom').value = j.prenom || ''; $('s-nom').value = j.nom || '';
+  initPad();
+  $('bar').classList.add('on');
+  verif();
+}
+const eur = n => Math.round(n).toLocaleString('fr-FR') + ' €';
+
+/* ---------- signature au doigt ---------- */
+let ctx, strokes = [], cur = null, inked = false, dpr = 1;
+function initPad(){
+  const pad = $('pad'); ctx = pad.getContext('2d');
+  const size = () => {
+    const r = pad.getBoundingClientRect(); dpr = window.devicePixelRatio || 1;
+    pad.width = Math.round(r.width * dpr); pad.height = Math.round(r.height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    redraw();
+  };
+  const pos = e => { const r = pad.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  pad.addEventListener('pointerdown', e => { e.preventDefault(); pad.setPointerCapture(e.pointerId); cur = [pos(e)]; strokes.push(cur); inked = true; $('pad-wrap').classList.add('inked'); redraw(); verif(); });
+  pad.addEventListener('pointermove', e => { if (!cur) return; e.preventDefault(); cur.push(pos(e)); redraw(); });
+  const up = () => { cur = null; };
+  pad.addEventListener('pointerup', up); pad.addEventListener('pointercancel', up); pad.addEventListener('pointerleave', up);
+  $('pad-clear').addEventListener('click', () => { strokes = []; inked = false; $('pad-wrap').classList.remove('inked'); redraw(); verif(); });
+  window.addEventListener('resize', size);
+  size();
+}
+function redraw(){
+  const pad = $('pad');
+  ctx.clearRect(0, 0, pad.width, pad.height);
+  ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#3A2A2A';
+  strokes.forEach(st => {
+    if (st.length === 1){ ctx.beginPath(); ctx.arc(st[0][0], st[0][1], 1.2, 0, Math.PI*2); ctx.fillStyle = '#3A2A2A'; ctx.fill(); return; }
+    ctx.beginPath(); ctx.moveTo(st[0][0], st[0][1]);
+    for (let i = 1; i < st.length; i++) ctx.lineTo(st[i][0], st[i][1]);
+    ctx.stroke();
+  });
+}
+function sigPng(){
+  // rendu propre sur fond transparent, taille fixe (indépendante de l'écran)
+  const pad = $('pad'), r = pad.getBoundingClientRect();
+  const W = 900, H = Math.round(900 * r.height / r.width), k = W / r.width;
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  x.lineWidth = 2.4 * k; x.lineCap = 'round'; x.lineJoin = 'round'; x.strokeStyle = '#3A2A2A';
+  strokes.forEach(st => {
+    x.beginPath(); x.moveTo(st[0][0]*k, st[0][1]*k);
+    if (st.length === 1) x.lineTo(st[0][0]*k + 0.5, st[0][1]*k + 0.5);
+    for (let i = 1; i < st.length; i++) x.lineTo(st[i][0]*k, st[i][1]*k);
+    x.stroke();
+  });
+  return c.toDataURL('image/png');
+}
+
+/* ---------- validation + envoi ---------- */
+function verif(){
+  const ok = inked && $('s-accept').checked && $('s-prenom').value.trim() && $('s-nom').value.trim();
+  $('s-go').disabled = !ok;
+}
+['s-accept','s-prenom','s-nom'].forEach(id => { $(id).addEventListener('input', verif); $(id).addEventListener('change', verif); });
+$('bar-go').addEventListener('click', () => $('signer').scrollIntoView({behavior:'smooth', block:'start'}));
+window.addEventListener('scroll', () => {
+  const s = $('signer'); if (s.hidden) return;
+  const r = s.getBoundingClientRect();
+  $('bar').classList.toggle('on', r.top > window.innerHeight);
+}, {passive:true});
+
+async function ipPublique(){
+  try {
+    const r = await Promise.race([fetch('https://api.ipify.org?format=json').then(x => x.json()), new Promise(res => setTimeout(() => res(null), 3500))]);
+    return r && r.ip ? r.ip : '';
+  } catch(e){ return ''; }
+}
+$('s-go').addEventListener('click', async () => {
+  const b = $('s-go'); const err = $('s-err'); err.style.display = 'none';
+  const prenom = $('s-prenom').value.trim(), nom = $('s-nom').value.trim();
+  if (!inked || !$('s-accept').checked || !prenom || !nom) return;
+  b.disabled = true; b.textContent = 'Signature en cours…';
+  const caseA = !!$('doc').querySelector('.case[data-case="A"].on');
+  const caseB = !!$('doc').querySelector('.case[data-case="B"].on');
+  const ip = await ipPublique();
+  try {
+    const r = await fetch(PONT, { method:'POST', body: JSON.stringify({ what:'contract_sign', t: token, prenom, nom, caseA, caseB, accept:true,
+      sig: sigPng(), ua: navigator.userAgent, ip, tz: Intl.DateTimeFormat().resolvedOptions().timeZone || '' }) });
+    const j = await r.json();
+    if (!j.ok) throw new Error({token:'lien invalide', accept:'case à cocher manquante', signature:'signature manquante', nom:'prénom ou nom manquant'}[j.error] || j.error || 'refus');
+    const slot = $('doc').querySelector('#ct-sig-slot');
+    $('doc').querySelectorAll('.case').forEach(c => c.classList.remove('clic'));
+    $('signer').hidden = true; $('bar').classList.remove('on');
+    slot.innerHTML = `<div class="fini"><h3>C'est signé, ${esc(prenom)} 🌸</h3><p>Ton contrat a été signé le ${esc(j.signedAt)}. Tu reçois ta copie PDF par e-mail dans quelques minutes${j.pdf ? ', et tu peux déjà l\'ouvrir ici' : ''}.</p><p>Anaïs revient vers toi très vite pour la suite : virement et accès.</p>${j.pdf ? `<a class="btn-pdf" href="${esc(j.pdf)}" target="_blank" rel="noopener">Ouvrir le PDF signé</a>` : ''}</div>`;
+    $('hello').innerHTML = `<h2>Ton contrat est signé, ${esc(prenom)} ✅</h2><p>Signé le ${esc(j.signedAt)}. Copie PDF envoyée sur ${esc(CT.email)}.</p>`;
+    slot.scrollIntoView({behavior:'smooth', block:'center'});
+    toast('Contrat signé ✅');
+  } catch(e){
+    err.textContent = 'La signature n\'a pas pu être enregistrée (' + e.message + '). Réessaie, ou écris à selfty.academy@gmail.com.';
+    err.style.display = 'block';
+    b.disabled = false; b.textContent = 'Signer le contrat';
+  }
+});
+
+charger();
+</script>
+</body>
+</html>

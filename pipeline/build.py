@@ -266,6 +266,36 @@ for r in (clients_rows or []):
     })
 clientes.sort(key=lambda c: c["ts"], reverse=True)
 
+# ---- Contrats envoyés / signés (onglet « Contrats », écrit par le pont) ----
+def dstr(v):
+    return v.strftime("%d/%m/%Y %H:%M") if isinstance(v, datetime.datetime) else str(v or "").strip()
+
+contrats_rows = read_tab(ewb, "contrats")
+contrats = {}
+for r in (contrats_rows or []):
+    mail = str(r.get("E-mail") or "").strip().lower()
+    if not mail or mail in TEST_EMAILS:
+        continue
+    st = str(r.get("Statut") or "").strip()
+    rec = {
+        "token": str(r.get("Token") or "").strip(),
+        "mail": mail,
+        "prenom": str(r.get("Prénom") or "").strip(),
+        "nom": str(r.get("Nom") or "").strip(),
+        "prix": eur(r.get("Prix")),
+        "np": int(eur(r.get("Nb paiements")) or 1),
+        "statut": st,
+        "sent": dstr(r.get("Date envoi")),
+        "signedAt": dstr(r.get("Date signature")),
+        "pdf": str(r.get("PDF") or "").strip(),
+        "caseA": str(r.get("Case A") or "").strip() == "Oui",
+        "caseB": str(r.get("Case B") or "").strip() == "Oui",
+    }
+    prev = contrats.get(mail)
+    # un contrat signé prime ; sinon le plus récent (dernière ligne) l'emporte
+    if not prev or st == "Signé" or prev["statut"] != "Signé":
+        contrats[mail] = rec
+
 # lien automatique paiements -> suivi des appels (fiche école par e-mail)
 ecole_by_mail = {e["mail"]: e for e in ecole if e["mail"]}
 clients = OrderedDict()
@@ -481,6 +511,8 @@ data = {
         "trackOk": track_rows is not None,
         "clientsOk": clients_rows is not None,
         "clientes": clientes,
+        "contratsOk": contrats_rows is not None,
+        "contrats": list(contrats.values()),
     },
     "schol": {"ok": schol_ok, "url": "https://tally.so/r/Np1Gy0",
               "stats": schol_stats, "subs": schol_subs},

@@ -233,7 +233,7 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 
 <!-- ===================== TRACKING CLOSING ===================== -->
 <section class="panel" id="p-track">
-  <p class="intro">Dès qu'un call est passé, il arrive ici pour être rempli en 3 clics : show-up, résultat, qualif /10, plus la retranscription et ton commentaire. Tout s'écrit dans l'onglet « Suivi Calls » du Sheet École. Une vente crée automatiquement la fiche dans « Clientes », et « Call test 🧪 » fait disparaître le call de toutes les datas.</p>
+  <p class="intro">Dès qu'un call est passé, il arrive ici pour être rempli en 3 clics : show-up, résultat, qualif /10, plus la retranscription et ton commentaire. Tout s'écrit dans l'onglet « Suivi Calls » du Sheet École. Une vente crée automatiquement la fiche dans « Clientes » ; « Enregistrer + envoyer le contrat » envoie en plus le contrat à signer en ligne. « Call test 🧪 » fait disparaître le call de toutes les datas.</p>
   <div class="kpis kpis-mini" id="track-stats"></div>
   <div class="pills" id="f-track"></div>
   <div class="liste" id="l-track"></div>
@@ -241,7 +241,7 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 
 <!-- ===================== CLIENTES ===================== -->
 <section class="panel" id="p-clients">
-  <p class="intro">Le suivi des clientes signées. Une vente marquée dans « Calls effectués » crée la fiche toute seule ; tu peux aussi en ajouter une à la main. Statut et notes s'écrivent dans l'onglet « Clients » du Sheet, l'encaissé vient de l'onglet « Paiements » de la Compta.</p>
+  <p class="intro">Le suivi des clientes signées. Une vente marquée dans « Calls effectués » crée la fiche toute seule ; tu peux aussi en ajouter une à la main. Statut et notes s'écrivent dans l'onglet « Clients » du Sheet, l'encaissé vient de l'onglet « Paiements » de la Compta. « Envoyer le contrat » envoie par e-mail le contrat à signer en ligne (signature au doigt, PDF automatique pour elle et pour toi) ; le statut suit ici.</p>
   <div class="kpis kpis-mini" id="clients-kpis"></div>
   <div class="liste" id="l-cli"></div>
   <div class="carte">
@@ -348,6 +348,7 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 <script>
 const DATA = __DATA__;
 const PONT = { url: '__PONT_URL__', key: '__PONT_KEY__' };
+const CONTRAT_URL = 'https://selfty-academy.github.io/console/contrat/';
 const $ = id => document.getElementById(id);
 const esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -397,7 +398,7 @@ function renderTabs(){
   const schd = store.get('scholdone', {});
   const bSchol = DATA.schol.subs.filter(s => !schd[s.id]).length;
   const bTrack = trackList().filter(c => { const t = effTrk(c); return !t.s && !t.r; }).length;
-  const bCli = clientes().filter(c => !c.statut || c.statut === 'Signée').length;
+  const bCli = clientes().filter(c => { const k = effCtr(c); return !k || k.statut !== 'Signé'; }).length;
   const b = {webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, calls:bCalls, track:bTrack, clients:bCli, compta:null, data:null};
   $('tabs').innerHTML = TABS.map(t =>
     `<button class="tab${t.id===tabOn?' on':''}" data-t="${t.id}">${t.lab}${b[t.id]!==null?` <span class="bdg">${b[t.id]}</span>`:''}</button>`).join('');
@@ -811,7 +812,7 @@ function renderTrack(){
         <div class="tk-row"><span class="tk-lab">Qualifiée</span>${[1,2,3,4,5,6,7,8,9,10].map(n => `<button class="tk-pill tk-mini${t.q===n?' on':''}" data-group="qualif" data-val="${n}">${n}</button>`).join('')}<span style="font-size:12.5px;color:var(--muted)">/10</span></div>
         <textarea class="tk-retrans" placeholder="Retranscription du call : ce qui s'est dit… (ajoutée à la suite dans le Sheet)"></textarea>
         <textarea class="tk-comment" placeholder="Commentaire : ton avis, les objections, la prochaine étape…"></textarea>
-        <div class="tk-row"><button class="btn-add tk-save">Enregistrer dans le Sheet</button></div>
+        <div class="tk-row"><button class="btn-add tk-save">Enregistrer dans le Sheet</button><button class="btn-ghost tk-contrat"${vente?'':' style="display:none"'}>📄 Enregistrer + envoyer le contrat</button></div>
       </div>
     </div>`;
   }).join('') : `<div class="vide">Rien ici pour l'instant. Les calls arrivent dès qu'ils sont passés.</div>`;
@@ -833,6 +834,7 @@ document.addEventListener('click', e => {
     f.querySelectorAll('.tk-pill[data-group="res"]').forEach(b => b.classList.remove('on'));
   }
   f.querySelector('.tk-prix-row').style.display = f.dataset.res === 'Vente' ? '' : 'none';
+  f.querySelector('.tk-contrat').style.display = f.dataset.res === 'Vente' ? '' : 'none';
 });
 document.addEventListener('click', async e => {
   const b = e.target.closest('.tk-save'); if (!b) return;
@@ -875,6 +877,87 @@ document.addEventListener('click', async e => {
   }
 });
 
+/* ---------- contrat : envoi + signature en ligne ---------- */
+async function envoyerContrat(o){
+  const r = await fetch(PONT.url, { method:'POST', body: JSON.stringify(Object.assign({ what:'send_contract', key:PONT.key }, o)) });
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.error || 'refus du pont');
+  if (!j.already){ const C = store.get('ctrpend', {}); C[(o.email||'').toLowerCase()] = { statut:'Envoyé', sent:j.sent, token:j.token, np:o.np, when:Date.now() }; store.set('ctrpend', C); }
+  return j;
+}
+function effCtr(c){
+  const mail = (c.mail||'').toLowerCase();
+  const fromSheet = (DATA.suivi.contrats||[]).find(x => x.mail === mail) || null;
+  const C = store.get('ctrpend', {}); const p = mail && C[mail];
+  if (!p) return fromSheet;
+  const caught = fromSheet && (fromSheet.statut === 'Signé' || (fromSheet.statut === 'Envoyé' && fromSheet.token === p.token));
+  if (caught || Date.now()-(p.when||0) > 3*86400000){ delete C[mail]; store.set('ctrpend', C); return fromSheet; }
+  return Object.assign({}, fromSheet||{}, { statut:'Envoyé', sent:p.sent, token:p.token, np:p.np, pend:true });
+}
+function ctrChip(k){
+  if (!k) return ' <span class="chip src-webi">contrat pas envoyé</span>';
+  if (k.statut === 'Signé') return ` <span class="chip src-live">📄 contrat signé le ${esc((k.signedAt||'').split(' ')[0])}</span>`;
+  return ` <span class="chip src-webi">📄 contrat envoyé le ${esc((k.sent||'').split(' ')[0])} · en attente de signature</span>`;
+}
+function ctrActions(c, k){
+  if (!c.mail) return '';
+  const d = `data-mail="${esc(c.mail)}" data-nom="${esc(c.n)}" data-tel="${esc(c.tel||'')}" data-prix="${c.prix||c.total||0}" data-np="${(k&&k.np)||1}"`;
+  if (k && k.statut === 'Signé') return k.pdf ? ` <a class="btn-ghost" href="${esc(k.pdf)}" target="_blank" rel="noopener">📄 PDF signé</a>` : '';
+  if (k) return ` <button class="btn-ghost cl-lien" data-token="${esc(k.token||'')}">Copier le lien</button> <button class="btn-ghost cl-contrat" ${d}>Renvoyer le contrat</button>`;
+  return ` <button class="btn-ghost cl-contrat" ${d}>📄 Envoyer le contrat</button>`;
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('.tk-contrat'); if (!b) return;
+  const f = b.closest('.tk-form');
+  if (!f.dataset.mail) return toast("Pas d'e-mail sur ce call : ajoute la cliente à la main dans Clientes");
+  const prix = parseFloat(f.querySelector('.tk-prix').value.trim().replace(',','.')) || 0;
+  const np = parseInt(f.dataset.np) || 1;
+  if (!prix) return toast('Indique le prix avant d\'envoyer le contrat');
+  if (!confirm(`Enregistrer la vente et envoyer le contrat à ${f.dataset.nom} (${f.dataset.mail}) : ${EUR(prix)} en ${np} fois ?`)) return;
+  b.disabled = true; b.textContent = 'Envoi…';
+  const qualif = f.dataset.qualif || '', retrans = f.querySelector('.tk-retrans').value.trim(), comment = f.querySelector('.tk-comment').value.trim();
+  const showup = f.dataset.show || 'Présente';
+  try {
+    const r = await fetch(PONT.url, { method:'POST', body: JSON.stringify({ what:'call_track', key:PONT.key, id:f.dataset.id, nom:f.dataset.nom, email:f.dataset.mail,
+      tel:f.dataset.tel, utc:f.dataset.utc, showup, resultat:'Vente', prix, npaie:np, qualif, retrans, comment }) });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'refus du pont');
+    const F = store.get('trackfix', {});
+    F[f.dataset.id] = { s:showup, r:'Vente', prix, np, q:parseInt(qualif)||0, when:Date.now() };
+    store.set('trackfix', F);
+    const P = store.get('clipend', []);
+    if (!P.some(x => x.mail === f.dataset.mail)) P.push({n:f.dataset.nom, mail:f.dataset.mail, tel:f.dataset.tel, prix, when:Date.now()});
+    store.set('clipend', P);
+    const k = await envoyerContrat({ email:f.dataset.mail, nom:f.dataset.nom, tel:f.dataset.tel, prix, np, callId:f.dataset.id });
+    toast(k.already ? 'Vente enregistrée. Son contrat était déjà signé ✅' : 'Vente enregistrée 🎉 Contrat envoyé à ' + f.dataset.mail);
+    renderTrack(); renderClients(); renderTabs();
+  } catch(err){
+    toast('Échec : ' + err.message);
+    b.disabled = false; b.textContent = '📄 Enregistrer + envoyer le contrat';
+  }
+});
+document.addEventListener('click', async e => {
+  const b = e.target.closest('.cl-contrat'); if (!b) return;
+  let prix = parseFloat(b.dataset.prix) || 0;
+  if (!prix){ prix = parseFloat((prompt('Prix du contrat (€) ?', '') || '').replace(',','.')) || 0; if (!prix) return; }
+  const np = parseInt(prompt('Paiement en combien de fois ? (1, 2 ou 3)', b.dataset.np || '1') || '0') || 0;
+  if (!np) return;
+  b.disabled = true; b.textContent = 'Envoi…';
+  try {
+    const j = await envoyerContrat({ email:b.dataset.mail, nom:b.dataset.nom, tel:b.dataset.tel, prix, np });
+    toast(j.already ? 'Ce contrat est déjà signé ✅' : 'Contrat envoyé à ' + b.dataset.mail + ' 📄');
+    renderClients(); renderTabs();
+  } catch(err){
+    toast('Échec : ' + err.message);
+    b.disabled = false; b.textContent = '📄 Envoyer le contrat';
+  }
+});
+document.addEventListener('click', e => {
+  const b = e.target.closest('.cl-lien'); if (!b) return;
+  const url = CONTRAT_URL + '?t=' + b.dataset.token;
+  navigator.clipboard.writeText(url).then(() => toast('Lien de signature copié'), () => prompt('Lien de signature :', url));
+});
+
 /* ---------- clientes signées ---------- */
 function clientes(){
   const fromSheet = DATA.suivi.clientes;
@@ -904,14 +987,15 @@ function renderClients(){
     [EUR(Math.max(0, contracte-encaisse)), 'reste à encaisser'],
   ].map(([v,l]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div></div>`).join('');
   $('l-cli').innerHTML = tous.length ? tous.map(c => {
+    const k = effCtr(c);
     const total = Math.max(c.total||0, c.prix||0);
     const reste = Math.max(0, total - (c.recu||0));
     return `<div class="ligne">
       <div class="qui"><div class="nom">${esc(c.n)}</div><div class="sub">${esc(c.mail)}</div>
-        <div style="margin-top:4px"><span class="chip src-live">${esc(c.statut||'Signée')}</span>${c.offre?` <span class="chip src-form">${esc(c.offre)}</span>`:''}${c.pend?' <span class="chip src-webi">en attente de la prochaine MAJ</span>':''}</div></div>
+        <div style="margin-top:4px"><span class="chip src-live">${esc(c.statut||'Signée')}</span>${c.offre?` <span class="chip src-form">${esc(c.offre)}</span>`:''}${ctrChip(k)}${c.pend?' <span class="chip src-webi">en attente de la prochaine MAJ</span>':''}</div></div>
       <div class="meta"><b>${c.date ? 'Signée le '+esc(c.date) : ''}</b>${c.tel?'+'+c.tel:''}</div>
       <div class="meta"><b>${EUR(c.recu||0)} encaissé${total ? ' / '+EUR(total) : ''}</b>${reste ? `<span class="tag-warn">reste ${EUR(reste)}</span>` : '<span class="tag-ok">soldé</span>'}</div>
-      <div class="actions">${c.tel ? `<a class="btn-wa" href="https://wa.me/${c.tel}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}</div>
+      <div class="actions">${c.tel ? `<a class="btn-wa" href="https://wa.me/${c.tel}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}${ctrActions(c, k)}</div>
       ${c.notes ? `<details class="sujet"><summary>Voir les notes</summary><div class="rep">${esc(c.notes)}</div></details>` : ''}
       ${c.pend ? '' : `<details class="sujet"><summary>✏️ Modifier le suivi</summary>
         <div class="suivi-form cli-form" data-mail="${esc(c.mail)}" data-nom="${esc(c.n)}">
