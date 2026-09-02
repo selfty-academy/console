@@ -148,7 +148,7 @@ function initPad(){
     redraw();
   };
   const pos = e => { const r = pad.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
-  pad.addEventListener('pointerdown', e => { e.preventDefault(); pad.setPointerCapture(e.pointerId); cur = [pos(e)]; strokes.push(cur); inked = true; $('pad-wrap').classList.add('inked'); redraw(); verif(); });
+  pad.addEventListener('pointerdown', e => { e.preventDefault(); try { pad.setPointerCapture(e.pointerId); } catch(_) {} cur = [pos(e)]; strokes.push(cur); inked = true; $('pad-wrap').classList.add('inked'); redraw(); verif(); });
   pad.addEventListener('pointermove', e => { if (!cur) return; e.preventDefault(); cur.push(pos(e)); redraw(); });
   const up = () => { cur = null; };
   pad.addEventListener('pointerup', up); pad.addEventListener('pointercancel', up); pad.addEventListener('pointerleave', up);
