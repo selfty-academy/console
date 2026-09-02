@@ -563,8 +563,17 @@ if pont_file.exists():
 pont["url"] = os.environ.get("PONT_URL", pont["url"])
 pont["key"] = os.environ.get("PONT_KEY", pont["key"])
 
+# Bot Telegram « SELFTY » (notif vente envoyée depuis la page) : telegram.json local ou env (CI)
+tg = {"token": "", "chat_id": ""}
+tg_file = HERE / "telegram.json"
+if tg_file.exists():
+    tg.update(json.loads(tg_file.read_text()))
+tg["token"] = os.environ.get("TG_TOKEN", tg["token"])
+tg["chat_id"] = os.environ.get("TG_CHAT", tg["chat_id"])
+
 tpl = (HERE / "template.html").read_text()
 out = (tpl.replace("__DATA__", json.dumps(data, ensure_ascii=False)).replace("__LOGO__", logo)
-       .replace("__PONT_URL__", pont["url"]).replace("__PONT_KEY__", pont["key"]))
+       .replace("__PONT_URL__", pont["url"]).replace("__PONT_KEY__", pont["key"])
+       .replace("__TG_TOKEN__", tg["token"]).replace("__TG_CHAT__", tg["chat_id"]))
 (HERE / "console.html").write_text(out)
 print(f"console.html : {len(inscrits)} inscrits, {len(cands)} candidatures live, {len(ecole)} lignes école ({ecole_uniques} personnes), {len(visites)} visites")

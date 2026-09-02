@@ -355,6 +355,20 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 <script>
 const DATA = __DATA__;
 const PONT = { url: '__PONT_URL__', key: '__PONT_KEY__' };
+// bot Telegram « SELFTY » (@SelftyConsoleBot) : notif instantanée à Alex à chaque vente validée
+const TG = { token: '__TG_TOKEN__', chat: '__TG_CHAT__' };
+function tgNotify(text){
+  if (!TG.token || TG.token.startsWith('__') || !TG.chat) return;
+  fetch(`https://api.telegram.org/bot${TG.token}/sendMessage`, { method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ chat_id: TG.chat, text }) }).catch(()=>{});
+}
+function tgVente(f, prix, np){
+  if (f.dataset.res0 === 'Vente') return; // déjà enregistrée comme vente : pas de doublon
+  f.dataset.res0 = 'Vente';
+  const d = f.dataset.utc ? new Date(f.dataset.utc) : null;
+  const quand = d && !isNaN(d) ? d.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' }) : '';
+  tgNotify(`🎉 Selfty : nouvelle vente\n${f.dataset.nom} — ${EUR(prix)}${np>1 ? ' en '+np+'x' : ''}${quand ? '\nCall du '+quand : ''}`);
+}
 const CONTRAT_URL = 'https://selfty-academy.github.io/console/contrat/';
 // script « Contrats Selfty » exécuté par selfty.academy (mails + PDF Drive), même clé que le pont
 const PONT_CTR = 'https://script.google.com/macros/s/AKfycbwhr4s_j6vijp-aWj0qWBYIR-8qSYy-tFUoasujsrqCr1-jVIomeBfiUMtkfixxJVLd/exec';
@@ -811,7 +825,7 @@ function renderTrack(){
       <div class="actions">${c.tel ? `<a class="btn-wa" href="https://wa.me/${c.tel}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}</div>
       ${icQuest(c)}
       ${t.retrans || t.comment ? `<details class="sujet"><summary>Voir ce qui est déjà enregistré</summary>${t.retrans?`<div class="rep"><b>Retranscription</b>${esc(t.retrans)}</div>`:''}${t.comment?`<div class="rep"><b>Commentaire</b>${esc(t.comment)}</div>`:''}</details>` : ''}
-      <div class="tk-form" data-id="${esc(c.id)}" data-nom="${esc(c.n)}" data-mail="${esc(c.mail)}" data-tel="${esc(c.tel||'')}" data-utc="${esc(c.utc)}" data-show="${esc(t.s||'')}" data-res="${esc(t.r||'')}" data-np="${t.np||''}" data-qualif="${t.q||''}">
+      <div class="tk-form" data-id="${esc(c.id)}" data-nom="${esc(c.n)}" data-mail="${esc(c.mail)}" data-tel="${esc(c.tel||'')}" data-utc="${esc(c.utc)}" data-show="${esc(t.s||'')}" data-res="${esc(t.r||'')}" data-res0="${esc(t.r||'')}" data-np="${t.np||''}" data-qualif="${t.q||''}">
         <div class="tk-row"><span class="tk-lab">Show-up</span>
           ${SHOW_OPTS.filter(Boolean).map(o => `<button class="tk-pill${t.s===o?' on':''}" data-group="show" data-val="${esc(o)}">${esc(o)}</button>`).join('')}
           <button class="tk-pill${t.s==='Call test'?' on':''}" data-group="show" data-val="Call test">Call test 🧪</button></div>
@@ -889,6 +903,7 @@ document.addEventListener('click', async e => {
       if (!P.some(x => x.mail === f.dataset.mail))
         P.push({n:f.dataset.nom, mail:f.dataset.mail, tel:f.dataset.tel, prix: parseFloat(prixRaw)||0, when: Date.now()});
       store.set('clipend', P);
+      tgVente(f, parseFloat(prixRaw)||0, parseInt(np)||1);
       toast('Vente enregistrée 🎉 La fiche cliente est créée');
     } else {
       toast('Call validé ✅');
@@ -1047,6 +1062,7 @@ document.addEventListener('click', async e => {
     const P = store.get('clipend', []);
     if (!P.some(x => x.mail === f.dataset.mail)) P.push({n:f.dataset.nom, mail:f.dataset.mail, tel:f.dataset.tel, prix, when:Date.now()});
     store.set('clipend', P);
+    tgVente(f, prix, np);
     const k = await envoyerContrat({ email:f.dataset.mail, nom:f.dataset.nom, tel:f.dataset.tel, prix, np, callId:f.dataset.id });
     toast(k.already ? 'Vente enregistrée. Son contrat était déjà signé ✅' : 'Vente enregistrée 🎉 Contrat envoyé à ' + f.dataset.mail);
     renderTrack(); renderClients(); renderTabs();

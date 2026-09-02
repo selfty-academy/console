@@ -31,6 +31,8 @@ jobs:
           TALLY_API_KEY: ${{ secrets.TALLY_API_KEY }}
           SHOW_TEST: ${{ secrets.SHOW_TEST }}
           TEST_CALLS: ${{ secrets.TEST_CALLS }}
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          TG_CHAT: ${{ secrets.TG_CHAT }}
         run: |
           cd pipeline
           python build.py

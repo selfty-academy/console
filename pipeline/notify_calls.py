@@ -4,7 +4,7 @@
 Compare les ids de icalls.json (écrit par build.py à chaque refresh) à l'état
 commité state-icalls.json. L'état ne contient QUE des ids (aucune donnée perso :
 le repo est public). Premier passage sans état : on initialise sans notifier.
-Env : TG_TOKEN + TG_CHAT (mêmes valeurs que le bot Console I3).
+Env : TG_TOKEN + TG_CHAT (bot « SELFTY » @SelftyConsoleBot, chat Telegram d'Alex).
 """
 import datetime
 import json
