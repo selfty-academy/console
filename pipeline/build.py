@@ -6,7 +6,7 @@ Le xlsx = export du Sheet « Candidature Webi »
 (1mKA765MImL3103Foil5kYu1IR14Ea55nOIv4n7UbHCc), onglets Inscriptions,
 Visites, « Mail a contacter webi  ».
 """
-import sys, re, json, base64, datetime, io
+import sys, re, json, base64, datetime, io, os
 from collections import Counter, OrderedDict
 from pathlib import Path
 
@@ -16,6 +16,9 @@ HERE = Path(__file__).parent
 XLSX = Path(sys.argv[1]) if len(sys.argv) > 1 else HERE / "candidature-webi.xlsx"
 TEST_EMAILS = {"alexyoucompte99@gmail.com", "alexandre.majorel@tsm-education.fr",
                "anaisbrault86@gmail.com"}  # Anaïs teste son propre funnel
+# SHOW_TEST=1 (build local uniquement, jamais en CI) : garde les e-mails de test dans Clientes/Contrats
+# et ajoute les faux calls de test-calls.json (gitignoré) pour tester la console de bout en bout
+SHOW_TEST = os.environ.get("SHOW_TEST") == "1"
 
 def norm_phone(v):
     if v is None:
@@ -250,7 +253,7 @@ clientes = []
 for r in (clients_rows or []):
     mail = str(r.get("E-mail") or "").strip().lower()
     nom = str(r.get("Nom") or "").strip()
-    if (not mail and not nom) or mail in TEST_EMAILS:
+    if (not mail and not nom) or (mail in TEST_EMAILS and not SHOW_TEST):
         continue
     dt = r.get("Date signature")
     clientes.append({
@@ -274,7 +277,7 @@ contrats_rows = read_tab(ewb, "contrats")
 contrats = {}
 for r in (contrats_rows or []):
     mail = str(r.get("E-mail") or "").strip().lower()
-    if not mail or mail in TEST_EMAILS:
+    if not mail or (mail in TEST_EMAILS and not SHOW_TEST):
         continue
     st = str(r.get("Statut") or "").strip()
     rec = {
@@ -392,6 +395,9 @@ if ic_key:
         print(f"iClosed : {len(icalls)} calls")
     except Exception as ex:
         print("iClosed fetch KO (on garde la console sans) :", ex)
+if SHOW_TEST and (HERE / "test-calls.json").exists():
+    icalls += json.loads((HERE / "test-calls.json").read_text())
+    print("SHOW_TEST : faux calls ajoutés")
 # suivi closing du Sheet accroché à chaque call ; « Call test » = exclu de partout
 for c in icalls:
     c["trk"] = track.get(str(c["id"]))
