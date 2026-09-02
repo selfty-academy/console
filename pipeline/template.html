@@ -101,7 +101,8 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 .tk-pill[data-val="Call test"].on{background:var(--ink);border-color:var(--ink)}
 .tk-pill.tk-mini{padding:6px 11px;font-size:13.5px}
 .tk-form textarea{min-height:60px;background:var(--surface)}
-.tk-prix{border:1px solid var(--border);border-radius:10px;padding:8px 10px;font:15px "Jost",sans-serif;color:var(--ink);background:var(--surface);max-width:130px}
+.tk-prix{border:1px solid var(--border);border-radius:10px;padding:8px 10px;font:15px "Jost",sans-serif;color:var(--ink);background:var(--surface);max-width:110px}
+.tk-prixq.on{background:var(--ok);border-color:var(--ok)}
 .kpis-mini{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:0 0 16px}
 .kpis-mini .kpi{padding:12px 14px}
 .kpis-mini .kpi .val{font-size:26px}
@@ -810,7 +811,7 @@ function renderTrack(){
           <button class="tk-pill${t.s==='Call test'?' on':''}" data-group="show" data-val="Call test">Call test 🧪</button></div>
         <div class="tk-row"><span class="tk-lab">Résultat</span>
           ${RES_OPTS.filter(Boolean).map(o => `<button class="tk-pill${t.r===o?' on':''}" data-group="res" data-val="${esc(o)}">${o==='Vente'?'Vente 🎉':esc(o)}</button>`).join('')}</div>
-        <div class="tk-row tk-prix-row"${vente?'':' style="display:none"'}><span class="tk-lab">Prix (€)</span><input class="tk-prix" inputmode="numeric" value="${t.prix||''}"><span class="tk-lab" style="min-width:auto">payé en</span>${[1,2,3,4].map(n => `<button class="tk-pill tk-mini${t.np===n?' on':''}" data-group="np" data-val="${n}">${n}x</button>`).join('')}</div>
+        <div class="tk-row tk-prix-row"${vente?'':' style="display:none"'}><span class="tk-lab">Prix (€)</span>${[5000,6000].map(n => `<button class="tk-pill tk-mini tk-prixq${t.prix===n?' on':''}" data-prix="${n}">${EUR(n)}</button>`).join('')}<input class="tk-prix" inputmode="numeric" placeholder="autre" value="${t.prix||''}"><span class="tk-lab" style="min-width:auto">payé en</span>${[1,2,3,4].map(n => `<button class="tk-pill tk-mini${t.np===n?' on':''}" data-group="np" data-val="${n}">${n}x</button>`).join('')}</div>
         <div class="tk-row"><span class="tk-lab">Qualifiée</span>${[1,2,3,4,5,6,7,8,9,10].map(n => `<button class="tk-pill tk-mini${t.q===n?' on':''}" data-group="qualif" data-val="${n}">${n}</button>`).join('')}<span style="font-size:12.5px;color:var(--muted)">/10</span></div>
         <textarea class="tk-retrans" placeholder="Retranscription du call : ce qui s'est dit… (ajoutée à la suite dans le Sheet)"></textarea>
         <textarea class="tk-comment" placeholder="Commentaire : ton avis, les objections, la prochaine étape…"></textarea>
@@ -821,7 +822,7 @@ function renderTrack(){
 }
 $('f-track').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fTrack = p.dataset.f; renderTrack(); }});
 document.addEventListener('click', e => {
-  const p = e.target.closest('.tk-pill'); if (!p) return;
+  const p = e.target.closest('.tk-pill'); if (!p || p.classList.contains('tk-prixq')) return;
   const f = p.closest('.tk-form');
   const g = p.dataset.group, v = p.dataset.val;
   const nv = (f.dataset[g] || '') === v ? '' : v;   // re-clic = désélection
@@ -837,6 +838,19 @@ document.addEventListener('click', e => {
   }
   f.querySelector('.tk-prix-row').style.display = f.dataset.res === 'Vente' ? '' : 'none';
   f.querySelector('.tk-contrat').style.display = f.dataset.res === 'Vente' ? '' : 'none';
+});
+// prix rapide : clic = remplit le champ (re-clic = vide), la saisie libre reste possible
+document.addEventListener('click', e => {
+  const b = e.target.closest('.tk-prixq'); if (!b) return;
+  const f = b.closest('.tk-form'), inp = f.querySelector('.tk-prix');
+  const on = !b.classList.contains('on');
+  inp.value = on ? b.dataset.prix : '';
+  f.querySelectorAll('.tk-prixq').forEach(x => x.classList.toggle('on', on && x === b));
+});
+document.addEventListener('input', e => {
+  if (!e.target.classList || !e.target.classList.contains('tk-prix')) return;
+  const f = e.target.closest('.tk-form'), v = parseFloat(e.target.value.replace(',','.')) || 0;
+  f.querySelectorAll('.tk-prixq').forEach(x => x.classList.toggle('on', +x.dataset.prix === v));
 });
 document.addEventListener('click', async e => {
   const b = e.target.closest('.tk-save'); if (!b) return;
