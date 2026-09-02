@@ -395,9 +395,12 @@ if ic_key:
         print(f"iClosed : {len(icalls)} calls")
     except Exception as ex:
         print("iClosed fetch KO (on garde la console sans) :", ex)
-if SHOW_TEST and (HERE / "test-calls.json").exists():
-    icalls += json.loads((HERE / "test-calls.json").read_text())
-    print("SHOW_TEST : faux calls ajoutés")
+# faux calls de test : env TEST_CALLS (secret GitHub, pour le CI) ou fichier local test-calls.json
+if SHOW_TEST:
+    raw_tc = os.environ.get("TEST_CALLS", "") or ((HERE / "test-calls.json").read_text() if (HERE / "test-calls.json").exists() else "")
+    if raw_tc.strip():
+        icalls += json.loads(raw_tc)
+        print("SHOW_TEST : faux calls ajoutés")
 # suivi closing du Sheet accroché à chaque call ; « Call test » = exclu de partout
 for c in icalls:
     c["trk"] = track.get(str(c["id"]))

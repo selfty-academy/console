@@ -29,6 +29,8 @@ jobs:
           PONT_KEY: ${{ secrets.PONT_KEY }}
           ICLOSED_KEY: ${{ secrets.ICLOSED_KEY }}
           TALLY_API_KEY: ${{ secrets.TALLY_API_KEY }}
+          SHOW_TEST: ${{ secrets.SHOW_TEST }}
+          TEST_CALLS: ${{ secrets.TEST_CALLS }}
         run: |
           cd pipeline
           python build.py
