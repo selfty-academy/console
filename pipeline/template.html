@@ -104,6 +104,8 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 .tk-prix{border:1px solid var(--border);border-radius:10px;padding:8px 10px;font:15px "Jost",sans-serif;color:var(--ink);background:var(--surface);max-width:110px}
 .tk-prixq.on{background:var(--ok);border-color:var(--ok)}
 .tk-hint{font-size:12.5px;color:var(--muted)}
+.paie-row{grid-column:1/-1;display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:2px}
+.paie-pill.on{background:var(--ok);border-color:var(--ok)}
 .tk-contrat-row{border-top:1px dashed var(--border);padding-top:9px;margin-top:2px}
 .tk-contrat{border-color:var(--mauve);color:var(--mauve-deep);font-weight:500}
 .kpis-mini{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:0 0 16px}
@@ -245,7 +247,7 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 
 <!-- ===================== CLIENTES ===================== -->
 <section class="panel" id="p-clients">
-  <p class="intro">Le suivi des clientes signées. Une vente marquée dans « Calls effectués » crée la fiche toute seule ; tu peux aussi en ajouter une à la main. Statut et notes s'écrivent dans l'onglet « Clients » du Sheet, l'encaissé vient de l'onglet « Paiements » de la Compta. « Envoyer le contrat » envoie par e-mail le contrat à signer en ligne (signature au doigt, PDF automatique pour elle et pour toi) ; le statut suit ici.</p>
+  <p class="intro">Le suivi des clientes signées. Une vente marquée dans « Calls effectués » crée la fiche toute seule ; tu peux aussi en ajouter une à la main. Statut et notes s'écrivent dans l'onglet « Clients » du Sheet ; l'encaissé vient de l'onglet « Paiements » de la Compta : coche chaque versement reçu directement sur la fiche. « Envoyer le contrat » envoie par e-mail le contrat à signer en ligne (signature au doigt, PDF automatique pour elle et pour toi) ; le statut suit ici.</p>
   <div class="kpis kpis-mini" id="clients-kpis"></div>
   <div class="liste" id="l-cli"></div>
   <div class="carte">
@@ -936,6 +938,52 @@ function effCtr(c){
   if (caught || Date.now()-(p.when||0) > 3*86400000){ delete C[mail]; store.set('ctrpend', C); return fromSheet; }
   return Object.assign({}, fromSheet||{}, { statut:'Envoyé', sent:p.sent, token:p.token, np:p.np, pend:true });
 }
+/* versements : montants comme dans le contrat (1er versement ajusté), coche = ligne dans « Paiements » */
+function versements(prix, np){ np = Math.max(1, np|0); const base = Math.floor(prix/np), first = prix - base*(np-1); return Array.from({length:np}, (_,i) => i ? base : first); }
+function paiesDe(mail){
+  // versements déjà dans le Sheet (notes « Versement k/n ») + overlay local en attente de la prochaine MAJ
+  const set = {};
+  (DATA.compta.paiements||[]).forEach(p => { if (p.mail === mail){ const m = /Versement (\d+)\/(\d+)/.exec(p.note||''); if (m) set[+m[1]] = true; } });
+  const F = store.get('paiefix', {}); const f = F[mail] || {}; let changed = false;
+  Object.keys(f).forEach(k => {
+    const o = f[k];
+    if ((o.on && set[k]) || (!o.on && !set[k]) || Date.now()-(o.when||0) > 3*86400000){ delete f[k]; changed = true; }
+    else if (o.on) set[k] = true; else delete set[k];
+  });
+  if (changed){ F[mail] = f; store.set('paiefix', F); }
+  return set;
+}
+function effRecu(c, k){
+  // encaissé = Sheet + versements cochés localement pas encore dans le Sheet
+  const mail = (c.mail||'').toLowerCase(); if (!mail) return c.recu||0;
+  const prix = (k && k.prix) || c.prix || c.total || 0, np = (k && k.np) || 1, v = versements(prix, np);
+  const inSheet = {}; (DATA.compta.paiements||[]).forEach(p => { if (p.mail === mail){ const m = /Versement (\d+)\/(\d+)/.exec(p.note||''); if (m) inSheet[+m[1]] = p.montant; } });
+  let recu = c.recu||0; const f = (store.get('paiefix', {})[mail]) || {};
+  Object.keys(f).forEach(kk => { if (f[kk].on && !inSheet[kk]) recu += v[kk-1]||0; if (!f[kk].on && inSheet[kk]) recu -= inSheet[kk]; });
+  return recu;
+}
+function paieRow(c, k){
+  const mail = (c.mail||'').toLowerCase();
+  const prix = (k && k.prix) || c.prix || c.total || 0; if (!mail || !prix) return '';
+  const np = (k && k.np) || 1, v = versements(prix, np), on = paiesDe(mail);
+  return `<div class="paie-row" data-mail="${esc(mail)}" data-nom="${esc(c.n)}" data-total="${prix}" data-np="${np}">
+    <span class="tk-lab">Encaissé</span>${v.map((m,i) => `<button class="tk-pill tk-mini paie-pill${on[i+1]?' on':''}" data-k="${i+1}" data-montant="${m}">${np===1?'Payé':'Versement '+(i+1)} · ${EUR(m)}</button>`).join('')}
+    <span class="tk-hint">${np>1 ? 'clique chaque versement reçu' : 'clique quand le virement est reçu'}, ça s\'écrit dans « Paiements »</span></div>`;
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('.paie-pill'); if (!b) return;
+  const row = b.closest('.paie-row'); const on = !b.classList.contains('on');
+  const mail = row.dataset.mail, k = +b.dataset.k, n = +row.dataset.np, montant = +b.dataset.montant, total = +row.dataset.total;
+  b.disabled = true;
+  try {
+    const r = await fetch(PONT.url, { method:'POST', body: JSON.stringify({ what:'paiement_set', key:PONT.key, email:mail, nom:row.dataset.nom, k, n, montant, total, on }) });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'refus du pont');
+    const F = store.get('paiefix', {}); F[mail] = F[mail] || {}; F[mail][k] = { on, when: Date.now() }; store.set('paiefix', F);
+    toast(on ? `Versement ${k}/${n} enregistré : ${EUR(montant)} ✅` : `Versement ${k}/${n} retiré`);
+    renderClients(); renderTabs();
+  } catch(err){ toast('Échec : ' + err.message); b.disabled = false; }
+});
 function ctrChip(k){
   if (!k) return ' <span class="chip src-webi">contrat pas envoyé</span>';
   if (k.statut === 'Signé') return ` <span class="chip src-live">📄 contrat signé le ${esc((k.signedAt||'').split(' ')[0])}</span>`;
@@ -1032,7 +1080,7 @@ const CLI_STATUTS = ['Signée', 'Onboarding', 'En cours', 'Terminée', 'En pause
 function renderClients(){
   const tous = clientes().map(effCli);
   const contracte = tous.reduce((s,c) => s+Math.max(c.total||0, c.prix||0), 0);
-  const encaisse = tous.reduce((s,c) => s+(c.recu||0), 0);
+  const encaisse = tous.reduce((s,c) => s+effRecu(c, effCtr(c)), 0);
   $('clients-kpis').innerHTML = [
     [tous.length, 'cliente'+(tous.length>1?'s':'')+' signée'+(tous.length>1?'s':'')],
     [EUR(contracte), 'contracté'],
@@ -1041,14 +1089,16 @@ function renderClients(){
   ].map(([v,l]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div></div>`).join('');
   $('l-cli').innerHTML = tous.length ? tous.map(c => {
     const k = effCtr(c);
-    const total = Math.max(c.total||0, c.prix||0);
-    const reste = Math.max(0, total - (c.recu||0));
+    const total = Math.max(c.total||0, c.prix||0, (k && k.prix) || 0);
+    const recu = effRecu(c, k);
+    const reste = Math.max(0, total - recu);
     return `<div class="ligne">
       <div class="qui"><div class="nom">${esc(c.n)}</div><div class="sub">${esc(c.mail)}</div>
         <div style="margin-top:4px"><span class="chip src-live">${esc(c.statut||'Signée')}</span>${c.offre?` <span class="chip src-form">${esc(c.offre)}</span>`:''}${ctrChip(k)}${c.pend?' <span class="chip src-webi">en attente de la prochaine MAJ</span>':''}</div></div>
       <div class="meta"><b>${c.date ? 'Signée le '+esc(c.date) : ''}</b>${c.tel?'+'+c.tel:''}</div>
-      <div class="meta"><b>${EUR(c.recu||0)} encaissé${total ? ' / '+EUR(total) : ''}</b>${reste ? `<span class="tag-warn">reste ${EUR(reste)}</span>` : '<span class="tag-ok">soldé</span>'}</div>
+      <div class="meta"><b>${EUR(recu)} encaissé${total ? ' / '+EUR(total) : ''}</b>${reste ? `<span class="tag-warn">reste ${EUR(reste)}</span>` : '<span class="tag-ok">soldé</span>'}</div>
       <div class="actions">${c.tel ? `<a class="btn-wa" href="https://wa.me/${c.tel}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}${ctrActions(c, k)}</div>
+      ${paieRow(c, k)}
       ${c.notes ? `<details class="sujet"><summary>Voir les notes</summary><div class="rep">${esc(c.notes)}</div></details>` : ''}
       ${c.pend ? '' : `<details class="sujet"><summary>✏️ Modifier le suivi</summary>
         <div class="suivi-form cli-form" data-mail="${esc(c.mail)}" data-nom="${esc(c.n)}">
