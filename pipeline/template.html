@@ -902,11 +902,34 @@ async function envoyerContrat(o){
   const j = await r.json();
   if (!j.ok) throw new Error(j.error || 'refus du pont');
   if (!j.already){ const C = store.get('ctrpend', {}); C[(o.email||'').toLowerCase()] = { statut:'Envoyé', sent:j.sent, token:j.token, np:o.np, when:Date.now() }; store.set('ctrpend', C); }
+  setTimeout(refreshContrats, 1500);
   return j;
+}
+/* statut live : à l'ouverture (et au retour sur l'onglet), la console demande au script Contrats
+   le statut réel des contrats des clientes -> chip « signé » + PDF sans attendre la MAJ auto */
+async function refreshContrats(){
+  const emails = [...new Set(clientes().map(c => (c.mail||'').toLowerCase()).filter(Boolean))];
+  if (!emails.length) return;
+  try {
+    const r = await fetch(PONT_CTR, { method:'POST', body: JSON.stringify({ what:'contract_status', key:PONT.key, emails }) });
+    const j = await r.json();
+    if (!j.ok) return;
+    const live = store.get('ctrlive', {});
+    const C = store.get('ctrpend', {});
+    Object.entries(j.status).forEach(([mail, st]) => {
+      live[mail] = Object.assign({ at: Date.now() }, st);
+      if (!st.found) delete C[mail];                        // contrat supprimé côté Sheet (test nettoyé) : on oublie l'attente locale
+    });
+    store.set('ctrlive', live); store.set('ctrpend', C);
+    renderClients(); renderTabs();
+  } catch(e){ /* hors ligne : on garde ce qu'on a */ }
 }
 function effCtr(c){
   const mail = (c.mail||'').toLowerCase();
-  const fromSheet = (DATA.suivi.contrats||[]).find(x => x.mail === mail) || null;
+  const L = mail && store.get('ctrlive', {})[mail];
+  const inSheet = (DATA.suivi.contrats||[]).find(x => x.mail === mail) || null;
+  // le statut live (script) prime sur les datas du build ; found:false = plus de contrat pour ce mail
+  const fromSheet = L ? (L.found ? { mail, token:L.token, prix:L.prix, np:L.np, statut:L.statut, sent:L.sent, signedAt:L.signedAt, pdf:L.pdf, caseA:L.caseA, caseB:L.caseB } : null) : inSheet;
   const C = store.get('ctrpend', {}); const p = mail && C[mail];
   if (!p) return fromSheet;
   const caught = fromSheet && (fromSheet.statut === 'Signé' || (fromSheet.statut === 'Envoyé' && fromSheet.token === p.token));
@@ -991,7 +1014,9 @@ function clientes(){
   const fromSheet = DATA.suivi.clientes;
   const mails = new Set(fromSheet.map(c => c.mail));
   const P = store.get('clipend', []);
-  const keep = P.filter(p => !mails.has(p.mail) && Date.now()-(p.when||0) < 3*86400000);
+  const L = store.get('ctrlive', {});
+  // fiche en attente : purgée quand le Sheet l'a (prochaine MAJ), après 3 jours, ou si le script dit qu'elle n'existe plus (test nettoyé)
+  const keep = P.filter(p => !mails.has(p.mail) && Date.now()-(p.when||0) < 3*86400000 && !(L[p.mail] && L[p.mail].client === false));
   if (keep.length !== P.length) store.set('clipend', keep);
   return fromSheet.concat(keep.map(p => ({n:p.n, mail:p.mail, tel:p.tel, date:'', ts:'', offre:'',
     prix:p.prix||0, statut:'Signée', notes:'', recu:0, total:p.prix||0, pend:true})));
@@ -1253,6 +1278,8 @@ $('s-reset').addEventListener('click', () => {
 });
 
 renderTabs(); renderWebi(); renderCand(); renderEcole(); renderSchol(); renderAgenda(); renderTrack(); renderClients(); renderCompta(); renderData();
+refreshContrats();
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshContrats(); });
 
 /* ---------- MAJ : bouton + auto-reload ETag ---------- */
 /* La page vit sur GitHub Pages ; un workflow (cron ~30 min en journée + Run workflow)
