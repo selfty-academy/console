@@ -235,7 +235,7 @@ track_rows = read_tab(ewb, "suivi calls")
 track = {}
 for r in (track_rows or []):
     cid = str(r.get("Call ID") or "").strip()
-    if not cid or cid.upper().startswith("TEST"):
+    if not cid or (cid.upper().startswith("TEST") and not SHOW_TEST):
         continue
     track[cid] = {
         "s": str(r.get("Show-up") or "").strip(),
