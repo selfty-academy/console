@@ -105,6 +105,7 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 .tk-prixq.on{background:var(--ok);border-color:var(--ok)}
 .tk-hint{font-size:12.5px;color:var(--muted)}
 .paie-row{grid-column:1/-1;display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:2px}
+.tk-form .paie-row{margin-top:0}
 .paie-pill.on{background:var(--ok);border-color:var(--ok)}
 .tk-contrat-row{border-top:1px dashed var(--border);padding-top:9px;margin-top:2px}
 .tk-contrat{border-color:var(--mauve);color:var(--mauve-deep);font-weight:500}
@@ -804,7 +805,7 @@ function renderTrack(){
     const vente = t.r === 'Vente';
     return `<div class="ligne">
       <div class="qui"><div class="nom">${esc(c.n)}</div><div class="sub">${esc(c.mail)}</div>
-        <div style="margin-top:4px"><span class="chip src-form">${esc(c.event||'iClosed')}</span>${t.r?` <span class="chip ${vente?'src-live':'src-webi'}">${esc(t.r)}${vente&&t.prix?' · '+EUR(t.prix):''}${vente&&t.np?' · '+t.np+'x':''}</span>`:''}${t.q?` <span class="chip src-webi">qualif ${t.q}/10</span>`:''}</div></div>
+        <div style="margin-top:4px"><span class="chip src-form">${esc(c.event||'iClosed')}</span>${t.r?` <span class="chip ${vente?'src-live':'src-webi'}">${esc(t.r)}${vente&&t.prix?' · '+EUR(t.prix):''}${vente&&t.np?' · '+t.np+'x':''}</span>`:''}${vente&&c.mail&&Object.keys(paiesDe(c.mail.toLowerCase())).length?` <span class="chip src-live" style="background:#E3EFE7;color:#4C7A5E">💶 virement reçu ${Object.keys(paiesDe(c.mail.toLowerCase())).length}/${t.np||1}</span>`:''}${t.q?` <span class="chip src-webi">qualif ${t.q}/10</span>`:''}</div></div>
       <div class="meta"><b>${q.txt}</b>${c.tel?'+'+c.tel:''}</div>
       <div class="meta">${t.s ? (t.s==='Présente' ? '<span class="tag-ok">Présente</span>' : '<span class="tag-warn">'+esc(t.s)+'</span>') : '<span class="tag-warn">À remplir</span>'}</div>
       <div class="actions">${c.tel ? `<a class="btn-wa" href="https://wa.me/${c.tel}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}</div>
@@ -817,6 +818,7 @@ function renderTrack(){
         <div class="tk-row"><span class="tk-lab">Résultat</span>
           ${RES_OPTS.filter(Boolean).map(o => `<button class="tk-pill${t.r===o?' on':''}" data-group="res" data-val="${esc(o)}">${o==='Vente'?'Vente 🎉':esc(o)}</button>`).join('')}</div>
         <div class="tk-row tk-prix-row"${vente?'':' style="display:none"'}><span class="tk-lab">Prix (€)</span>${[5000,6000].map(n => `<button class="tk-pill tk-mini tk-prixq${t.prix===n?' on':''}" data-prix="${n}">${EUR(n)}</button>`).join('')}<input class="tk-prix" inputmode="numeric" placeholder="autre" value="${t.prix||''}"><span class="tk-lab" style="min-width:auto">payé en</span>${[1,2,3,4].map(n => `<button class="tk-pill tk-mini${t.np===n?' on':''}" data-group="np" data-val="${n}">${n}x</button>`).join('')}</div>
+        ${vente && t.prix && c.mail ? paieRow({n:c.n, mail:c.mail}, {prix:t.prix, np:t.np||1}, 'Virement reçu') : ''}
         <div class="tk-row"><span class="tk-lab">Qualifiée</span>${[1,2,3,4,5,6,7,8,9,10].map(n => `<button class="tk-pill tk-mini${t.q===n?' on':''}" data-group="qualif" data-val="${n}">${n}</button>`).join('')}<span style="font-size:12.5px;color:var(--muted)">/10</span></div>
         <textarea class="tk-retrans" placeholder="Retranscription du call : ce qui s'est dit… (ajoutée à la suite dans le Sheet)"></textarea>
         <textarea class="tk-comment" placeholder="Commentaire : ton avis, les objections, la prochaine étape…"></textarea>
@@ -962,12 +964,12 @@ function effRecu(c, k){
   Object.keys(f).forEach(kk => { if (f[kk].on && !inSheet[kk]) recu += v[kk-1]||0; if (!f[kk].on && inSheet[kk]) recu -= inSheet[kk]; });
   return recu;
 }
-function paieRow(c, k){
+function paieRow(c, k, label){
   const mail = (c.mail||'').toLowerCase();
   const prix = (k && k.prix) || c.prix || c.total || 0; if (!mail || !prix) return '';
   const np = (k && k.np) || 1, v = versements(prix, np), on = paiesDe(mail);
   return `<div class="paie-row" data-mail="${esc(mail)}" data-nom="${esc(c.n)}" data-total="${prix}" data-np="${np}">
-    <span class="tk-lab">Encaissé</span>${v.map((m,i) => `<button class="tk-pill tk-mini paie-pill${on[i+1]?' on':''}" data-k="${i+1}" data-montant="${m}">${np===1?'Payé':'Versement '+(i+1)} · ${EUR(m)}</button>`).join('')}
+    <span class="tk-lab">${label || 'Encaissé'}</span>${v.map((m,i) => `<button class="tk-pill tk-mini paie-pill${on[i+1]?' on':''}" data-k="${i+1}" data-montant="${m}">${np===1?'Payé':'Versement '+(i+1)} · ${EUR(m)}</button>`).join('')}
     <span class="tk-hint">${np>1 ? 'clique chaque versement reçu' : 'clique quand le virement est reçu'}, ça s\'écrit dans « Paiements »</span></div>`;
 }
 document.addEventListener('click', async e => {
@@ -981,7 +983,7 @@ document.addEventListener('click', async e => {
     if (!j.ok) throw new Error(j.error || 'refus du pont');
     const F = store.get('paiefix', {}); F[mail] = F[mail] || {}; F[mail][k] = { on, when: Date.now() }; store.set('paiefix', F);
     toast(on ? `Versement ${k}/${n} enregistré : ${EUR(montant)} ✅` : `Versement ${k}/${n} retiré`);
-    renderClients(); renderTabs();
+    renderClients(); renderTrack(); renderTabs();
   } catch(err){ toast('Échec : ' + err.message); b.disabled = false; }
 });
 function ctrChip(k){
