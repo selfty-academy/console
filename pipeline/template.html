@@ -915,6 +915,7 @@ document.addEventListener('click', async e => {
   const prix = parseFloat(f.querySelector('.tk-prix').value.trim().replace(',','.')) || 0;
   const np = parseInt(f.dataset.np) || 1;
   if (!prix) return toast('Indique le prix avant d\'envoyer le contrat');
+  if (np > 3) return toast('Le contrat prévoit 3 fois maximum (article 5) : choisis 1x, 2x ou 3x');
   if (!confirm(`Enregistrer la vente et envoyer le contrat à ${f.dataset.nom} (${f.dataset.mail}) : ${EUR(prix)} en ${np} fois ?`)) return;
   b.disabled = true; b.textContent = 'Envoi…';
   const qualif = f.dataset.qualif || '', retrans = f.querySelector('.tk-retrans').value.trim(), comment = f.querySelector('.tk-comment').value.trim();
@@ -944,6 +945,7 @@ document.addEventListener('click', async e => {
   if (!prix){ prix = parseFloat((prompt('Prix du contrat (€) ?', '') || '').replace(',','.')) || 0; if (!prix) return; }
   const np = parseInt(prompt('Paiement en combien de fois ? (1, 2 ou 3)', b.dataset.np || '1') || '0') || 0;
   if (!np) return;
+  if (np > 3) return toast('Le contrat prévoit 3 fois maximum (article 5)');
   b.disabled = true; b.textContent = 'Envoi…';
   try {
     const j = await envoyerContrat({ email:b.dataset.mail, nom:b.dataset.nom, tel:b.dataset.tel, prix, np });
