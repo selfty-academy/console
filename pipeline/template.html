@@ -830,7 +830,7 @@ function renderTrack(){
 }
 $('f-track').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fTrack = p.dataset.f; renderTrack(); }});
 document.addEventListener('click', e => {
-  const p = e.target.closest('.tk-pill'); if (!p || p.classList.contains('tk-prixq')) return;
+  const p = e.target.closest('.tk-pill'); if (!p || p.classList.contains('tk-prixq') || p.classList.contains('paie-pill')) return;
   const f = p.closest('.tk-form');
   const g = p.dataset.group, v = p.dataset.val;
   const nv = (f.dataset[g] || '') === v ? '' : v;   // re-clic = désélection
