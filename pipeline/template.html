@@ -384,7 +384,7 @@ const WA_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10
 
 /* ---------- onglets ---------- */
 const TABS = [
-  {id:'track', lab:'Calls effectués'},
+  {id:'track', lab:'Calls effectués à remplir'},
   {id:'calls', lab:'Agenda calls'},
   {id:'clients', lab:'Clientes'},
   {id:'webi',  lab:'Relances webi'},
@@ -970,7 +970,8 @@ function paieRow(c, k, label){
   const np = (k && k.np) || 1, v = versements(prix, np), on = paiesDe(mail);
   return `<div class="paie-row" data-mail="${esc(mail)}" data-nom="${esc(c.n)}" data-total="${prix}" data-np="${np}">
     <span class="tk-lab">${label || 'Encaissé'}</span>${v.map((m,i) => `<button class="tk-pill tk-mini paie-pill${on[i+1]?' on':''}" data-k="${i+1}" data-montant="${m}">${np===1?'Payé':'Versement '+(i+1)} · ${EUR(m)}</button>`).join('')}
-    <span class="tk-hint">${np>1 ? 'clique chaque versement reçu' : 'clique quand le virement est reçu'}, ça s\'écrit dans « Paiements »</span></div>`;
+    <span class="tk-hint">${np>1 ? 'clique chaque versement reçu' : 'clique quand le virement est reçu'} : paiement dans « Paiements » + facture envoyée</span>
+    ${facturesDe(mail).map(f => `<a class="chip src-live" style="text-decoration:none" href="${esc(f.pdf||'#')}" target="_blank" rel="noopener" title="versement ${esc(f.versement)}">🧾 ${esc(f.numero)} · ${EUR(f.ttc||0)}</a>`).join('')}</div>`;
 }
 document.addEventListener('click', async e => {
   const b = e.target.closest('.paie-pill'); if (!b) return;
@@ -982,10 +983,28 @@ document.addEventListener('click', async e => {
     const j = await r.json();
     if (!j.ok) throw new Error(j.error || 'refus du pont');
     const F = store.get('paiefix', {}); F[mail] = F[mail] || {}; F[mail][k] = { on, when: Date.now() }; store.set('paiefix', F);
-    toast(on ? `Versement ${k}/${n} enregistré : ${EUR(montant)} ✅` : `Versement ${k}/${n} retiré`);
+    toast(on ? `Versement ${k}/${n} enregistré : ${EUR(montant)} ✅ Facture en cours…` : `Versement ${k}/${n} retiré (la facture émise reste, à annuler par un avoir si besoin)`);
     renderClients(); renderTrack(); renderTabs();
+    if (on){
+      // facture auto du versement (script Contrats : PDF, Drive, mail cliente + école)
+      const rf = await fetch(PONT_CTR, { method:'POST', body: JSON.stringify({ what:'facture', key:PONT.key, email:mail, nom:row.dataset.nom, k, n, montant, total }) });
+      const jf = await rf.json();
+      if (!jf.ok) throw new Error('facture : ' + (jf.error || 'refus'));
+      const X = store.get('factfix', {}); X[mail] = (X[mail] || []).filter(x => x.versement !== k+'/'+n);
+      X[mail].push({ numero: jf.numero, versement: k+'/'+n, ttc: jf.ttc, pdf: jf.pdf, date: new Date().toLocaleDateString('fr-FR'), when: Date.now() });
+      store.set('factfix', X);
+      toast(jf.deja ? `Facture ${jf.numero} déjà émise pour ce versement` : `Facture ${jf.numero} envoyée à ${mail} 🧾` + (jf.noAddress ? ' (adresse manquante sur la facture)' : ''));
+      renderClients(); renderTrack();
+      setTimeout(refreshContrats, 1500);
+    }
   } catch(err){ toast('Échec : ' + err.message); b.disabled = false; }
 });
+function facturesDe(mail){
+  const L = store.get('ctrlive', {})[mail]; const live = (L && L.factures) || [];
+  const X = store.get('factfix', {}); const loc = (X[mail] || []).filter(f => !live.some(l => l.numero === f.numero) && Date.now()-(f.when||0) < 3*86400000);
+  if (X[mail] && loc.length !== X[mail].length){ X[mail] = loc; store.set('factfix', X); }
+  return live.concat(loc);
+}
 function ctrChip(k){
   if (!k) return ' <span class="chip src-webi">contrat pas envoyé</span>';
   if (k.statut === 'Signé') return ` <span class="chip src-live">📄 contrat signé le ${esc((k.signedAt||'').split(' ')[0])}</span>`;

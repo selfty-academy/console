@@ -72,10 +72,14 @@ input:focus,button:focus-visible{outline:2px solid var(--mauve);outline-offset:1
 <!-- bloc de signature : déplacé dans le contrat (#ct-sig-slot) une fois chargé -->
 <div class="signer" id="signer" hidden>
   <h3>Signer le contrat</h3>
-  <p class="aide">Vérifie ton prénom et ton nom, coche la case, puis signe dans le cadre avec le doigt ou la souris.</p>
+  <p class="aide">Vérifie ton prénom et ton nom, indique ton adresse postale (elle figurera sur tes factures), coche la case, puis signe dans le cadre avec le doigt ou la souris.</p>
   <div class="grid2">
     <label class="f">Prénom<input id="s-prenom" autocomplete="given-name"></label>
     <label class="f">Nom<input id="s-nom" autocomplete="family-name"></label>
+  </div>
+  <div class="grid2">
+    <label class="f">Adresse postale (pour tes factures)<input id="s-adresse" autocomplete="street-address" placeholder="12 rue des Lilas"></label>
+    <label class="f">Code postal et ville<input id="s-cpville" autocomplete="postal-code" placeholder="35000 Rennes"></label>
   </div>
   <label class="accept"><input type="checkbox" id="s-accept"><span>J'ai lu et compris l'ensemble du Contrat et de ses annexes, et je les accepte sans réserve.</span></label>
   <div class="pad-wrap" id="pad-wrap">
@@ -185,10 +189,10 @@ function sigPng(){
 
 /* ---------- validation + envoi ---------- */
 function verif(){
-  const ok = inked && $('s-accept').checked && $('s-prenom').value.trim() && $('s-nom').value.trim();
+  const ok = inked && $('s-accept').checked && $('s-prenom').value.trim() && $('s-nom').value.trim() && $('s-adresse').value.trim() && $('s-cpville').value.trim();
   $('s-go').disabled = !ok;
 }
-['s-accept','s-prenom','s-nom'].forEach(id => { $(id).addEventListener('input', verif); $(id).addEventListener('change', verif); });
+['s-accept','s-prenom','s-nom','s-adresse','s-cpville'].forEach(id => { $(id).addEventListener('input', verif); $(id).addEventListener('change', verif); });
 $('bar-go').addEventListener('click', () => $('signer').scrollIntoView({behavior:'smooth', block:'start'}));
 window.addEventListener('scroll', () => {
   const s = $('signer'); if (s.hidden) return;
@@ -205,16 +209,17 @@ async function ipPublique(){
 $('s-go').addEventListener('click', async () => {
   const b = $('s-go'); const err = $('s-err'); err.style.display = 'none';
   const prenom = $('s-prenom').value.trim(), nom = $('s-nom').value.trim();
-  if (!inked || !$('s-accept').checked || !prenom || !nom) return;
+  const adresse = $('s-adresse').value.trim(), cpville = $('s-cpville').value.trim();
+  if (!inked || !$('s-accept').checked || !prenom || !nom || !adresse || !cpville) return;
   b.disabled = true; b.textContent = 'Signature en cours…';
   const caseA = !!$('doc').querySelector('.case[data-case="A"].on');
   const caseB = !!$('doc').querySelector('.case[data-case="B"].on');
   const ip = await ipPublique();
   try {
-    const r = await fetch(PONT, { method:'POST', body: JSON.stringify({ what:'contract_sign', t: token, prenom, nom, caseA, caseB, accept:true,
+    const r = await fetch(PONT, { method:'POST', body: JSON.stringify({ what:'contract_sign', t: token, prenom, nom, adresse, cpville, caseA, caseB, accept:true,
       sig: sigPng(), ua: navigator.userAgent, ip, tz: Intl.DateTimeFormat().resolvedOptions().timeZone || '' }) });
     const j = await r.json();
-    if (!j.ok) throw new Error({token:'lien invalide', accept:'case à cocher manquante', signature:'signature manquante', nom:'prénom ou nom manquant'}[j.error] || j.error || 'refus');
+    if (!j.ok) throw new Error({token:'lien invalide', accept:'case à cocher manquante', signature:'signature manquante', nom:'prénom ou nom manquant', adresse:'adresse postale manquante'}[j.error] || j.error || 'refus');
     const slot = $('doc').querySelector('#ct-sig-slot');
     $('doc').querySelectorAll('.case').forEach(c => c.classList.remove('clic'));
     $('signer').hidden = true; $('bar').classList.remove('on');
