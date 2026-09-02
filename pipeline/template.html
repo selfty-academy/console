@@ -103,6 +103,9 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 .tk-form textarea{min-height:60px;background:var(--surface)}
 .tk-prix{border:1px solid var(--border);border-radius:10px;padding:8px 10px;font:15px "Jost",sans-serif;color:var(--ink);background:var(--surface);max-width:110px}
 .tk-prixq.on{background:var(--ok);border-color:var(--ok)}
+.tk-hint{font-size:12.5px;color:var(--muted)}
+.tk-contrat-row{border-top:1px dashed var(--border);padding-top:9px;margin-top:2px}
+.tk-contrat{border-color:var(--mauve);color:var(--mauve-deep);font-weight:500}
 .kpis-mini{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:0 0 16px}
 .kpis-mini .kpi{padding:12px 14px}
 .kpis-mini .kpi .val{font-size:26px}
@@ -234,7 +237,7 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 
 <!-- ===================== TRACKING CLOSING ===================== -->
 <section class="panel" id="p-track">
-  <p class="intro">Dès qu'un call est passé, il arrive ici pour être rempli en 3 clics : show-up, résultat, qualif /10, plus la retranscription et ton commentaire. Tout s'écrit dans l'onglet « Suivi Calls » du Sheet École. Une vente crée automatiquement la fiche dans « Clientes » ; « Enregistrer + envoyer le contrat » envoie en plus le contrat à signer en ligne. « Call test 🧪 » fait disparaître le call de toutes les datas.</p>
+  <p class="intro">Dès qu'un call est passé, il arrive ici pour être rempli en 3 clics : show-up, résultat, qualif /10, plus la retranscription et ton commentaire, puis « Valider ». Tout s'écrit dans l'onglet « Suivi Calls » du Sheet École. Si c'est une vente : « 📄 Envoyer le contrat » enregistre la vente, crée la fiche dans « Clientes » et envoie le contrat à signer en ligne. « Call test 🧪 » fait disparaître le call de toutes les datas.</p>
   <div class="kpis kpis-mini" id="track-stats"></div>
   <div class="pills" id="f-track"></div>
   <div class="liste" id="l-track"></div>
@@ -815,7 +818,8 @@ function renderTrack(){
         <div class="tk-row"><span class="tk-lab">Qualifiée</span>${[1,2,3,4,5,6,7,8,9,10].map(n => `<button class="tk-pill tk-mini${t.q===n?' on':''}" data-group="qualif" data-val="${n}">${n}</button>`).join('')}<span style="font-size:12.5px;color:var(--muted)">/10</span></div>
         <textarea class="tk-retrans" placeholder="Retranscription du call : ce qui s'est dit… (ajoutée à la suite dans le Sheet)"></textarea>
         <textarea class="tk-comment" placeholder="Commentaire : ton avis, les objections, la prochaine étape…"></textarea>
-        <div class="tk-row"><button class="btn-add tk-save">Enregistrer dans le Sheet</button><button class="btn-ghost tk-contrat"${vente?'':' style="display:none"'}>📄 Enregistrer + envoyer le contrat</button></div>
+        <div class="tk-row tk-contrat-row"><button class="btn-ghost tk-contrat">📄 Envoyer le contrat</button><span class="tk-hint">Si c'est une vente : enregistre la vente et envoie le contrat à signer par e-mail</span></div>
+        <div class="tk-row"><button class="btn-add tk-save">Valider</button><span class="tk-hint">Enregistre ce que tu as coché dans le Sheet</span></div>
       </div>
     </div>`;
   }).join('') : `<div class="vide">Rien ici pour l'instant. Les calls arrivent dès qu'ils sont passés.</div>`;
@@ -837,7 +841,6 @@ document.addEventListener('click', e => {
     f.querySelectorAll('.tk-pill[data-group="res"]').forEach(b => b.classList.remove('on'));
   }
   f.querySelector('.tk-prix-row').style.display = f.dataset.res === 'Vente' ? '' : 'none';
-  f.querySelector('.tk-contrat').style.display = f.dataset.res === 'Vente' ? '' : 'none';
 });
 // prix rapide : clic = remplit le champ (re-clic = vide), la saisie libre reste possible
 document.addEventListener('click', e => {
@@ -862,7 +865,7 @@ document.addEventListener('click', async e => {
   const prixRaw = f.querySelector('.tk-prix').value.trim().replace(',','.');
   const retrans = f.querySelector('.tk-retrans').value.trim();
   const comment = f.querySelector('.tk-comment').value.trim();
-  if (!showup && !resultat && !qualif && !retrans && !comment) return toast('Rien à enregistrer');
+  if (!showup && !resultat && !qualif && !retrans && !comment) return toast('Rien à valider : coche au moins le show-up ou le résultat');
   const payload = { what:'call_track', key:PONT.key, id:f.dataset.id, nom:f.dataset.nom, email:f.dataset.mail,
     tel:f.dataset.tel, utc:f.dataset.utc, showup, resultat, prix: prixRaw==='' ? '' : (parseFloat(prixRaw)||0),
     npaie: np, qualif, retrans, comment };
@@ -884,12 +887,12 @@ document.addEventListener('click', async e => {
       store.set('clipend', P);
       toast('Vente enregistrée 🎉 La fiche cliente est créée');
     } else {
-      toast('Call enregistré dans le Sheet ✅');
+      toast('Call validé ✅');
     }
     renderTrack(); renderClients(); renderTabs();
   } catch(err){
     toast('Échec : ' + err.message);
-    b.disabled = false; b.textContent = 'Enregistrer dans le Sheet';
+    b.disabled = false; b.textContent = 'Valider';
   }
 });
 
@@ -926,9 +929,16 @@ document.addEventListener('click', async e => {
   const b = e.target.closest('.tk-contrat'); if (!b) return;
   const f = b.closest('.tk-form');
   if (!f.dataset.mail) return toast("Pas d'e-mail sur ce call : ajoute la cliente à la main dans Clientes");
+  if (f.dataset.res !== 'Vente'){
+    // envoyer le contrat = c'est une vente : on coche Vente (+ Présente) et on ouvre la ligne prix
+    f.dataset.res = 'Vente'; if (!f.dataset.show) f.dataset.show = 'Présente';
+    f.querySelectorAll('.tk-pill[data-group="res"]').forEach(x => x.classList.toggle('on', x.dataset.val === 'Vente'));
+    f.querySelectorAll('.tk-pill[data-group="show"]').forEach(x => x.classList.toggle('on', x.dataset.val === f.dataset.show));
+    f.querySelector('.tk-prix-row').style.display = '';
+  }
   const prix = parseFloat(f.querySelector('.tk-prix').value.trim().replace(',','.')) || 0;
   const np = parseInt(f.dataset.np) || 1;
-  if (!prix) return toast('Indique le prix avant d\'envoyer le contrat');
+  if (!prix) return toast('Choisis le prix (5 000 € / 6 000 € ou autre) puis reclique sur Envoyer le contrat');
   if (np > 3) return toast('Le contrat prévoit 3 fois maximum (article 5) : choisis 1x, 2x ou 3x');
   if (!confirm(`Enregistrer la vente et envoyer le contrat à ${f.dataset.nom} (${f.dataset.mail}) : ${EUR(prix)} en ${np} fois ?`)) return;
   b.disabled = true; b.textContent = 'Envoi…';
@@ -950,7 +960,7 @@ document.addEventListener('click', async e => {
     renderTrack(); renderClients(); renderTabs();
   } catch(err){
     toast('Échec : ' + err.message);
-    b.disabled = false; b.textContent = '📄 Enregistrer + envoyer le contrat';
+    b.disabled = false; b.textContent = '📄 Envoyer le contrat';
   }
 });
 document.addEventListener('click', async e => {
