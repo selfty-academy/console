@@ -349,6 +349,8 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 const DATA = __DATA__;
 const PONT = { url: '__PONT_URL__', key: '__PONT_KEY__' };
 const CONTRAT_URL = 'https://selfty-academy.github.io/console/contrat/';
+// script « Contrats Selfty » exécuté par selfty.academy (mails + PDF Drive), même clé que le pont
+const PONT_CTR = 'https://script.google.com/macros/s/AKfycbwhr4s_j6vijp-aWj0qWBYIR-8qSYy-tFUoasujsrqCr1-jVIomeBfiUMtkfixxJVLd/exec';
 const $ = id => document.getElementById(id);
 const esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -879,7 +881,7 @@ document.addEventListener('click', async e => {
 
 /* ---------- contrat : envoi + signature en ligne ---------- */
 async function envoyerContrat(o){
-  const r = await fetch(PONT.url, { method:'POST', body: JSON.stringify(Object.assign({ what:'send_contract', key:PONT.key }, o)) });
+  const r = await fetch(PONT_CTR, { method:'POST', body: JSON.stringify(Object.assign({ what:'send_contract', key:PONT.key }, o)) });
   const j = await r.json();
   if (!j.ok) throw new Error(j.error || 'refus du pont');
   if (!j.already){ const C = store.get('ctrpend', {}); C[(o.email||'').toLowerCase()] = { statut:'Envoyé', sent:j.sent, token:j.token, np:o.np, when:Date.now() }; store.set('ctrpend', C); }
