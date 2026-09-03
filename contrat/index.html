@@ -57,6 +57,8 @@ input:focus,button:focus-visible{outline:2px solid var(--mauve);outline-offset:1
 /* barre du bas */
 .bar{position:fixed;left:0;right:0;bottom:0;background:rgba(250,238,238,.92);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);border-top:1px solid var(--border);padding:11px 16px;display:none;align-items:center;justify-content:center;gap:14px;z-index:5;font-size:14px;color:var(--ink-soft)}
 .bar.on{display:flex}
+.soc-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;line-height:1.5;margin:0 0 12px;color:var(--ink-soft)}
+.soc-box b{color:var(--ink)}
 .bar button{background:var(--mauve);color:#FFFDFB;border:none;border-radius:999px;padding:9px 16px;font:500 14px "Jost",sans-serif;cursor:pointer}
 .toast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);background:var(--ink);color:#FFFDFB;border-radius:999px;padding:10px 20px;font-size:14px;z-index:30;opacity:0;transition:opacity .2s;pointer-events:none;max-width:92vw;text-align:center}
 .toast.on{opacity:1}
@@ -72,13 +74,14 @@ input:focus,button:focus-visible{outline:2px solid var(--mauve);outline-offset:1
 <!-- bloc de signature : déplacé dans le contrat (#ct-sig-slot) une fois chargé -->
 <div class="signer" id="signer" hidden>
   <h3>Signer le contrat</h3>
-  <p class="aide">Vérifie ton prénom et ton nom, indique ton adresse postale (elle figurera sur tes factures), coche la case, puis signe dans le cadre avec le doigt ou la souris.</p>
+  <p class="aide" id="s-aide">Vérifie ton prénom et ton nom, indique ton adresse postale (elle figurera sur tes factures), coche la case, puis signe dans le cadre avec le doigt ou la souris.</p>
+  <div class="soc-box" id="s-soc" hidden></div>
   <div class="grid2">
     <label class="f">Prénom<input id="s-prenom" autocomplete="given-name"></label>
     <label class="f">Nom<input id="s-nom" autocomplete="family-name"></label>
   </div>
   <div class="grid2">
-    <label class="f">Adresse postale (pour tes factures)<input id="s-adresse" autocomplete="street-address" placeholder="12 rue des Lilas"></label>
+    <label class="f"><span id="s-adresse-lab">Adresse postale (pour tes factures)</span><input id="s-adresse" autocomplete="street-address" placeholder="12 rue des Lilas"></label>
     <label class="f">Code postal et ville<input id="s-cpville" autocomplete="postal-code" placeholder="35000 Rennes"></label>
   </div>
   <label class="accept"><input type="checkbox" id="s-accept"><span>J'ai lu et compris l'ensemble du Contrat et de ses annexes, et je les accepte sans réserve.</span></label>
@@ -135,6 +138,15 @@ async function charger(){
   $('doc').querySelectorAll('.case').forEach(c => { c.classList.add('clic'); c.addEventListener('click', () => c.classList.toggle('on')); });
   const s = $('signer'); slot.appendChild(s); s.hidden = false;
   $('s-prenom').value = j.prenom || ''; $('s-nom').value = j.nom || '';
+  if (j.soc && j.soc.nom){
+    // contrat au nom de la société de la cliente : adresse de facturation = siège (modifiable), rappel de qui signe
+    const S = j.soc; const box = $('s-soc'); box.hidden = false;
+    box.innerHTML = `<b>Contrat au nom de ${esc(S.nom)}${S.forme ? ' (' + esc(S.forme) + ')' : ''}</b> · SIREN ${esc(S.siren)}<br>Signé par ${esc(j.prenom)} ${esc(j.nom)}${S.fonction ? ', ' + esc(S.fonction) : ''}, en qualité de représentant(e) de la société.`;
+    $('s-aide').textContent = 'Vérifie ton prénom et ton nom (tu signes pour ta société), l\'adresse de facturation, coche la case, puis signe dans le cadre avec le doigt ou la souris.';
+    $('s-adresse-lab').textContent = 'Adresse de facturation (siège de la société)';
+    const m = /^(.*?)[,\s]+(\d{5}\s+.+)$/.exec(String(S.siege || '').trim());
+    if (m){ $('s-adresse').value = m[1]; $('s-cpville').value = m[2]; } else if (S.siege) $('s-adresse').value = S.siege;
+  }
   initPad();
   $('bar').classList.add('on');
   verif();

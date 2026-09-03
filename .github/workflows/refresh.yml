@@ -37,6 +37,12 @@ jobs:
           cd pipeline
           python build.py
           python encrypt_page.py console.html ../index.html "${{ secrets.PAGE_CODE }}" "Console Selfty"
+      - name: Rappels de paiement J-2 (script Contrats, mails depuis selfty.academy)
+        env:
+          PONT_KEY: ${{ secrets.PONT_KEY }}
+        run: |
+          curl -s -m 120 -L -X POST "https://script.google.com/macros/s/AKfycbwhr4s_j6vijp-aWj0qWBYIR-8qSYy-tFUoasujsrqCr1-jVIomeBfiUMtkfixxJVLd/exec" \
+            -H "Content-Type: application/json" -d "{\"what\":\"rappels\",\"key\":\"$PONT_KEY\"}" | head -c 600; echo
       - name: Notif Telegram nouveaux calls
         env:
           TG_TOKEN: ${{ secrets.TG_TOKEN }}

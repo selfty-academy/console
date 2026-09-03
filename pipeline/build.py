@@ -270,6 +270,9 @@ for r in (clients_rows or []):
 clientes.sort(key=lambda c: c["ts"], reverse=True)
 
 # ---- Contrats envoyés / signés (onglet « Contrats », écrit par le pont) ----
+# dossiers Drive (compte selfty.academy) où le script Contrats range les PDF signés et les factures
+DRIVE_CONTRATS = "https://drive.google.com/drive/folders/1x9Evn3ZP_j5JQ9MT9sNAoqXHnfC7lB_j"
+DRIVE_FACTURES = "https://drive.google.com/drive/folders/1M7YKwkC2FV1czGkMZGOTAnUy985uSQ2D"
 def dstr(v):
     return v.strftime("%d/%m/%Y %H:%M") if isinstance(v, datetime.datetime) else str(v or "").strip()
 
@@ -293,7 +296,20 @@ for r in (contrats_rows or []):
         "pdf": str(r.get("PDF") or "").strip(),
         "caseA": str(r.get("Case A") or "").strip() == "Oui",
         "caseB": str(r.get("Case B") or "").strip() == "Oui",
+        # contrat au nom de la société de la cliente (Type = Société) + échéancier daté + rappels J-2 envoyés
+        "type": str(r.get("Type") or "Particulier").strip() or "Particulier",
+        "soc": ({"nom": str(r.get("Société") or "").strip(), "forme": str(r.get("Forme") or "").strip(),
+                 "siren": str(r.get("SIREN") or "").strip(), "tva": str(r.get("TVA intra") or "").strip(),
+                 "siege": str(r.get("Siège") or "").strip(), "fonction": str(r.get("Fonction") or "").strip()}
+                if str(r.get("Type") or "").strip() == "Société" else None),
     }
+    _np = rec["np"]
+    _dates = [d.strip() for d in str(r.get("Échéances") or "").split("|") if d.strip()][:_np]
+    _rap = dict(x.split(":", 1) for x in str(r.get("Rappels") or "").split(";") if ":" in x)
+    _base = int(rec["prix"] // _np) if _np else 0
+    _first = int(rec["prix"] - _base * (_np - 1)) if _np else 0
+    rec["ech"] = [{"k": i + 1, "n": _np, "date": d, "montant": _first if i == 0 else _base,
+                   "paye": False, "rappel": _rap.get(str(i + 1), "")} for i, d in enumerate(_dates)]
     prev = contrats.get(mail)
     # un contrat signé prime ; sinon le plus récent (dernière ligne) l'emporte
     if not prev or st == "Signé" or prev["statut"] != "Signé":
@@ -574,6 +590,7 @@ tg["chat_id"] = os.environ.get("TG_CHAT", tg["chat_id"])
 tpl = (HERE / "template.html").read_text()
 out = (tpl.replace("__DATA__", json.dumps(data, ensure_ascii=False)).replace("__LOGO__", logo)
        .replace("__PONT_URL__", pont["url"]).replace("__PONT_KEY__", pont["key"])
-       .replace("__TG_TOKEN__", tg["token"]).replace("__TG_CHAT__", tg["chat_id"]))
+       .replace("__TG_TOKEN__", tg["token"]).replace("__TG_CHAT__", tg["chat_id"])
+       .replace("__DRIVE_CONTRATS__", DRIVE_CONTRATS).replace("__DRIVE_FACTURES__", DRIVE_FACTURES))
 (HERE / "console.html").write_text(out)
 print(f"console.html : {len(inscrits)} inscrits, {len(cands)} candidatures live, {len(ecole)} lignes école ({ecole_uniques} personnes), {len(visites)} visites")

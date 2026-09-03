@@ -144,6 +144,34 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 #panneau .champ{margin-bottom:16px}
 #panneau .champ label{font-size:13px;font-weight:500;display:block;margin-bottom:5px}
 #panneau .note{font-size:12.5px;color:var(--muted);margin-top:4px}
+.cm-voile{position:fixed;inset:0;background:rgba(58,42,42,.38);z-index:25;display:flex;align-items:center;justify-content:center;padding:14px;overflow-y:auto}
+.cm-voile[hidden]{display:none}
+.cm-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:20px 22px;width:min(640px,100%);max-height:94vh;overflow-y:auto;display:flex;flex-direction:column;gap:11px}
+.cm-card h3{font:600 20px "Playfair Display",Georgia,serif;margin:0}
+.cm-qui{font-size:14px;color:var(--ink-soft)}
+.cm-soc{display:grid;grid-template-columns:1fr 1fr;gap:9px 12px;background:var(--card);border-radius:10px;padding:12px 14px}
+.cm-soc label{font-size:12.5px;color:var(--muted);display:block}
+.cm-soc label.wide{grid-column:1/-1}
+.cm-soc input,.cm-soc select{display:block;width:100%;border:1px solid var(--border);border-radius:10px;padding:8px 10px;font:14.5px "Jost",sans-serif;color:var(--ink);background:var(--surface);margin-top:3px}
+.cm-ech{display:flex;flex-direction:column;gap:7px}
+.cm-ech .er,.ech-row{display:flex;gap:9px;align-items:center;flex-wrap:wrap;font-size:14px}
+.cm-ech .er b{min-width:170px}
+.cm-ech input[type=date],.ech-row input[type=date]{width:auto;padding:7px 10px;font-size:14px}
+.cm-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:4px}
+.cm-prixq.on{background:var(--ok);border-color:var(--ok)}
+.tk-pill[data-cmtype].on,.tk-pill[data-cmnp].on{background:var(--mauve);border-color:var(--mauve);color:#FFFDFB}
+.mois{font:600 16px "Playfair Display",Georgia,serif;margin:18px 0 8px;color:var(--mauve-deep)}
+.ech-line{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:11px 16px;box-shadow:var(--shadow);display:grid;grid-template-columns:110px 1.3fr 1fr auto;gap:6px 14px;align-items:center}
+.ech-line.late{border-color:var(--danger)}
+.ech-line.paid{opacity:.72}
+.ech-line .jour{font-weight:600;font-size:15px;line-height:1.2}
+.ech-line .jour small{display:block;font-weight:400;font-size:12px;color:var(--muted)}
+.ech-line .nom{font-weight:600}
+.ech-line .sub{font-size:13px;color:var(--muted)}
+.ech-line .acts{display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.tag-late{background:#F3D9D9;color:var(--danger);border-radius:999px;padding:1px 9px;font-size:12px;font-weight:600}
+.tag-soon{background:#F4E6D3;color:var(--warn);border-radius:999px;padding:1px 9px;font-size:12px;font-weight:600}
+@media (max-width:760px){.ech-line{grid-template-columns:1fr 1fr}.ech-line .acts{grid-column:1/-1;justify-content:flex-start}.cm-soc{grid-template-columns:1fr}}
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:#FFFDFB;border-radius:999px;padding:10px 20px;font-size:14px;z-index:30;opacity:0;transition:opacity .2s}
 .toast.on{opacity:1}
 
@@ -264,6 +292,14 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
   </div>
 </section>
 
+<!-- ===================== PAIEMENTS ===================== -->
+<section class="panel" id="p-paie">
+  <p class="intro">Le suivi des versements, centralisé : les dates prévues (fixées à l'envoi du contrat, modifiables ici), les rappels envoyés automatiquement par e-mail 2 jours avant depuis selfty.academy@gmail.com, et ce qui est reçu ou reste à recevoir. Coche « Reçu » dès que le virement arrive : la facture part toute seule. <a id="paie-drive" href="__DRIVE_CONTRATS__" target="_blank" rel="noopener">📁 Dossier Drive des contrats</a> · <a href="__DRIVE_FACTURES__" target="_blank" rel="noopener">🧾 Factures</a></p>
+  <div class="kpis kpis-mini" id="paie-kpis"></div>
+  <div class="pills" id="f-paie"></div>
+  <div id="l-paie"></div>
+</section>
+
 <!-- ===================== COMPTA ===================== -->
 <section class="panel" id="p-compta">
   <p class="intro">Les entrées (paiements clients) et les sorties (charges : ads, outils…). Tout se saisit dans le Sheet École, onglets « Paiements » et « Charges » : la console fait les comptes et relie chaque client à son appel du suivi école.</p>
@@ -352,6 +388,30 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 </aside>
 <div class="toast" id="toast"></div>
 
+<!-- ===================== MODALE ENVOI DU CONTRAT ===================== -->
+<div id="cm-voile" class="cm-voile" hidden>
+  <div class="cm-card" role="dialog" aria-modal="true" aria-labelledby="cm-titre">
+    <h3 id="cm-titre">📄 Envoyer le contrat</h3>
+    <div class="cm-qui" id="cm-qui"></div>
+    <div class="tk-row"><span class="tk-lab">Au nom de</span>
+      <button class="tk-pill" data-cmtype="perso">👤 En perso (particulier)</button>
+      <button class="tk-pill" data-cmtype="societe">🏢 Sa société</button></div>
+    <div class="cm-soc" id="cm-soc" hidden>
+      <label>Raison sociale *<input id="cm-soc-nom" placeholder="Camille Coaching"></label>
+      <label>Forme juridique<select id="cm-soc-forme"><option>SASU</option><option>SAS</option><option>EURL</option><option>SARL</option><option>EI / micro-entreprise</option><option>Association</option><option>Autre</option></select></label>
+      <label>SIREN ou SIRET *<input id="cm-soc-siren" inputmode="numeric" placeholder="123 456 789"></label>
+      <label>N° TVA intracom (si assujettie)<input id="cm-soc-tva" placeholder="FR12123456789"></label>
+      <label class="wide">Adresse du siège<input id="cm-soc-siege" placeholder="12 rue des Lilas, 35000 Rennes"></label>
+      <label>Sa fonction dans la société<input id="cm-soc-fonction" placeholder="Présidente, gérante…"></label>
+    </div>
+    <div class="tk-row"><span class="tk-lab">Prix (€)</span><button class="tk-pill tk-mini cm-prixq" data-prix="5000">5 000 €</button><button class="tk-pill tk-mini cm-prixq" data-prix="6000">6 000 €</button><input class="tk-prix" id="cm-prix" inputmode="numeric" placeholder="autre"></div>
+    <div class="tk-row"><span class="tk-lab">Payé en</span><button class="tk-pill tk-mini" data-cmnp="1">1x</button><button class="tk-pill tk-mini" data-cmnp="2">2x</button><button class="tk-pill tk-mini" data-cmnp="3">3x</button><span class="tk-hint">3 fois maximum (article 5)</span></div>
+    <div class="cm-ech" id="cm-ech"></div>
+    <div class="tk-hint">Proposition automatique : 1er versement à la date choisie ; s'il tombe avant le 10/10 (début de l'école), les suivants sont le 10/11 et le 10/12. Chaque date est modifiable : elles figurent dans le contrat et déclenchent le rappel J-2 par e-mail.</div>
+    <div class="cm-actions"><button class="btn-ghost" id="cm-cancel">Annuler</button><button class="btn-add" id="cm-go">📄 Envoyer le contrat</button></div>
+  </div>
+</div>
+
 <script>
 const DATA = __DATA__;
 const PONT = { url: '__PONT_URL__', key: '__PONT_KEY__' };
@@ -401,6 +461,7 @@ const TABS = [
   {id:'track', lab:'Calls effectués à remplir'},
   {id:'calls', lab:'Agenda calls'},
   {id:'clients', lab:'Clientes'},
+  {id:'paie', lab:'Paiements'},
   {id:'webi',  lab:'Relances webi'},
   {id:'cand',  lab:'Candidatures live'},
   {id:'ecole', lab:'École'},
@@ -422,7 +483,8 @@ function renderTabs(){
   const bSchol = DATA.schol.subs.filter(s => !schd[s.id]).length;
   const bTrack = trackList().filter(c => { const t = effTrk(c); return !t.s && !t.r; }).length;
   const bCli = clientes().filter(c => { const k = effCtr(c); return !k || k.statut !== 'Signé'; }).length;
-  const b = {webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, calls:bCalls, track:bTrack, clients:bCli, compta:null, data:null};
+  const bPaie = echeancesToutes().filter(x => !x.paye && x.diff !== null && x.diff <= 2).length;
+  const b = {webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, calls:bCalls, track:bTrack, clients:bCli, paie:bPaie, compta:null, data:null};
   $('tabs').innerHTML = TABS.map(t =>
     `<button class="tab${t.id===tabOn?' on':''}" data-t="${t.id}">${t.lab}${b[t.id]!==null?` <span class="bdg">${b[t.id]}</span>`:''}</button>`).join('');
   TABS.forEach(t => $('p-'+t.id).classList.toggle('on', t.id===tabOn));
@@ -831,7 +893,7 @@ function renderTrack(){
           <button class="tk-pill${t.s==='Call test'?' on':''}" data-group="show" data-val="Call test">Call test 🧪</button></div>
         <div class="tk-row"><span class="tk-lab">Résultat</span>
           ${RES_OPTS.filter(Boolean).map(o => `<button class="tk-pill${t.r===o?' on':''}" data-group="res" data-val="${esc(o)}">${o==='Vente'?'Vente 🎉':esc(o)}</button>`).join('')}</div>
-        <div class="tk-row tk-prix-row"${vente?'':' style="display:none"'}><span class="tk-lab">Prix (€)</span>${[5000,6000].map(n => `<button class="tk-pill tk-mini tk-prixq${t.prix===n?' on':''}" data-prix="${n}">${EUR(n)}</button>`).join('')}<input class="tk-prix" inputmode="numeric" placeholder="autre" value="${t.prix||''}"><span class="tk-lab" style="min-width:auto">payé en</span>${[1,2,3,4].map(n => `<button class="tk-pill tk-mini${t.np===n?' on':''}" data-group="np" data-val="${n}">${n}x</button>`).join('')}</div>
+        <div class="tk-row tk-prix-row"${vente?'':' style="display:none"'}><span class="tk-lab">Prix (€)</span>${[5000,6000].map(n => `<button class="tk-pill tk-mini tk-prixq${t.prix===n?' on':''}" data-prix="${n}">${EUR(n)}</button>`).join('')}<input class="tk-prix" inputmode="numeric" placeholder="autre" value="${t.prix||''}"><span class="tk-lab" style="min-width:auto">payé en</span>${[1,2,3].map(n => `<button class="tk-pill tk-mini${t.np===n?' on':''}" data-group="np" data-val="${n}">${n}x</button>`).join('')}</div>
         ${vente && t.prix && c.mail ? paieRow({n:c.n, mail:c.mail}, {prix:t.prix, np:t.np||1}, 'Virement reçu') : ''}
         <div class="tk-row"><span class="tk-lab">Qualifiée</span>${[1,2,3,4,5,6,7,8,9,10].map(n => `<button class="tk-pill tk-mini${t.q===n?' on':''}" data-group="qualif" data-val="${n}">${n}</button>`).join('')}<span style="font-size:12.5px;color:var(--muted)">/10</span></div>
         <textarea class="tk-retrans" placeholder="Retranscription du call : ce qui s'est dit… (ajoutée à la suite dans le Sheet)"></textarea>
@@ -920,7 +982,13 @@ async function envoyerContrat(o){
   const r = await fetch(PONT_CTR, { method:'POST', body: JSON.stringify(Object.assign({ what:'send_contract', key:PONT.key }, o)) });
   const j = await r.json();
   if (!j.ok) throw new Error(j.error || 'refus du pont');
-  if (!j.already){ const C = store.get('ctrpend', {}); C[(o.email||'').toLowerCase()] = { statut:'Envoyé', sent:j.sent, token:j.token, np:o.np, when:Date.now() }; store.set('ctrpend', C); }
+  if (!j.already){
+    const C = store.get('ctrpend', {}); const dates = j.dates || o.dates || [], v = versements(o.prix||0, o.np||1);
+    C[(o.email||'').toLowerCase()] = { statut:'Envoyé', sent:j.sent, token:j.token, np:o.np, prix:o.prix, when:Date.now(),
+      type: o.type === 'societe' ? 'Société' : 'Particulier', soc: o.type === 'societe' ? o.soc : null,
+      ech: dates.map((d, i) => ({ k:i+1, n:o.np||1, date:d, montant:v[i]||0, paye:false, rappel:'' })) };
+    store.set('ctrpend', C);
+  }
   setTimeout(refreshContrats, 1500);
   return j;
 }
@@ -948,12 +1016,12 @@ function effCtr(c){
   const L = mail && store.get('ctrlive', {})[mail];
   const inSheet = (DATA.suivi.contrats||[]).find(x => x.mail === mail) || null;
   // le statut live (script) prime sur les datas du build ; found:false = plus de contrat pour ce mail
-  const fromSheet = L ? (L.found ? { mail, token:L.token, prix:L.prix, np:L.np, statut:L.statut, sent:L.sent, signedAt:L.signedAt, pdf:L.pdf, caseA:L.caseA, caseB:L.caseB } : null) : inSheet;
+  const fromSheet = L ? (L.found ? { mail, token:L.token, prix:L.prix, np:L.np, statut:L.statut, sent:L.sent, signedAt:L.signedAt, pdf:L.pdf, caseA:L.caseA, caseB:L.caseB, type:L.type, soc:L.soc, ech:L.ech||[], rappels:L.rappels } : null) : inSheet;
   const C = store.get('ctrpend', {}); const p = mail && C[mail];
   if (!p) return fromSheet;
   const caught = fromSheet && (fromSheet.statut === 'Signé' || (fromSheet.statut === 'Envoyé' && fromSheet.token === p.token));
   if (caught || Date.now()-(p.when||0) > 3*86400000){ delete C[mail]; store.set('ctrpend', C); return fromSheet; }
-  return Object.assign({}, fromSheet||{}, { statut:'Envoyé', sent:p.sent, token:p.token, np:p.np, pend:true });
+  return Object.assign({}, fromSheet||{}, { statut:'Envoyé', sent:p.sent, token:p.token, np:p.np, prix:p.prix||(fromSheet&&fromSheet.prix)||0, type:p.type, soc:p.soc, ech:p.ech||[], pend:true });
 }
 /* versements : montants comme dans le contrat (1er versement ajusté), coche = ligne dans « Paiements » */
 function versements(prix, np){ np = Math.max(1, np|0); const base = Math.floor(prix/np), first = prix - base*(np-1); return Array.from({length:np}, (_,i) => i ? base : first); }
@@ -1043,11 +1111,15 @@ document.addEventListener('click', async e => {
     f.querySelectorAll('.tk-pill[data-group="show"]').forEach(x => x.classList.toggle('on', x.dataset.val === f.dataset.show));
     f.querySelector('.tk-prix-row').style.display = '';
   }
-  const prix = parseFloat(f.querySelector('.tk-prix').value.trim().replace(',','.')) || 0;
-  const np = parseInt(f.dataset.np) || 1;
-  if (!prix) return toast('Choisis le prix (5 000 € / 6 000 € ou autre) puis reclique sur Envoyer le contrat');
-  if (np > 3) return toast('Le contrat prévoit 3 fois maximum (article 5) : choisis 1x, 2x ou 3x');
-  if (!confirm(`Enregistrer la vente et envoyer le contrat à ${f.dataset.nom} (${f.dataset.mail}) : ${EUR(prix)} en ${np} fois ?`)) return;
+  const k0 = effCtr({ mail: f.dataset.mail });
+  const m = await openCtrModal({ nom:f.dataset.nom, mail:f.dataset.mail, prix: parseFloat(f.querySelector('.tk-prix').value.trim().replace(',','.')) || 0,
+    np: Math.min(parseInt(f.dataset.np) || 1, 3), type: k0 && k0.type, soc: k0 && k0.soc, dates: (k0 && k0.ech || []).map(x => x.date) });
+  if (!m) return;
+  const prix = m.prix, np = m.np;
+  // le choix fait dans la modale se reflète dans le formulaire du call
+  f.querySelector('.tk-prix').value = prix; f.dataset.np = np;
+  f.querySelectorAll('.tk-prixq').forEach(x => x.classList.toggle('on', +x.dataset.prix === prix));
+  f.querySelectorAll('.tk-pill[data-group="np"]').forEach(x => x.classList.toggle('on', +x.dataset.val === np));
   b.disabled = true; b.textContent = 'Envoi…';
   const qualif = f.dataset.qualif || '', retrans = f.querySelector('.tk-retrans').value.trim(), comment = f.querySelector('.tk-comment').value.trim();
   const showup = f.dataset.show || 'Présente';
@@ -1063,7 +1135,7 @@ document.addEventListener('click', async e => {
     if (!P.some(x => x.mail === f.dataset.mail)) P.push({n:f.dataset.nom, mail:f.dataset.mail, tel:f.dataset.tel, prix, when:Date.now()});
     store.set('clipend', P);
     tgVente(f, prix, np);
-    const k = await envoyerContrat({ email:f.dataset.mail, nom:f.dataset.nom, tel:f.dataset.tel, prix, np, callId:f.dataset.id });
+    const k = await envoyerContrat({ email:f.dataset.mail, nom:f.dataset.nom, tel:f.dataset.tel, prix, np, callId:f.dataset.id, type:m.type, soc:m.soc, dates:m.dates });
     toast(k.already ? 'Vente enregistrée. Son contrat était déjà signé ✅' : 'Vente enregistrée 🎉 Contrat envoyé à ' + f.dataset.mail);
     renderTrack(); renderClients(); renderTabs();
   } catch(err){
@@ -1073,14 +1145,13 @@ document.addEventListener('click', async e => {
 });
 document.addEventListener('click', async e => {
   const b = e.target.closest('.cl-contrat'); if (!b) return;
-  let prix = parseFloat(b.dataset.prix) || 0;
-  if (!prix){ prix = parseFloat((prompt('Prix du contrat (€) ?', '') || '').replace(',','.')) || 0; if (!prix) return; }
-  const np = parseInt(prompt('Paiement en combien de fois ? (1, 2 ou 3)', b.dataset.np || '1') || '0') || 0;
-  if (!np) return;
-  if (np > 3) return toast('Le contrat prévoit 3 fois maximum (article 5)');
+  const k0 = effCtr({ mail: b.dataset.mail });
+  const m = await openCtrModal({ nom:b.dataset.nom, mail:b.dataset.mail, prix: parseFloat(b.dataset.prix) || 0, np: Math.min(parseInt(b.dataset.np) || 1, 3),
+    type: k0 && k0.type, soc: k0 && k0.soc, dates: (k0 && k0.ech || []).map(x => x.date) });
+  if (!m) return;
   b.disabled = true; b.textContent = 'Envoi…';
   try {
-    const j = await envoyerContrat({ email:b.dataset.mail, nom:b.dataset.nom, tel:b.dataset.tel, prix, np });
+    const j = await envoyerContrat({ email:b.dataset.mail, nom:b.dataset.nom, tel:b.dataset.tel, prix:m.prix, np:m.np, type:m.type, soc:m.soc, dates:m.dates });
     toast(j.already ? 'Ce contrat est déjà signé ✅' : 'Contrat envoyé à ' + b.dataset.mail + ' 📄');
     renderClients(); renderTabs();
   } catch(err){
@@ -1092,6 +1163,183 @@ document.addEventListener('click', e => {
   const b = e.target.closest('.cl-lien'); if (!b) return;
   const url = CONTRAT_URL + '?t=' + b.dataset.token;
   navigator.clipboard.writeText(url).then(() => toast('Lien de signature copié'), () => prompt('Lien de signature :', url));
+});
+
+/* ---------- modale « Envoyer le contrat » : perso / société, prix, 1-3x, dates des versements ---------- */
+const DEBUT_ECOLE = '2026-10-10';
+const isoToFr = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||''); return m ? `${m[3]}/${m[2]}/${m[1]}` : ''; };
+const frToIso = fr => { const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec((fr||'').trim()); return m ? `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}` : ''; };
+const todayIso = () => new Date().toLocaleDateString('fr-CA', { timeZone:'Europe/Paris' });
+function addMonthsIso(iso, n){ const d = new Date(iso + 'T12:00:00'); d.setMonth(d.getMonth() + n); return d.toISOString().slice(0,10); }
+/* proposition d'échéancier : 1er versement à la date donnée ; avant le 10/10 -> 10/11 et 10/12 ; sinon tous les mois, dans les 3 premiers mois */
+function proposeDates(np, firstIso){
+  firstIso = firstIso || todayIso();
+  const out = [firstIso];
+  if (firstIso < DEBUT_ECOLE){ ['2026-11-10','2026-12-10'].forEach((d,i) => { if (i+1 < np) out.push(d); }); }
+  else { const cap = addMonthsIso(DEBUT_ECOLE, 3); for (let k = 1; k < np; k++){ let d = addMonthsIso(firstIso, k); if (d > cap) d = cap; out.push(d); } }
+  return out;
+}
+const CM = { type:'perso', np:1, prix:0, dates:[] };
+function cmRenderEch(){
+  const v = versements(CM.prix || 0, CM.np);
+  while (CM.dates.length < CM.np) CM.dates = proposeDates(CM.np, CM.dates[0]);
+  CM.dates = CM.dates.slice(0, CM.np);
+  $('cm-ech').innerHTML = CM.dates.map((d, i) => `<div class="er"><b>${CM.np > 1 ? 'Versement ' + (i+1) : 'Règlement'} · ${EUR(v[i]||0)}</b><input type="date" data-cmdate="${i}" value="${esc(d)}">${i === 0 ? '<span class="tk-hint">1er versement</span>' : '<span class="tk-hint">proposé, modifiable</span>'}</div>`).join('');
+}
+function cmSync(){
+  $('cm-voile').querySelectorAll('[data-cmtype]').forEach(x => x.classList.toggle('on', x.dataset.cmtype === CM.type));
+  $('cm-soc').hidden = CM.type !== 'societe';
+  $('cm-voile').querySelectorAll('[data-cmnp]').forEach(x => x.classList.toggle('on', +x.dataset.cmnp === CM.np));
+  $('cm-voile').querySelectorAll('.cm-prixq').forEach(x => x.classList.toggle('on', +x.dataset.prix === CM.prix));
+  $('cm-prix').value = CM.prix || '';
+  cmRenderEch();
+}
+let cmResolve = null;
+function openCtrModal(o){
+  CM.type = o.type === 'Société' || o.type === 'societe' ? 'societe' : 'perso';
+  CM.np = Math.min(Math.max(o.np || 1, 1), 3); CM.prix = o.prix || 0;
+  CM.dates = (o.dates || []).map(frToIso).filter(Boolean);
+  if (CM.dates.length !== CM.np) CM.dates = proposeDates(CM.np, CM.dates[0]);
+  const S = o.soc || {};
+  $('cm-soc-nom').value = S.nom || ''; $('cm-soc-forme').value = S.forme || 'SASU'; $('cm-soc-siren').value = S.siren || '';
+  $('cm-soc-tva').value = S.tva || ''; $('cm-soc-siege').value = S.siege || ''; $('cm-soc-fonction').value = S.fonction || '';
+  $('cm-qui').textContent = `Pour ${o.nom} (${o.mail}). Le contrat part par e-mail avec son lien de signature.`;
+  $('cm-go').disabled = false; $('cm-go').textContent = '📄 Envoyer le contrat';
+  cmSync();
+  $('cm-voile').hidden = false;
+  return new Promise(res => { cmResolve = res; });
+}
+function closeCtrModal(v){ $('cm-voile').hidden = true; if (cmResolve){ const r = cmResolve; cmResolve = null; r(v); } }
+$('cm-cancel').addEventListener('click', () => closeCtrModal(null));
+$('cm-voile').addEventListener('click', e => { if (e.target === $('cm-voile')) closeCtrModal(null); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('cm-voile').hidden) closeCtrModal(null); });
+$('cm-voile').addEventListener('click', e => {
+  const t = e.target.closest('[data-cmtype]'); if (t){ CM.type = t.dataset.cmtype; cmSync(); return; }
+  const n = e.target.closest('[data-cmnp]'); if (n){ CM.np = +n.dataset.cmnp; CM.dates = proposeDates(CM.np, CM.dates[0]); cmSync(); return; }
+  const q = e.target.closest('.cm-prixq'); if (q){ CM.prix = +q.dataset.prix; cmSync(); }
+});
+$('cm-prix').addEventListener('input', () => { CM.prix = parseFloat($('cm-prix').value.trim().replace(',','.')) || 0; $('cm-voile').querySelectorAll('.cm-prixq').forEach(x => x.classList.toggle('on', +x.dataset.prix === CM.prix)); cmRenderEch(); });
+$('cm-ech').addEventListener('change', e => {
+  const i = e.target.dataset.cmdate; if (i === undefined || !e.target.value) return;
+  if (+i === 0) CM.dates = proposeDates(CM.np, e.target.value);   // le 1er versement change : on repropose les suivants
+  else CM.dates[+i] = e.target.value;
+  cmRenderEch();
+});
+$('cm-go').addEventListener('click', () => {
+  if (!CM.prix) return toast('Choisis le prix (5 000 € / 6 000 € ou autre)');
+  const soc = CM.type === 'societe' ? { nom:$('cm-soc-nom').value.trim(), forme:$('cm-soc-forme').value, siren:$('cm-soc-siren').value.replace(/\D/g,''), tva:$('cm-soc-tva').value.trim().toUpperCase(), siege:$('cm-soc-siege').value.trim(), fonction:$('cm-soc-fonction').value.trim() } : null;
+  if (soc && (!soc.nom || !soc.siren)) return toast('Société : il faut au moins la raison sociale et le SIREN');
+  if (soc && soc.siren.length !== 9 && soc.siren.length !== 14) return toast('Le SIREN fait 9 chiffres (ou 14 pour un SIRET)');
+  if (CM.dates.length !== CM.np || CM.dates.some(d => !d)) return toast('Il manque une date de versement');
+  for (let i = 1; i < CM.dates.length; i++) if (CM.dates[i] <= CM.dates[i-1]) return toast('Les dates doivent se suivre dans l\'ordre');
+  closeCtrModal({ prix:CM.prix, np:CM.np, type:CM.type, soc, dates:CM.dates.map(isoToFr) });
+});
+
+/* ---------- onglet Paiements : échéances datées, rappels J-2, reçu / restant ---------- */
+let fPaie = 'agenda';
+/* toutes les échéances de toutes les clientes : [{c, k, n, date, iso, montant, paye, rappel, diff}] (diff = jours par rapport à aujourd'hui) */
+function echeancesToutes(){
+  const today = todayIso(), out = [];
+  clientes().forEach(c => {
+    const k = effCtr(c); if (!k || !(k.ech||[]).length) return;
+    const mail = (c.mail||'').toLowerCase(), on = paiesDe(mail);
+    const v = versements(k.prix || c.prix || c.total || 0, k.np || 1);
+    k.ech.forEach((e, i) => {
+      const iso = frToIso(e.date);
+      const diff = iso ? Math.round((new Date(iso+'T12:00:00') - new Date(today+'T12:00:00')) / 86400000) : null;
+      out.push({ c, k, kk:e.k, n:e.n || k.np || 1, date:e.date, iso, montant:e.montant || v[i] || 0, paye: !!on[e.k] || !!e.paye, rappel:e.rappel||'', diff });
+    });
+  });
+  return out.sort((a,b) => (a.iso||'9999').localeCompare(b.iso||'9999') || a.kk - b.kk);
+}
+const MOIS_FR = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+function moisLabel(iso){ if (!iso) return 'Sans date'; const [y,m] = iso.split('-'); const l = MOIS_FR[+m-1]; return l.charAt(0).toUpperCase() + l.slice(1) + ' ' + y; }
+function echStatut(x){
+  if (x.paye) return '<span class="tag-ok">✅ reçu</span>';
+  if (x.diff === null) return '<span class="chip src-webi">date à fixer</span>';
+  if (x.diff < 0) return `<span class="tag-late">⚠️ en retard de ${-x.diff} j</span>`;
+  if (x.diff === 0) return '<span class="tag-soon">⏰ aujourd\'hui</span>';
+  if (x.diff <= 7) return `<span class="tag-soon">⏰ dans ${x.diff} j</span>`;
+  return '<span class="chip src-webi">à venir</span>';
+}
+function echRappel(x){
+  if (x.paye) return '';
+  if (x.rappel) return ` <span class="chip src-live">📧 rappel envoyé le ${esc(x.rappel)}</span>`;
+  if (x.diff !== null && x.diff > 2) return ` <span class="chip src-webi">📧 rappel auto le ${esc(isoToFr(addDaysIso(x.iso, -2)))}</span>`;
+  return '';
+}
+function addDaysIso(iso, n){ const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0,10); }
+function echActions(x){
+  const mail = (x.c.mail||'').toLowerCase(), total = x.k.prix || x.c.prix || x.c.total || 0;
+  const fact = facturesDe(mail).find(f => f.versement === x.kk + '/' + x.n);
+  return `<div class="paie-row" style="margin:0" data-mail="${esc(mail)}" data-nom="${esc(x.c.n)}" data-total="${total}" data-np="${x.n}">
+    <button class="tk-pill tk-mini paie-pill${x.paye?' on':''}" data-k="${x.kk}" data-montant="${x.montant}">${x.paye ? 'Reçu ✓' : 'Reçu ?'}</button>
+    ${fact ? `<a class="chip src-live" style="text-decoration:none" href="${esc(fact.pdf||'#')}" target="_blank" rel="noopener">🧾 ${esc(fact.numero)}</a>` : ''}
+    <input type="date" class="ech-date" data-mail="${esc(mail)}" data-k="${x.kk}" value="${esc(x.iso)}" title="Modifier la date prévue"${x.paye ? ' disabled' : ''}>
+  </div>`;
+}
+function renderPaie(){
+  if (!$('l-paie')) return;
+  const all = echeancesToutes();
+  const tous = clientes().map(effCli);
+  const contracte = tous.reduce((s,c) => { const k = effCtr(c); return s + Math.max(c.total||0, c.prix||0, (k&&k.prix)||0); }, 0);
+  const encaisse = tous.reduce((s,c) => s+effRecu(c, effCtr(c)), 0);
+  const late = all.filter(x => !x.paye && x.diff !== null && x.diff < 0);
+  const soon = all.filter(x => !x.paye && x.diff !== null && x.diff >= 0 && x.diff <= 7);
+  $('paie-kpis').innerHTML = [
+    [EUR(contracte), 'contracté'], [EUR(encaisse), 'encaissé'], [EUR(Math.max(0, contracte-encaisse)), 'reste à recevoir'],
+    [late.length ? EUR(late.reduce((s,x)=>s+x.montant,0)) : '0', late.length ? `en retard (${late.length})` : 'en retard'],
+    [soon.length ? EUR(soon.reduce((s,x)=>s+x.montant,0)) : '0', 'à recevoir sous 7 jours'],
+    [all.filter(x => x.rappel).length, 'rappels envoyés'],
+  ].map(([v,l]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div></div>`).join('');
+  $('f-paie').innerHTML = [['agenda', `Agenda <b>${all.filter(x=>!x.paye).length}</b>`], ['cli', `Par cliente <b>${tous.length}</b>`]]
+    .map(([v,l]) => `<button class="pill${fPaie===v?' on':''}" data-f="${v}">${l}</button>`).join('');
+  const sans = tous.filter(c => { const k = effCtr(c); return !k || !(k.ech||[]).length; });
+  const lineOf = x => `<div class="ech-line${x.paye?' paid':''}${!x.paye && x.diff !== null && x.diff < 0 ? ' late' : ''}">
+      <div class="jour">${x.date ? esc(x.date.slice(0,5)) : '·'}<small>${x.iso ? new Date(x.iso+'T12:00:00').toLocaleDateString('fr-FR', {weekday:'long'}) : 'à fixer'}</small></div>
+      <div><div class="nom">${esc(x.c.n)}${x.k.soc && x.k.soc.nom ? ` <span class="chip src-form">🏢 ${esc(x.k.soc.nom)}</span>` : ''}</div><div class="sub">${x.n > 1 ? `Versement ${x.kk}/${x.n}` : 'Règlement'} · ${EUR(x.montant)}${x.k.statut !== 'Signé' ? ' · contrat pas encore signé' : ''}</div></div>
+      <div>${echStatut(x)}${echRappel(x)}</div>
+      <div class="acts">${echActions(x)}</div>
+    </div>`;
+  let html = '';
+  if (fPaie === 'agenda'){
+    const groups = {};
+    all.forEach(x => { const g = moisLabel(x.iso); (groups[g] = groups[g] || []).push(x); });
+    html = Object.keys(groups).length ? Object.entries(groups).map(([g, xs]) => `<div class="mois">${esc(g)}</div><div class="liste">${xs.map(lineOf).join('')}</div>`).join('')
+      : `<div class="vide">Aucune échéance pour l'instant : elles se créent à l'envoi du contrat (dates modifiables ici ensuite).</div>`;
+  } else {
+    html = tous.length ? tous.map(c => {
+      const k = effCtr(c); const xs = all.filter(x => x.c === c);
+      const total = Math.max(c.total||0, c.prix||0, (k&&k.prix)||0), recu = effRecu(c, k);
+      return `<div class="carte"><h3>${esc(c.n)}${k && k.soc && k.soc.nom ? ` <span class="chip src-form">🏢 ${esc(k.soc.nom)}</span>` : ''}${ctrChip(k)}</h3>
+        <div class="sub" style="font-size:13.5px;color:var(--muted);margin:-6px 0 10px">${EUR(recu)} reçu${total ? ' / ' + EUR(total) : ''}${total-recu > 0 ? ` · reste ${EUR(total-recu)}` : ' · soldé'}</div>
+        ${xs.length ? `<div class="liste">${xs.map(lineOf).join('')}</div>` : `<div class="tk-hint">Pas d'échéancier : ${k ? 'les dates n\'ont pas été fixées (renvoie le contrat pour les définir)' : 'envoie le contrat depuis Clientes pour fixer les dates'}.</div>`}
+      </div>`;
+    }).join('') : `<div class="vide">Pas encore de cliente.</div>`;
+  }
+  if (fPaie === 'agenda' && sans.length) html += `<div class="tk-hint" style="margin-top:14px">Sans échéancier : ${sans.map(c => esc(c.n)).join(', ')} (envoie ou renvoie le contrat pour fixer les dates).</div>`;
+  $('l-paie').innerHTML = html;
+}
+$('f-paie').addEventListener('click', e => { const p = e.target.closest('.pill'); if (p){ fPaie = p.dataset.f; renderPaie(); } });
+/* modification d'une date prévue -> script Contrats (echeances_set) : toutes les dates de la cliente sont renvoyées */
+document.addEventListener('change', async e => {
+  const inp = e.target.closest('.ech-date'); if (!inp || !inp.value) return;
+  const mail = inp.dataset.mail; const c = clientes().find(x => (x.mail||'').toLowerCase() === mail); if (!c) return;
+  const k = effCtr(c); if (!k) return;
+  const dates = (k.ech||[]).map(x => x.date);
+  dates[+inp.dataset.k - 1] = isoToFr(inp.value);
+  inp.disabled = true;
+  try {
+    const r = await fetch(PONT_CTR, { method:'POST', body: JSON.stringify({ what:'echeances_set', key:PONT.key, email:mail, dates }) });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'refus du script');
+    // reflet immédiat : live + overlay en attente
+    const live = store.get('ctrlive', {}); if (live[mail] && live[mail].ech) live[mail].ech.forEach((x,i) => { x.date = j.dates[i] || x.date; }); store.set('ctrlive', live);
+    const C = store.get('ctrpend', {}); if (C[mail] && C[mail].ech) C[mail].ech.forEach((x,i) => { x.date = j.dates[i] || x.date; }); store.set('ctrpend', C);
+    toast(`Date du versement ${inp.dataset.k} enregistrée : ${isoToFr(inp.value)} ✅`);
+    renderClients(); renderTabs();
+    setTimeout(refreshContrats, 1200);
+  } catch(err){ toast('Échec : ' + err.message); inp.disabled = false; }
 });
 
 /* ---------- clientes signées ---------- */
@@ -1145,6 +1393,7 @@ function renderClients(){
         </div></details>`}
     </div>`;
   }).join('') : `<div class="vide">Pas encore de cliente signée. Dès qu'un call est marqué « Vente » dans Tracking, la fiche arrive ici.</div>`;
+  renderPaie();
 }
 document.addEventListener('click', async e => {
   const b = e.target.closest('.cl-save'); if (!b) return;
