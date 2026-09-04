@@ -269,7 +269,7 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 
 <!-- ===================== TRACKING CLOSING ===================== -->
 <section class="panel" id="p-track">
-  <p class="intro">Dès qu'un call est passé, il arrive ici pour être rempli en 3 clics : show-up, résultat, qualif /10, plus la retranscription et ton commentaire, puis « Valider ». Tout s'écrit dans l'onglet « Suivi Calls » du Sheet École. Si c'est une vente : « 📄 Envoyer le contrat » enregistre la vente, crée la fiche dans « Clientes » et envoie le contrat à signer en ligne. « Call test 🧪 » fait disparaître le call de toutes les datas.</p>
+  <p class="intro">Dès qu'un call est passé, il arrive ici pour être rempli en 3 clics : show-up, résultat, qualif /10, plus la retranscription et ton commentaire, puis « Valider ». Tout s'écrit dans l'onglet « Suivi Calls » du Sheet École. Si c'est une vente : « 📄 Envoyer le contrat » enregistre la vente, crée la fiche dans « Clientes » et envoie le contrat à signer en ligne. « Call test 🧪 » fait disparaître le call de toutes les datas (sur une vente : la fiche cliente, les paiements, le contrat et les factures partent aussi ; le bouton existe aussi sur la fiche dans « Clientes »).</p>
   <div class="kpis kpis-mini" id="track-stats"></div>
   <div class="pills" id="f-track"></div>
   <div class="liste" id="l-track"></div>
@@ -960,6 +960,10 @@ document.addEventListener('click', async e => {
       np: parseInt(np)||0, q: parseInt(qualif)||0, when: Date.now() };
     store.set('trackfix', F);
     if (showup === 'Call test'){
+      const mail = (f.dataset.mail||'').toLowerCase();
+      if (mail && (f.dataset.res0 === 'Vente' || clientes().some(c => (c.mail||'').toLowerCase() === mail))){
+        try { await callTestCliente(mail, f.dataset.nom); return; } catch(e){}
+      }
       toast('Call test enregistré 🧪 il disparaît de toutes les datas');
     } else if (resultat === 'Vente'){
       const P = store.get('clipend', []);
@@ -1374,9 +1378,46 @@ function clientes(){
   // fiche en attente : purgée quand le Sheet l'a (prochaine MAJ), après 3 jours, ou si le script dit qu'elle n'existe plus (test nettoyé)
   const keep = P.filter(p => !mails.has(p.mail) && Date.now()-(p.when||0) < 3*86400000 && !(L[p.mail] && L[p.mail].client === false));
   if (keep.length !== P.length) store.set('clipend', keep);
-  return fromSheet.concat(keep.map(p => ({n:p.n, mail:p.mail, tel:p.tel, date:'', ts:'', offre:'',
+  // « Call test » côté page : la fiche est masquée tout de suite, l'overlay est purgé quand le Sheet ne l'a plus (ou après 3 jours)
+  const T = store.get('clitest', {}); let tch = false;
+  Object.keys(T).forEach(m => { if (!mails.has(m) || Date.now()-(T[m]||0) > 3*86400000){ delete T[m]; tch = true; } });
+  if (tch) store.set('clitest', T);
+  return fromSheet.filter(c => !T[c.mail]).concat(keep.map(p => ({n:p.n, mail:p.mail, tel:p.tel, date:'', ts:'', offre:'',
     prix:p.prix||0, statut:'Signée', notes:'', recu:0, total:p.prix||0, pend:true})));
 }
+/* « Call test » sur une vente : le call passe en Call test dans « Suivi Calls », la fiche Clients, les paiements,
+   le contrat et les factures de cet e-mail sont supprimés (PDF à la corbeille). Tout disparaît de la console tout de suite. */
+async function callTestCliente(mail, nom){
+  mail = (mail||'').toLowerCase(); if (!mail) throw new Error("pas d'e-mail");
+  const r = await fetch(PONT.url, { method:'POST', body: JSON.stringify({ what:'client_test', key:PONT.key, email:mail, nom }) });
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.error || 'refus du pont');
+  let jc = { contrats:0, factures:0 };
+  try {
+    const r2 = await fetch(PONT_CTR, { method:'POST', body: JSON.stringify({ what:'client_test', key:PONT.key, email:mail }) });
+    const x = await r2.json(); if (x.ok) jc = x;
+  } catch(e){}
+  // reflet immédiat côté page
+  const F = store.get('trackfix', {});
+  DATA.icalls.calls.forEach(c => { if ((c.mail||'').toLowerCase() === mail) F[c.id] = { s:'Call test', r:'', prix:0, np:0, q:0, when:Date.now() }; });
+  store.set('trackfix', F);
+  const T = store.get('clitest', {}); T[mail] = Date.now(); store.set('clitest', T);
+  store.set('clipend', store.get('clipend', []).filter(p => (p.mail||'').toLowerCase() !== mail));
+  const C = store.get('ctrpend', {}); delete C[mail]; store.set('ctrpend', C);
+  const L = store.get('ctrlive', {}); delete L[mail]; store.set('ctrlive', L);
+  const PF = store.get('paiefix', {}); delete PF[mail]; store.set('paiefix', PF);
+  const FF = store.get('factfix', {}); if (FF && FF[mail]) { delete FF[mail]; store.set('factfix', FF); }
+  toast(`Call test 🧪 ${j.calls||0} call${j.calls>1?'s':''}, fiche, paiements, ${jc.contrats||0} contrat${jc.contrats>1?'s':''}, ${jc.factures||0} facture${jc.factures>1?'s':''} retirés`);
+  renderTrack(); renderClients(); renderTabs();
+  return j;
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('.cl-test'); if (!b) return;
+  if (!confirm(`Call test pour ${b.dataset.nom || b.dataset.mail} ?\n\nLe call, la fiche cliente, les paiements, le contrat et les factures de cet e-mail seront retirés de toutes les datas.`)) return;
+  b.disabled = true; b.textContent = 'Nettoyage…';
+  try { await callTestCliente(b.dataset.mail, b.dataset.nom); }
+  catch(err){ toast('Échec : ' + err.message); b.disabled = false; b.textContent = '🧪 Call test'; }
+});
 function effCli(c){
   const F = store.get('clifix', {});
   const f = c.mail && F[c.mail];
@@ -1405,7 +1446,7 @@ function renderClients(){
         <div style="margin-top:4px"><span class="chip src-live">${esc(c.statut||'Signée')}</span>${c.offre?` <span class="chip src-form">${esc(c.offre)}</span>`:''}${ctrChip(k)}${c.pend?' <span class="chip src-webi">en attente de la prochaine MAJ</span>':''}</div></div>
       <div class="meta"><b>${c.date ? 'Signée le '+esc(c.date) : ''}</b>${c.tel?'+'+c.tel:''}</div>
       <div class="meta"><b>${EUR(recu)} encaissé${total ? ' / '+EUR(total) : ''}</b>${reste ? `<span class="tag-warn">reste ${EUR(reste)}</span>` : '<span class="tag-ok">soldé</span>'}</div>
-      <div class="actions">${c.tel ? `<a class="btn-wa" href="https://wa.me/${c.tel}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}${ctrActions(c, k)}</div>
+      <div class="actions">${c.tel ? `<a class="btn-wa" href="https://wa.me/${c.tel}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}${ctrActions(c, k)}${c.mail ? ` <button class="btn-ghost cl-test" data-mail="${esc(c.mail)}" data-nom="${esc(c.n)}" title="Vente de test : retire le call, la fiche, les paiements, le contrat et les factures">🧪 Call test</button>` : ''}</div>
       ${paieRow(c, k)}
       ${c.notes ? `<details class="sujet"><summary>Voir les notes</summary><div class="rep">${esc(c.notes)}</div></details>` : ''}
       ${c.pend ? '' : `<details class="sujet"><summary>✏️ Modifier le suivi</summary>
