@@ -43,7 +43,7 @@ jobs:
         run: |
           curl -s -m 120 -L -X POST "https://script.google.com/macros/s/AKfycbwhr4s_j6vijp-aWj0qWBYIR-8qSYy-tFUoasujsrqCr1-jVIomeBfiUMtkfixxJVLd/exec" \
             -H "Content-Type: application/json" -d "{\"what\":\"rappels\",\"key\":\"$PONT_KEY\"}" | head -c 600; echo
-      - name: Bilan hebdo des clientes (vendredi 16h : lien Tally par mail depuis selfty.academy, une fois par semaine)
+      - name: Bilan hebdo des clientes (vendredi 16h, lien Tally par mail depuis selfty.academy, une fois par semaine)
         env:
           PONT_KEY: ${{ secrets.PONT_KEY }}
         run: |
