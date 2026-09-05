@@ -549,6 +549,13 @@ def iso_week(at):
     except Exception:
         return ""
 
+# attribution manuelle (onglet « Bilans attribution », écrit par la console) : Submission ID -> e-mail ('__ignore__' = ignoré)
+attrib = {}
+for r in (read_tab(ewb, "bilans attribution") or []):
+    sid = str(r.get("Submission") or "").strip()
+    if sid:
+        attrib[sid] = str(r.get("E-mail") or "").strip().lower()
+
 eow_subs, eow_ok = [], False
 if ty_key:
     try:
@@ -587,14 +594,19 @@ if ty_key:
                     except ValueError:
                         pass
                 det.append([lab, v])
+            mail_decl = mail
             mail = str(hid.get("email") or "").strip().lower() or mail
+            sid = str(s.get("id") or "")
+            if attrib.get(sid):
+                mail = attrib[sid]
             prenom = str(hid.get("prenom") or "").strip() or prenom
-            if not mail or (mail in TEST_EMAILS and not SHOW_TEST):
+            # sans e-mail : gardé quand même, il sortira en « non attribué » dans la console
+            if mail in TEST_EMAILS and not SHOW_TEST:
                 continue
             at = str(s.get("submittedAt") or "")
             pres = next((v for l, v in det if l.startswith("Cette semaine, aux calls de groupe")), "")
             eow_subs.append({
-                "id": s.get("id"), "mail": mail, "prenom": prenom, "at": at, "date": iso_paris(at),
+                "id": sid, "mail": mail, "prenom": prenom, "mailDecl": mail_decl, "attrib": bool(attrib.get(sid)), "at": at, "date": iso_paris(at),
                 "week": str(hid.get("semaine") or "").strip() or iso_week(at),
                 "feel": scores.get("Comment tu te sens, là, en cette fin de semaine ?"),
                 "energie": scores.get("Ton niveau d’énergie sur la semaine"),

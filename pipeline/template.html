@@ -318,6 +318,11 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
   <div class="kpis kpis-mini" id="am-kpis"></div>
   <div class="pills" id="f-ambre"></div>
   <div class="liste" id="l-ambre"></div>
+  <div class="carte" id="am-na-carte">
+    <h3>Bilans non attribués <span class="bdg" id="am-na-n" style="background:var(--rose);color:var(--mauve-deep);border-radius:999px;padding:0 8px;font-size:13px"></span></h3>
+    <p class="bm-note" style="margin:0 0 10px">Tous les bilans Tally arrivent ici s'ils ne sont rattachés à aucune cliente (lien ouvert sans son lien perso, e-mail différent, ou cliente pas encore dans « Clientes »). Choisis la cliente puis « Attribuer » : c'est mémorisé dans le Sheet et le bilan rejoint sa fiche.</p>
+    <div id="am-na-liste"></div>
+  </div>
   <div class="carte" id="am-pres-carte">
     <h3>Présence aux calls de groupe</h3>
     <p class="bm-note" style="margin:0 0 10px">Choisis la date du call (ou ajoute-la), puis coche Présente / Absente pour chaque cliente : ça s'écrit dans l'onglet « Présences » du Sheet. Chaque cliente déclare aussi sa présence dans son bilan hebdo (visible dans ses bilans). Pointage automatique depuis Zoom : possible plus tard via l'API Zoom du compte d'Anaïs (rapport des participants), pas encore branché.</p>
@@ -557,7 +562,7 @@ function renderTabs(){
   const bTrack = trackList().filter(c => { const t = effTrk(c); return !t.s && !t.r; }).length;
   const bCli = clientes().filter(c => { const k = effCtr(c); return !k || k.statut !== 'Signé'; }).length;
   const bPaie = echeancesToutes().filter(x => !x.paye && x.diff !== null && x.diff <= 2).length;
-  const b = {webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, calls:bCalls, track:bTrack, clients:bCli, ambre:ambreManquants().length, paie:bPaie, compta:null, data:null};
+  const b = {webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, calls:bCalls, track:bTrack, clients:bCli, ambre:ambreManquants().length + eowNonAttribues().length, paie:bPaie, compta:null, data:null};
   $('tabs').innerHTML = TABS.map(t =>
     `<button class="tab${t.id===tabOn?' on':''}" data-t="${t.id}">${t.lab}${b[t.id]!==null?` <span class="bdg">${b[t.id]}</span>`:''}</button>`).join('');
   TABS.forEach(t => $('p-'+t.id).classList.toggle('on', t.id===tabOn));
@@ -1663,7 +1668,20 @@ function semaineBilan(){
 }
 const ecoleCommencee = () => todayIso() >= DATA.ecoleDebut;
 const cliActive = c => !['Terminée', 'En pause'].includes(c.statut || '');
-const eowDe = mail => (DATA.eow.subs || []).filter(s => s.mail === mail);
+/* bilans avec attribution manuelle (Sheet « Bilans attribution » au build, overlay local en attendant) */
+function subsEff(){
+  const A = store.get('attribfix', {}); let ch = false;
+  const out = (DATA.eow.subs || []).map(s => {
+    const a = A[s.id];
+    if (!a) return s;
+    if ((s.attrib && s.mail === a.mail) || Date.now()-(a.when||0) > 3*86400000){ delete A[s.id]; ch = true; return s; }
+    return Object.assign({}, s, { mail: a.mail, attrib: true });
+  });
+  if (ch) store.set('attribfix', A);
+  return out;
+}
+const eowDe = mail => subsEff().filter(s => s.mail === mail);
+const eowNonAttribues = () => { const M = new Set(clientes().map(c => (c.mail||'').toLowerCase()).filter(Boolean)); return subsEff().filter(s => s.mail !== '__ignore__' && (!s.mail || !M.has(s.mail))); };
 function presDe(mail){
   const F = store.get('presfix', {});
   const rows = (DATA.presences || []).filter(x => x.mail === mail).map(x => ({ date:x.date, present:x.present }));
@@ -1769,6 +1787,15 @@ function renderAmbre(){
         </div></details>`}
     </div>`;
   }).join('') : `<div class="vide">${tous.length ? 'Personne dans ce filtre.' : 'Pas encore de cliente. Dès qu\'une vente est enregistrée (ou une cliente ajoutée à la main dans « Clientes »), sa fiche de suivi arrive ici.'}</div>`;
+  // bilans non attribués : attribution à une cliente (select) ou ignorer
+  const na = eowNonAttribues();
+  $('am-na-n').textContent = na.length;
+  $('am-na-carte').style.display = na.length ? '' : 'none';
+  const optsCli = clientes().filter(c => c.mail).map(c => `<option value="${esc((c.mail||'').toLowerCase())}">${esc(c.n)} · ${esc(c.mail)}</option>`).join('');
+  $('am-na-liste').innerHTML = na.map(b => `<div class="am-bilan" data-id="${esc(b.id)}"><div class="h"><b>${esc(b.date)}</b> · semaine ${esc(b.week.replace(/^\d+-W/, ''))} · ${b.prenom ? 'prénom déclaré : <b>' + esc(b.prenom) + '</b>' : 'sans prénom'}${b.mail ? ' · e-mail : <b>' + esc(b.mail) + '</b> (inconnu dans Clientes)' : b.mailDecl ? ' · e-mail : <b>' + esc(b.mailDecl) + '</b>' : ' · sans e-mail'}
+      ${scoreChip('Ressenti', b.feel)}${scoreChip('Énergie', b.energie)}${scoreChip('Confiance', b.confiance)}${scoreChip('Semaine', b.note)}</div>
+    <details class="sujet"><summary>Voir ses réponses</summary>${b.det.map(([t,v]) => `<div class="rep"><b>${esc(t)}</b>${esc(v)}</div>`).join('')}</details>
+    <div class="tk-row" style="margin-top:8px"><select class="am-na-sel" style="border:1px solid var(--border);border-radius:999px;padding:6px 12px;font:14px Jost,sans-serif;background:var(--surface);color:var(--ink)"><option value="">Choisir la cliente…</option>${optsCli}</select><button class="btn-add am-na-ok">Attribuer</button><button class="btn-ghost am-na-ign" title="Bilan de test ou hors sujet">Ignorer</button></div></div>`).join('');
   // pointage des présences
   let cur = store.get('amsess', '') || sess[0] || '';
   if (cur && !sess.includes(cur)) cur = sess[0] || '';
@@ -1789,6 +1816,23 @@ document.addEventListener('click', async e => {
     const S = store.get('sessions', []); if (!S.includes(v)) S.push(v); store.set('sessions', S); store.set('amsess', v); renderAmbre(); return;
   }
   const cp = e.target.closest('.am-copy'); if (cp){ try { await navigator.clipboard.writeText(cp.dataset.lien); toast('Lien du bilan copié 🔗'); } catch(err){ prompt('Lien perso du bilan :', cp.dataset.lien); } return; }
+  const na = e.target.closest('.am-na-ok, .am-na-ign');
+  if (na){
+    const card = na.closest('.am-bilan'); const id = card.dataset.id;
+    const ign = na.classList.contains('am-na-ign');
+    const mail = ign ? '__ignore__' : card.querySelector('.am-na-sel').value;
+    if (!mail) return toast('Choisis la cliente');
+    const nom = ign ? '' : (clientes().find(c => (c.mail||'').toLowerCase() === mail) || {}).n || '';
+    na.disabled = true;
+    try {
+      const r = await fetch(PONT.url, { method:'POST', body: JSON.stringify({ what:'bilan_attrib', key:PONT.key, id, email:mail, nom }) });
+      const j = await r.json(); if (!j.ok) throw new Error(j.error || 'refus du pont');
+      const A = store.get('attribfix', {}); A[id] = { mail, when:Date.now() }; store.set('attribfix', A);
+      toast(ign ? 'Bilan ignoré' : `Bilan attribué à ${nom} ✅`);
+      renderAmbre(); renderTabs();
+    } catch(err){ toast('Échec : ' + err.message); na.disabled = false; }
+    return;
+  }
   const b = e.target.closest('.am-p'); if (!b) return;
   const present = b.dataset.p === '1';
   b.disabled = true;
