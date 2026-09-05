@@ -223,6 +223,7 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 <!-- ===================== RELANCES WEBI ===================== -->
 <section class="panel" id="p-webi">
   <p class="intro">Toutes les personnes inscrites au live, avec leur numéro. Clique sur le bouton WhatsApp : le message est pré-écrit (c'est ce soir + ajout au groupe), tu n'as plus qu'à envoyer. La coche « Relancée » se garde sur ce navigateur.</p>
+  <div class="pills" id="f-webi-live"></div>
   <div class="pills" id="f-webi-seg"></div>
   <div class="pills" id="f-webi"></div>
   <div style="margin:0 0 14px"><input type="search" id="q-webi" class="search" placeholder="Chercher un prénom, un mail…"></div>
@@ -588,10 +589,16 @@ const segMsg = i => {
   const tpl = i.coach ? SET.tplWebiCoach : (i.eco ? SET.tplWebiEcole : SET.tplWebi);
   return tpl.replaceAll('{prenom}', i.n).replaceAll('{groupe}', SET.groupe).replaceAll('{live}', DATA.webi.meet);
 };
-let fWebi = 'a', segWebi = 't', qWebi = '';
+let fWebi = 'a', segWebi = 't', qWebi = '', liveWebi = store.get('livewebi', '9sept');
 function renderWebi(){
   const done = store.get('relwebi', {});
-  let tous = DATA.inscrits;
+  const tousLives = DATA.inscrits;
+  $('f-webi-live').innerHTML = [
+    ['9sept', `Live du 9 sept <b>${tousLives.filter(i => i.live==='9sept').length}</b>`],
+    ['31aout', `Live du 31 août <b>${tousLives.filter(i => i.live!=='9sept').length}</b>`],
+    ['t', `Les 2 <b>${tousLives.length}</b>`]
+  ].map(([v,l]) => `<button class="pill${liveWebi===v?' on':''}" data-f="${v}">${l}</button>`).join('');
+  let tous = liveWebi==='t' ? tousLives : tousLives.filter(i => (i.live==='9sept') === (liveWebi==='9sept'));
   $('f-webi-seg').innerHTML = [
     ['t', `Tout le monde <b>${tous.length}</b>`],
     ['l', `Live seul <b>${tous.filter(i => segOf(i)==='l').length}</b>`],
@@ -630,6 +637,7 @@ function renderWebi(){
 }
 $('f-webi').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fWebi = p.dataset.f; renderWebi(); }});
 $('f-webi-seg').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ segWebi = p.dataset.f; renderWebi(); }});
+$('f-webi-live').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ liveWebi = p.dataset.f; store.set('livewebi', liveWebi); renderWebi(); }});
 $('q-webi').addEventListener('input', e => { qWebi = e.target.value.trim().toLowerCase(); renderWebi(); });
 
 /* ---------- candidatures ---------- */

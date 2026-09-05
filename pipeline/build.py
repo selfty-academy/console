@@ -76,6 +76,7 @@ for r in real:
         "date": fmt_date(r.get("Date")),
         "ts": r.get("Date").isoformat() if isinstance(r.get("Date"), datetime.datetime) else "",
         "src": src_label(r.get("Source")),
+        "live": "9sept" if "9-sept" in str(r.get("Source") or "") else "31aout",
         "statut": str(r.get("Statut ") or "").strip(),
         "etape": r.get("Dernière étape") or "",
     }
@@ -630,10 +631,11 @@ data = {
     "eow": {"ok": eow_ok, "url": f"https://tally.so/r/{EOW_FORM}", "subs": eow_subs},
     "presences": presences,
     "webi": {
-        "label": "Live du lundi 31 août, 18h",
+        "label": "Live du mercredi 9 septembre, 18h",
         "meet": "https://meet.google.com/oxf-vzjg-bhr",
         "groupe": "https://chat.whatsapp.com/JRCRXWKVg8qBUS0uUUTkCA?mode=gi_t",
-        "lp": "https://selfty-academy.github.io/live-31-aout/",
+        "lp": "https://selfty-academy.github.io/live-9-septembre/",
+        "lpPrec": "https://selfty-academy.github.io/live-31-aout/",
     },
     "inscrits": sorted(inscrits, key=lambda x: x["ts"], reverse=True),
     "cands": sorted(cands, key=lambda c: (c["accord"] != "oui", c["ts"])),
