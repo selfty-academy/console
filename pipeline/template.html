@@ -408,7 +408,7 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
     <div class="tk-row"><span class="tk-lab">Prix (€)</span><button class="tk-pill tk-mini cm-prixq" data-prix="5000">5 000 €</button><button class="tk-pill tk-mini cm-prixq" data-prix="6000">6 000 €</button><input class="tk-prix" id="cm-prix" inputmode="numeric" placeholder="autre"></div>
     <div class="tk-row"><span class="tk-lab">Payé en</span><button class="tk-pill tk-mini" data-cmnp="1">1x</button><button class="tk-pill tk-mini" data-cmnp="2">2x</button><button class="tk-pill tk-mini" data-cmnp="3">3x</button><span class="tk-hint">3 fois maximum (article 5)</span></div>
     <div class="cm-ech" id="cm-ech"></div>
-    <div class="tk-hint">Proposition automatique : 1er versement à la date choisie ; s'il tombe avant le 10/10 (début de l'école), les suivants sont le 10/11 et le 10/12. Chaque date est modifiable : elles figurent dans le contrat et déclenchent le rappel J-2 par e-mail.</div>
+    <div class="tk-hint">Proposition automatique : tous les versements le 1er du mois (1er versement = le prochain 1er du mois, puis le 1er des mois suivants). Chaque date est modifiable : elles figurent dans le contrat et déclenchent le rappel J-2 par e-mail.</div>
     <div class="cm-actions"><button class="btn-ghost" id="cm-cancel">Annuler</button><button class="btn-add" id="cm-go">📄 Envoyer le contrat</button></div>
   </div>
 </div>
@@ -1198,12 +1198,14 @@ const isoToFr = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||''); re
 const frToIso = fr => { const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec((fr||'').trim()); return m ? `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}` : ''; };
 const todayIso = () => new Date().toLocaleDateString('fr-CA', { timeZone:'Europe/Paris' });
 function addMonthsIso(iso, n){ const d = new Date(iso + 'T12:00:00'); d.setMonth(d.getMonth() + n); return d.toISOString().slice(0,10); }
-/* proposition d'échéancier : 1er versement à la date donnée ; avant le 10/10 -> 10/11 et 10/12 ; sinon tous les mois, dans les 3 premiers mois */
+/* proposition d'échéancier (règle du 04/09) : tous les versements le 1er du mois.
+   1er versement = le prochain 1er du mois (ou la date choisie à la main) ; les suivants = le 1er des mois suivants. Chaque date reste modifiable. */
+function premierDuMois(iso, plus){ const m = /^(\d{4})-(\d{2})/.exec(iso); const d = new Date(+m[1], +m[2]-1 + (plus||0), 1, 12); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`; }
+function prochainPremier(){ const t = todayIso(); return t.slice(8) === '01' ? t : premierDuMois(t, 1); }
 function proposeDates(np, firstIso){
-  firstIso = firstIso || todayIso();
+  firstIso = firstIso || prochainPremier();
   const out = [firstIso];
-  if (firstIso < DEBUT_ECOLE){ ['2026-11-10','2026-12-10'].forEach((d,i) => { if (i+1 < np) out.push(d); }); }
-  else { const cap = addMonthsIso(DEBUT_ECOLE, 3); for (let k = 1; k < np; k++){ let d = addMonthsIso(firstIso, k); if (d > cap) d = cap; out.push(d); } }
+  for (let k = 1; k < np; k++) out.push(premierDuMois(firstIso, k));
   return out;
 }
 const CM = { type:'perso', np:1, prix:0, dates:[] };
