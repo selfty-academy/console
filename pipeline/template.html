@@ -1713,7 +1713,7 @@ function ambreMsg(c, f){
 const scoreChip = (lab, v) => v == null ? '' : `<span class="am-sc">${lab} <b>${v}/10</b></span>`;
 function bilanHtml(b){
   return `<div class="am-bilan"><div class="h"><b>${esc(b.date)}</b> · semaine ${esc(b.week.replace(/^\d+-W/, ''))}${b.presence ? ` · <span class="chip src-form">calls : ${esc(b.presence)}</span>` : ''}
-    ${scoreChip('Ressenti', b.feel)}${scoreChip('Énergie', b.energie)}${scoreChip('Confiance', b.confiance)}${scoreChip('Semaine', b.note)}</div>
+    ${b.seances ? `<span class="am-sc">séances <b>${esc(b.seances)}</b></span>` : ''}${scoreChip('Ressenti', b.feel)}${scoreChip('Énergie', b.energie)}${scoreChip('En séance', b.ressentiSeances)}${scoreChip('Confiance', b.confiance)}${scoreChip('Semaine', b.note)}</div>
     <details class="sujet"><summary>Voir ses réponses</summary>${b.det.map(([t,v]) => `<div class="rep"><b>${esc(t)}</b>${esc(v)}</div>`).join('')}</details></div>`;
 }
 let fAmbre = store.get('amf', 't');
@@ -1752,7 +1752,7 @@ function renderAmbre(){
       <div class="meta"><b>${c.date ? 'Signée le ' + esc(c.date) : ''}</b>${cc ? `Closing ${esc(quandUtc(cc.c.utc).txt)}${cc.t.q ? ' · qualif ' + cc.t.q + '/10' : ''}` : 'Pas de call iClosed rattaché'}</div>
       <div class="meta"><b>${ecoleCommencee() ? 'Semaine ' + f.semaine + ' / ' + ECOLE_SEMAINES : 'Démarre le 10/10'}</b><div class="am-prog"><i style="width:${Math.round(100*f.semaine/ECOLE_SEMAINES)}%"></i></div>${f.bilans.length} bilan${f.bilans.length>1?'s':''}${dern ? ' · dernier le ' + esc(dern.date.split(' ')[0]) : ''} · ${nbPres}/${f.pres.length || sess.length || 0} call${(f.pres.length||sess.length)>1?'s':''}</div>
       <div class="actions">${c.tel ? `<a class="btn-wa" href="${waUrl(c.tel, ambreMsg(c, f))}" target="_blank" rel="noopener">${WA_SVG} ${f.manque ? 'Relancer le bilan' : (f.derniere && !f.derniere.present) ? 'Absente au call' : 'Prendre des nouvelles'}</a>` : ''} <button class="btn-ghost am-copy" data-lien="${esc(eowLienPerso(c))}" title="Lien perso du questionnaire hebdo">🔗 Lien bilan</button>${cc && cc.c.link ? ` <a class="btn-ghost" href="${esc(cc.c.link)}" target="_blank" rel="noopener">🎥 Visio du closing</a>` : ''}${bvBtn(c)}</div>
-      ${dern ? `<div style="grid-column:1/-1">${scoreChip('Ressenti', dern.feel)}${scoreChip('Énergie', dern.energie)}${scoreChip('Confiance', dern.confiance)}${scoreChip('Semaine', dern.note)}${dern.presence ? `<span class="am-sc">calls (déclaré) <b>${esc(dern.presence)}</b></span>` : ''}</div>` : ''}
+      ${dern ? `<div style="grid-column:1/-1">${dern.seances ? `<span class="am-sc">séances <b>${esc(dern.seances)}</b></span>` : ''}${scoreChip('Ressenti', dern.feel)}${scoreChip('Énergie', dern.energie)}${scoreChip('En séance', dern.ressentiSeances)}${scoreChip('Confiance', dern.confiance)}${scoreChip('Semaine', dern.note)}${dern.presence ? `<span class="am-sc">calls (déclaré) <b>${esc(dern.presence)}</b></span>` : ''}</div>` : ''}
       ${cc ? `<details class="sujet"><summary>📞 Call de closing du ${esc(quandUtc(cc.c.utc).txt)}${cc.c.closer ? ' · ' + esc(cc.c.closer) : ''}</summary>
         ${cc.c.link ? `<div class="rep"><b>Lien de la visio</b><a href="${esc(cc.c.link)}" target="_blank" rel="noopener">${esc(cc.c.link)}</a></div>` : ''}
         ${cc.t.r ? `<div class="rep"><b>Résultat</b>${esc(cc.t.r)}${cc.t.prix ? ' · ' + EUR(cc.t.prix) : ''}${cc.t.np ? ' · ' + cc.t.np + 'x' : ''}${cc.t.q ? ' · qualifiée ' + cc.t.q + '/10' : ''}</div>` : ''}
