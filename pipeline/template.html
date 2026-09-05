@@ -144,6 +144,25 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 #panneau .champ{margin-bottom:16px}
 #panneau .champ label{font-size:13px;font-weight:500;display:block;margin-bottom:5px}
 #panneau .note{font-size:12.5px;color:var(--muted);margin-top:4px}
+/* onglet Ambre suivi client */
+.am-prog{height:7px;background:var(--rose);border-radius:999px;overflow:hidden;margin:6px 0 4px}
+.am-prog i{display:block;height:100%;background:var(--mauve);border-radius:999px}
+.am-sc{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:600;background:var(--card);color:var(--ink-soft);margin:2px 3px 0 0}
+.am-sc b{color:var(--mauve-deep)}
+.am-bilan{border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin:8px 0;background:var(--surface)}
+.am-bilan .h{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13px;color:var(--ink-soft);margin-bottom:6px}
+.am-bilan .h b{color:var(--ink)}
+.am-pres{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--border)}
+.am-pres:last-child{border-bottom:none}
+.am-pres .n{font-size:14px}
+.am-pres .n small{display:block;color:var(--muted);font-size:12px}
+.am-sess{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
+.am-sess input{border:1px solid var(--border);border-radius:999px;padding:6px 12px;font:14px "Jost",sans-serif;background:var(--surface);color:var(--ink);width:130px}
+.bm-card label{font-size:12.5px;color:var(--muted);display:block}
+.bm-card input[type=text],.bm-card textarea{display:block;width:100%;border:1px solid var(--border);border-radius:10px;padding:8px 10px;font:14.5px "Jost",sans-serif;color:var(--ink);background:var(--surface);margin-top:3px}
+.bm-card textarea{min-height:76px;resize:vertical}
+.bm-card .chk{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink-soft)}
+.bm-note{font-size:12.5px;color:var(--muted);line-height:1.45}
 .cm-voile{position:fixed;inset:0;background:rgba(58,42,42,.38);z-index:25;display:flex;align-items:center;justify-content:center;padding:14px;overflow-y:auto}
 .cm-voile[hidden]{display:none}
 .cm-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:20px 22px;width:min(640px,100%);max-height:94vh;overflow-y:auto;display:flex;flex-direction:column;gap:11px}
@@ -293,6 +312,20 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
   </div>
 </section>
 
+<!-- ===================== AMBRE SUIVI CLIENT ===================== -->
+<section class="panel" id="p-ambre">
+  <p class="intro">Le suivi des clientes pour Ambre, tout au même endroit : la fiche, le call de closing (lien de la visio, retranscription), l'avancée dans le programme, les bilans de la semaine (questionnaire hebdo envoyé automatiquement chaque vendredi, réponses centralisées ici), qui n'a pas fait son bilan, la présence aux calls de groupe. Le bouton WhatsApp est prérempli selon la situation : bilan pas fait, absente au dernier call, ou simple prise de nouvelles (messages modifiables dans ⚙️).</p>
+  <div class="kpis kpis-mini" id="am-kpis"></div>
+  <div class="pills" id="f-ambre"></div>
+  <div class="liste" id="l-ambre"></div>
+  <div class="carte" id="am-pres-carte">
+    <h3>Présence aux calls de groupe</h3>
+    <p class="bm-note" style="margin:0 0 10px">Choisis la date du call (ou ajoute-la), puis coche Présente / Absente pour chaque cliente : ça s'écrit dans l'onglet « Présences » du Sheet. Chaque cliente déclare aussi sa présence dans son bilan hebdo (visible dans ses bilans). Pointage automatique depuis Zoom : possible plus tard via l'API Zoom du compte d'Anaïs (rapport des participants), pas encore branché.</p>
+    <div class="am-sess" id="am-sess"></div>
+    <div id="am-pres-liste"></div>
+  </div>
+</section>
+
 <!-- ===================== PAIEMENTS ===================== -->
 <section class="panel" id="p-paie">
   <p class="intro">Le suivi des versements, centralisé : les dates prévues (fixées à l'envoi du contrat, modifiables ici), les rappels envoyés automatiquement par e-mail 2 jours avant depuis selfty.academy@gmail.com, et ce qui est reçu ou reste à recevoir. Coche « Reçu » dès que le virement arrive : la facture acquittée part toute seule. « Facturer avant paiement » envoie la facture à régler avant l'échéance (elle passe en acquittée à la réception). <a id="paie-drive" href="__DRIVE_CONTRATS__" target="_blank" rel="noopener">📁 Dossier Drive des contrats</a> · <a href="__DRIVE_FACTURES__" target="_blank" rel="noopener">🧾 Factures</a></p>
@@ -374,6 +407,21 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
     <div class="note">Variables : {prenom}</div>
   </div>
   <div class="champ">
+    <label for="s-tpl-eow">Ambre : bilan de la semaine pas fait</label>
+    <textarea id="s-tpl-eow"></textarea>
+    <div class="note">Variables : {prenom} {lien} (lien perso du bilan hebdo)</div>
+  </div>
+  <div class="champ">
+    <label for="s-tpl-ambre">Ambre : prise de nouvelles</label>
+    <textarea id="s-tpl-ambre"></textarea>
+    <div class="note">Variables : {prenom}</div>
+  </div>
+  <div class="champ">
+    <label for="s-tpl-ambre-abs">Ambre : absente au call de groupe</label>
+    <textarea id="s-tpl-ambre-abs"></textarea>
+    <div class="note">Variables : {prenom} {date} (date du call)</div>
+  </div>
+  <div class="champ">
     <label for="s-groupe">Lien du groupe WhatsApp</label>
     <input type="text" id="s-groupe">
   </div>
@@ -388,6 +436,26 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
   </div>
 </aside>
 <div class="toast" id="toast"></div>
+
+<!-- ===================== MODALE MAIL DE BIENVENUE ===================== -->
+<div id="bm-voile" class="cm-voile" hidden>
+  <div class="cm-card bm-card" role="dialog" aria-modal="true" aria-labelledby="bm-titre">
+    <h3 id="bm-titre">💌 Mail de bienvenue</h3>
+    <div class="cm-qui" id="bm-qui"></div>
+    <div class="bm-note">Le mail d'Anaïs (« Bienvenue dans l'Academy !! 🎉🎉🎉 »), envoyé depuis selfty.academy@gmail.com : accueil, ton petit mot perso, la facture en pièce jointe si elle existe, sa vision en PDF « Ta vision » (DA Selfty, aussi rangé dans le Drive), la phrase sur le contrat adaptée à son statut, et la date d'accès au premier module.</div>
+    <label>Prénom<input type="text" id="bm-prenom"></label>
+    <label>Petit mot perso (ce que tu as envie de lui dire, ce que tu as hâte de voir chez elle)<textarea id="bm-perso" placeholder="Ex. : hâte de te voir prendre confiance de ta posture, de tes outils, et de te voir être au service de personnes qui seront ravies de tes services !"></textarea></label>
+    <label>Sa vision (telle que formulée au call ; laisse vide pour ne pas joindre le PDF)<textarea id="bm-vision" placeholder="Ex. : un groupe formé, quelques clients alignés, un salaire à 2 000 € et un événement à Monaco avec tes bols chantants."></textarea></label>
+    <label class="chk"><input type="checkbox" id="bm-facture" checked> Joindre sa facture <span id="bm-facture-info" class="bm-note"></span></label>
+    <label>Accès au premier module le<input type="text" id="bm-acces" value="15 septembre"></label>
+    <div class="bm-note" id="bm-ctr"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+      <button class="btn-ghost" id="bm-cancel">Annuler</button>
+      <button class="btn-ghost" id="bm-preview">👁 Aperçu</button>
+      <button class="btn-add" id="bm-send">Envoyer le mail</button>
+    </div>
+  </div>
+</div>
 
 <!-- ===================== MODALE ENVOI DU CONTRAT ===================== -->
 <div id="cm-voile" class="cm-voile" hidden>
@@ -444,14 +512,17 @@ const TPL_DEF = {
   cand: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nMerci pour ta candidature au coaching en direct. Cette fois on a choisi une autre personne, mais ta candidature nous a beaucoup plu et on la garde précieusement : si on refait un live coaching un jour, tu fais partie des personnes à qui on pensera en premier.\n\nEt bien sûr on t'attend au live ce soir à 18h, voici le lien :\n{live}",
   call: "Hello {prenom}, c'est Alex de la Selfty Academy 🌸 Petit rappel pour notre appel {quand}. À tout à l'heure !",
   scholRel: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nJ'ai vu que tu avais commencé ta candidature pour la bourse mais qu'elle n'est pas allée au bout. Les candidatures ferment le 15 septembre : si tu veux ta chance, tu peux la finir ici :\n{lien}\n\nEt si tu bloques quelque part, dis-moi !",
-  scholOk: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nOn a bien reçu ta candidature pour la bourse, merci pour ta confiance. Anaïs lit tout personnellement : tu auras une réponse avant le 15 septembre."
+  scholOk: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nOn a bien reçu ta candidature pour la bourse, merci pour ta confiance. Anaïs lit tout personnellement : tu auras une réponse avant le 15 septembre.",
+  eowRelance: "Hello {prenom}, c'est Ambre de la Selfty Academy 🌸\n\nJe n'ai pas encore vu ton bilan de la semaine. Cinq minutes pour prendre du recul sur ta semaine, et ça nous aide à t'accompagner au plus près. Voici ton lien perso :\n{lien}\n\nMerci, et belle journée !",
+  ambreCheckin: "Hello {prenom}, c'est Ambre de la Selfty Academy 🌸\n\nJe prends de tes nouvelles : comment tu te sens en ce moment dans la formation ? Y a-t-il quelque chose qu'on peut faire pour mieux t'accompagner ? Je suis là si besoin.",
+  ambreAbsente: "Hello {prenom}, c'est Ambre de la Selfty Academy 🌸\n\nOn ne t'a pas vue au call de groupe du {date}. Tout va bien de ton côté ? Le replay est disponible, et si tu as une question dessus je suis là."
 };
 const MEM = {};
 const store = {
   get: (k, d) => { try { const v = localStorage.getItem('sc-'+k); return v===null ? d : JSON.parse(v); } catch(e){ return k in MEM ? MEM[k] : d; } },
   set: (k, v) => { MEM[k] = v; try { localStorage.setItem('sc-'+k, JSON.stringify(v)); } catch(e){} }
 };
-let SET = Object.assign({tplWebi:TPL_DEF.webi, tplWebiCoach:TPL_DEF.webiCoach, tplWebiEcole:TPL_DEF.webiEcole, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, tplScholRel:TPL_DEF.scholRel, tplScholOk:TPL_DEF.scholOk, groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
+let SET = Object.assign({tplWebi:TPL_DEF.webi, tplWebiCoach:TPL_DEF.webiCoach, tplWebiEcole:TPL_DEF.webiEcole, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, tplScholRel:TPL_DEF.scholRel, tplScholOk:TPL_DEF.scholOk, tplEowRelance:TPL_DEF.eowRelance, tplAmbreCheckin:TPL_DEF.ambreCheckin, tplAmbreAbsente:TPL_DEF.ambreAbsente, groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
 
 function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),2200); }
 function waUrl(tel, msg){ return 'https://wa.me/'+tel+'?text='+encodeURIComponent(msg); }
@@ -462,6 +533,7 @@ const TABS = [
   {id:'track', lab:'Calls effectués à remplir'},
   {id:'calls', lab:'Agenda calls'},
   {id:'clients', lab:'Clientes'},
+  {id:'ambre', lab:'Ambre suivi client'},
   {id:'paie', lab:'Paiements'},
   {id:'webi',  lab:'Relances webi'},
   {id:'cand',  lab:'Candidatures live'},
@@ -485,7 +557,7 @@ function renderTabs(){
   const bTrack = trackList().filter(c => { const t = effTrk(c); return !t.s && !t.r; }).length;
   const bCli = clientes().filter(c => { const k = effCtr(c); return !k || k.statut !== 'Signé'; }).length;
   const bPaie = echeancesToutes().filter(x => !x.paye && x.diff !== null && x.diff <= 2).length;
-  const b = {webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, calls:bCalls, track:bTrack, clients:bCli, paie:bPaie, compta:null, data:null};
+  const b = {webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, calls:bCalls, track:bTrack, clients:bCli, ambre:ambreManquants().length, paie:bPaie, compta:null, data:null};
   $('tabs').innerHTML = TABS.map(t =>
     `<button class="tab${t.id===tabOn?' on':''}" data-t="${t.id}">${t.lab}${b[t.id]!==null?` <span class="bdg">${b[t.id]}</span>`:''}</button>`).join('');
   TABS.forEach(t => $('p-'+t.id).classList.toggle('on', t.id===tabOn));
@@ -899,7 +971,7 @@ function renderTrack(){
         <div class="tk-row"><span class="tk-lab">Qualifiée</span>${[1,2,3,4,5,6,7,8,9,10].map(n => `<button class="tk-pill tk-mini${t.q===n?' on':''}" data-group="qualif" data-val="${n}">${n}</button>`).join('')}<span style="font-size:12.5px;color:var(--muted)">/10</span></div>
         <textarea class="tk-retrans" placeholder="Retranscription du call : ce qui s'est dit… (ajoutée à la suite dans le Sheet)"></textarea>
         <textarea class="tk-comment" placeholder="Commentaire : ton avis, les objections, la prochaine étape…"></textarea>
-        <div class="tk-row tk-contrat-row"><button class="btn-ghost tk-contrat">📄 Envoyer le contrat</button><span class="tk-hint">Si c'est une vente : enregistre la vente et envoie le contrat à signer par e-mail</span></div>
+        <div class="tk-row tk-contrat-row"><button class="btn-ghost tk-contrat">📄 Envoyer le contrat</button>${vente && c.mail ? bvBtn({mail:c.mail, n:c.n, tel:c.tel}) : ''}<span class="tk-hint">Si c'est une vente : enregistre la vente et envoie le contrat à signer par e-mail${vente && c.mail ? ', puis le mail de bienvenue d\'Anaïs' : ''}</span></div>
         <div class="tk-row"><button class="btn-add tk-save">Valider</button><span class="tk-hint">Enregistre ce que tu as coché dans le Sheet</span></div>
       </div>
     </div>`;
@@ -1013,7 +1085,7 @@ async function refreshContrats(){
       if (!st.found) delete C[mail];                        // contrat supprimé côté Sheet (test nettoyé) : on oublie l'attente locale
     });
     store.set('ctrlive', live); store.set('ctrpend', C);
-    renderClients(); renderTabs();
+    renderClients(); renderAmbre(); renderTabs();
   } catch(e){ /* hors ligne : on garde ce qu'on a */ }
 }
 function effCtr(c){
@@ -1445,10 +1517,10 @@ function renderClients(){
     const reste = Math.max(0, total - recu);
     return `<div class="ligne">
       <div class="qui"><div class="nom">${esc(c.n)}</div><div class="sub">${esc(c.mail)}</div>
-        <div style="margin-top:4px"><span class="chip src-live">${esc(c.statut||'Signée')}</span>${c.offre?` <span class="chip src-form">${esc(c.offre)}</span>`:''}${ctrChip(k)}${c.pend?' <span class="chip src-webi">en attente de la prochaine MAJ</span>':''}</div></div>
+        <div style="margin-top:4px"><span class="chip src-live">${esc(c.statut||'Signée')}</span>${c.offre?` <span class="chip src-form">${esc(c.offre)}</span>`:''}${ctrChip(k)}${bvChip(c)}${c.pend?' <span class="chip src-webi">en attente de la prochaine MAJ</span>':''}</div></div>
       <div class="meta"><b>${c.date ? 'Signée le '+esc(c.date) : ''}</b>${c.tel?'+'+c.tel:''}</div>
       <div class="meta"><b>${EUR(recu)} encaissé${total ? ' / '+EUR(total) : ''}</b>${reste ? `<span class="tag-warn">reste ${EUR(reste)}</span>` : '<span class="tag-ok">soldé</span>'}</div>
-      <div class="actions">${c.tel ? `<a class="btn-wa" href="https://wa.me/${c.tel}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}${ctrActions(c, k)}${c.mail ? ` <button class="btn-ghost cl-test" data-mail="${esc(c.mail)}" data-nom="${esc(c.n)}" title="Vente de test : retire le call, la fiche, les paiements, le contrat et les factures">🧪 Call test</button>` : ''}</div>
+      <div class="actions">${c.tel ? `<a class="btn-wa" href="https://wa.me/${c.tel}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}${ctrActions(c, k)}${bvBtn(c)}${c.mail ? ` <button class="btn-ghost cl-test" data-mail="${esc(c.mail)}" data-nom="${esc(c.n)}" title="Vente de test : retire le call, la fiche, les paiements, le contrat et les factures">🧪 Call test</button>` : ''}</div>
       ${paieRow(c, k)}
       ${c.notes ? `<details class="sujet"><summary>Voir les notes</summary><div class="rep">${esc(c.notes)}</div></details>` : ''}
       ${c.pend ? '' : `<details class="sujet"><summary>✏️ Modifier le suivi</summary>
@@ -1460,6 +1532,7 @@ function renderClients(){
     </div>`;
   }).join('') : `<div class="vide">Pas encore de cliente signée. Dès qu'un call est marqué « Vente » dans Tracking, la fiche arrive ici.</div>`;
   renderPaie();
+  if (typeof renderAmbre === 'function') renderAmbre();
 }
 document.addEventListener('click', async e => {
   const b = e.target.closest('.cl-save'); if (!b) return;
@@ -1499,6 +1572,233 @@ $('cl-add').addEventListener('click', async () => {
     renderClients(); renderTabs();
   } catch(err){ toast('Échec : ' + err.message); }
   b.disabled = false; b.textContent = 'Ajouter';
+});
+
+
+/* ---------- mail de bienvenue d'Anaïs (script Contrats, depuis selfty.academy) ---------- */
+function effBienvenue(c){
+  const mail = (c.mail||'').toLowerCase(); if (!mail) return '';
+  const L = store.get('ctrlive', {})[mail];
+  const live = L && L.bienvenue ? L.bienvenue : (c.bienvenue || '');
+  const P = store.get('bvpend', {}); const p = P[mail];
+  if (p && (live || Date.now()-(p.when||0) > 3*86400000)){ delete P[mail]; store.set('bvpend', P); return live; }
+  return p ? p.sent : live;
+}
+function bvChip(c){ const d = effBienvenue(c); return d ? ` <span class="chip src-live">💌 bienvenue envoyé le ${esc(d.split(' ')[0])}</span>` : ''; }
+function bvBtn(c){
+  if (!c.mail) return '';
+  const d = effBienvenue(c);
+  return ` <button class="btn-ghost cl-bienvenue" data-mail="${esc(c.mail)}" data-nom="${esc(c.n||'')}" data-tel="${esc(c.tel||'')}">💌 ${d ? 'Renvoyer le mail de bienvenue' : 'Mail de bienvenue'}</button>`;
+}
+let bmMail = '';
+function openBienvenue(o){
+  bmMail = (o.mail||'').toLowerCase();
+  const D = store.get('bvdraft', {})[bmMail] || {};
+  const prenom = D.prenom || ((o.nom||'').includes('@') ? '' : (o.nom||'').trim().split(' ')[0]);
+  $('bm-qui').innerHTML = `<b>${esc(o.nom||bmMail)}</b> · ${esc(bmMail)}`;
+  $('bm-prenom').value = prenom; $('bm-perso').value = D.perso || ''; $('bm-vision').value = D.vision || '';
+  $('bm-acces').value = D.acces || '15 septembre';
+  const f = facturesDe(bmMail);
+  $('bm-facture').checked = f.length > 0; $('bm-facture').disabled = !f.length;
+  $('bm-facture-info').textContent = f.length ? `(${f[f.length-1].numero}${f[f.length-1].payee === false ? ', à régler' : ''})` : '(aucune facture pour l\'instant : coche un versement reçu ou « Facturer avant paiement » d\'abord si tu veux la joindre)';
+  const k = effCtr({mail:bmMail});
+  $('bm-ctr').textContent = k && k.statut === 'Signé' ? 'Contrat signé : le mail dira que tout est en ordre de ce côté.' : k ? 'Contrat envoyé, pas encore signé : le mail lui rappellera qu\'elle l\'a reçu par e-mail.' : 'Pas de contrat envoyé : le mail dira qu\'elle le recevra très prochainement.';
+  $('bm-send').disabled = false; $('bm-send').textContent = 'Envoyer le mail';
+  $('bm-voile').hidden = false; $('bm-perso').focus();
+}
+function bmSaveDraft(){
+  if (!bmMail) return;
+  const D = store.get('bvdraft', {});
+  D[bmMail] = { prenom:$('bm-prenom').value.trim(), perso:$('bm-perso').value, vision:$('bm-vision').value, acces:$('bm-acces').value.trim(), when:Date.now() };
+  store.set('bvdraft', D);
+}
+function bmPayload(preview){
+  return { what:'mail_bienvenue', key:PONT.key, email:bmMail, prenom:$('bm-prenom').value.trim(), perso:$('bm-perso').value.trim(),
+    vision:$('bm-vision').value.trim(), facture:$('bm-facture').checked, acces:$('bm-acces').value.trim(), preview: !!preview };
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('.cl-bienvenue'); if (!b) return;
+  openBienvenue({ mail:b.dataset.mail, nom:b.dataset.nom, tel:b.dataset.tel });
+});
+['bm-prenom','bm-perso','bm-vision','bm-acces'].forEach(i => $(i).addEventListener('input', bmSaveDraft));
+$('bm-cancel').addEventListener('click', () => { bmSaveDraft(); $('bm-voile').hidden = true; });
+$('bm-voile').addEventListener('click', e => { if (e.target === $('bm-voile')){ bmSaveDraft(); $('bm-voile').hidden = true; } });
+$('bm-preview').addEventListener('click', async () => {
+  const b = $('bm-preview'); b.disabled = true; b.textContent = 'Aperçu…';
+  try {
+    const r = await fetch(PONT_CTR, { method:'POST', body: JSON.stringify(bmPayload(true)) });
+    const j = await r.json(); if (!j.ok) throw new Error(j.error || 'refus du script');
+    const w = window.open('', '_blank'); if (!w) throw new Error('popup bloquée');
+    w.document.write('<!doctype html><meta charset="utf-8"><title>Aperçu du mail</title>' + j.html); w.document.close();
+  } catch(err){ toast('Échec : ' + err.message); }
+  b.disabled = false; b.textContent = '👁 Aperçu';
+});
+$('bm-send').addEventListener('click', async () => {
+  if (!$('bm-prenom').value.trim()) return toast('Il manque le prénom');
+  const b = $('bm-send'); b.disabled = true; b.textContent = 'Envoi…';
+  try {
+    const r = await fetch(PONT_CTR, { method:'POST', body: JSON.stringify(bmPayload(false)) });
+    const j = await r.json(); if (!j.ok) throw new Error(j.error || 'refus du script');
+    const P = store.get('bvpend', {}); P[bmMail] = { sent:j.sent, when:Date.now() }; store.set('bvpend', P);
+    const D = store.get('bvdraft', {}); delete D[bmMail]; store.set('bvdraft', D);
+    $('bm-voile').hidden = true;
+    toast(`Mail de bienvenue envoyé 💌${j.facture ? ' avec la facture ' + j.facture : ''}${j.vision ? ' + PDF Ta vision' : ''}`);
+    renderClients(); renderTrack(); renderTabs(); setTimeout(refreshContrats, 1500);
+  } catch(err){ toast('Échec : ' + err.message); b.disabled = false; b.textContent = 'Envoyer le mail'; }
+});
+
+/* ---------- onglet « Ambre suivi client » ---------- */
+const ECOLE_FIN = '2027-04-17';
+const ECOLE_SEMAINES = Math.round((new Date(ECOLE_FIN+'T12:00:00') - new Date(DATA.ecoleDebut+'T12:00:00')) / 6048e5);
+function isoWeekKey(iso){
+  const d = new Date(iso + 'T12:00:00Z'); const day = d.getUTCDay() || 7; d.setUTCDate(d.getUTCDate() + 4 - day);
+  const y0 = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return d.getUTCFullYear() + '-W' + String(Math.ceil(((d - y0) / 864e5 + 1) / 7)).padStart(2, '0');
+}
+/* semaine dont on attend le bilan : dès le vendredi = la semaine en cours, sinon la semaine passée */
+function semaineBilan(){
+  const t = todayIso(); const d = new Date(t + 'T12:00:00'); const dow = d.getDay() || 7;
+  const ref = dow >= 5 ? t : addDaysIso(t, -7);
+  return { key: isoWeekKey(ref), courante: dow >= 5 };
+}
+const ecoleCommencee = () => todayIso() >= DATA.ecoleDebut;
+const cliActive = c => !['Terminée', 'En pause'].includes(c.statut || '');
+const eowDe = mail => (DATA.eow.subs || []).filter(s => s.mail === mail);
+function presDe(mail){
+  const F = store.get('presfix', {});
+  const rows = (DATA.presences || []).filter(x => x.mail === mail).map(x => ({ date:x.date, present:x.present }));
+  Object.keys(F).forEach(k => {
+    const [date, m] = k.split('|'); if (m !== mail) return;
+    const f = F[k]; const r = rows.find(x => x.date === date);
+    if (r && (r.present === f.p || Date.now()-(f.when||0) > 3*86400000)){ delete F[k]; return; }
+    if (r) r.present = f.p; else rows.push({ date, present:f.p });
+  });
+  store.set('presfix', F);
+  return rows;
+}
+function sessionsAll(){
+  const set = new Set((DATA.presences || []).map(x => x.date).concat(store.get('sessions', [])));
+  Object.keys(store.get('presfix', {})).forEach(k => set.add(k.split('|')[0]));
+  return [...set].filter(Boolean).sort((a, b) => frToIso(b).localeCompare(frToIso(a)));
+}
+function closingCall(mail){
+  const cs = DATA.icalls.calls.filter(c => (c.mail||'').toLowerCase() === mail && !c.cancel && c.utc).map(c => ({ c, t:effTrk(c) }));
+  if (!cs.length) return null;
+  const v = cs.filter(x => x.t.r === 'Vente'); const pool = v.length ? v : cs.filter(x => quandUtc(x.c.utc).passe);
+  const x = (pool.length ? pool : cs).sort((a, b) => b.c.utc.localeCompare(a.c.utc))[0];
+  return x;
+}
+function eowLienPerso(c){
+  const prenom = (c.n||'').trim().split(' ')[0];
+  return `${DATA.eow.url}?email=${encodeURIComponent(c.mail)}&prenom=${encodeURIComponent(prenom)}&semaine=${semaineBilan().key}`;
+}
+function ambreFiche(c){
+  const mail = (c.mail||'').toLowerCase();
+  const bilans = eowDe(mail); const sb = semaineBilan();
+  const bilanSemaine = bilans.find(b => b.week === sb.key) || null;
+  const pres = presDe(mail).sort((a, b) => frToIso(b.date).localeCompare(frToIso(a.date)));
+  const derniere = pres[0] || null;
+  const debut = new Date(DATA.ecoleDebut + 'T12:00:00'), today = new Date(todayIso() + 'T12:00:00');
+  const semaine = ecoleCommencee() ? Math.min(ECOLE_SEMAINES, Math.floor((today - debut) / 6048e5) + 1) : 0;
+  const manque = ecoleCommencee() && cliActive(c) && !bilanSemaine;
+  return { mail, bilans, bilanSemaine, pres, derniere, semaine, manque, sb };
+}
+function ambreManquants(){ return clientes().map(effCli).filter(c => c.mail && ambreFiche(c).manque); }
+function ambreMsg(c, f){
+  const prenom = (c.n||'').trim().split(' ')[0];
+  if (f.manque) return SET.tplEowRelance.replaceAll('{prenom}', prenom).replaceAll('{lien}', eowLienPerso(c));
+  if (f.derniere && !f.derniere.present) return SET.tplAmbreAbsente.replaceAll('{prenom}', prenom).replaceAll('{date}', f.derniere.date);
+  return SET.tplAmbreCheckin.replaceAll('{prenom}', prenom);
+}
+const scoreChip = (lab, v) => v == null ? '' : `<span class="am-sc">${lab} <b>${v}/10</b></span>`;
+function bilanHtml(b){
+  return `<div class="am-bilan"><div class="h"><b>${esc(b.date)}</b> · semaine ${esc(b.week.replace(/^\d+-W/, ''))}${b.presence ? ` · <span class="chip src-form">calls : ${esc(b.presence)}</span>` : ''}
+    ${scoreChip('Ressenti', b.feel)}${scoreChip('Énergie', b.energie)}${scoreChip('Confiance', b.confiance)}${scoreChip('Semaine', b.note)}</div>
+    <details class="sujet"><summary>Voir ses réponses</summary>${b.det.map(([t,v]) => `<div class="rep"><b>${esc(t)}</b>${esc(v)}</div>`).join('')}</details></div>`;
+}
+let fAmbre = store.get('amf', 't');
+function renderAmbre(){
+  if (!$('l-ambre')) return;
+  const tous = clientes().map(effCli).filter(c => c.mail).map(c => ({ c, f: ambreFiche(c) }));
+  const actives = tous.filter(x => cliActive(x.c));
+  const sb = semaineBilan();
+  const recus = actives.filter(x => x.f.bilanSemaine).length;
+  const manquants = actives.filter(x => x.f.manque).length;
+  const sess = sessionsAll(); const last = sess[0];
+  const presLast = last ? tous.filter(x => x.f.pres.some(p => p.date === last && p.present)).length : null;
+  $('am-kpis').innerHTML = [
+    [actives.length, 'cliente'+(actives.length>1?'s':'')+' active'+(actives.length>1?'s':'')],
+    [ecoleCommencee() ? `${Math.min(ECOLE_SEMAINES, Math.floor((new Date(todayIso()+'T12:00:00') - new Date(DATA.ecoleDebut+'T12:00:00'))/6048e5)+1)}/${ECOLE_SEMAINES}` : 'J-' + Math.max(0, Math.round((new Date(DATA.ecoleDebut+'T12:00:00') - new Date(todayIso()+'T12:00:00'))/864e5)), ecoleCommencee() ? 'semaine du programme' : 'avant le début (10/10)'],
+    [ecoleCommencee() ? recus : '·', `bilan${recus>1?'s':''} reçu${recus>1?'s':''} · sem. ${sb.key.replace(/^\d+-W/, '')}`],
+    [ecoleCommencee() ? manquants : '·', 'bilan manquant' + (manquants>1?'s':'')],
+    [presLast === null ? '·' : `${presLast}/${actives.length}`, last ? 'présentes au call du ' + last.slice(0,5) : 'présence (pas de call pointé)'],
+  ].map(([v,l]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div></div>`).join('');
+  $('f-ambre').innerHTML = [
+    ['t', `Toutes <b>${tous.length}</b>`],
+    ['m', `Bilan manquant <b>${manquants}</b>`],
+    ['r', `Bilan reçu <b>${recus}</b>`],
+    ['x', `Terminées / en pause <b>${tous.length - actives.length}</b>`],
+  ].map(([v,l]) => `<button class="pill${fAmbre===v?' on':''}" data-f="${v}">${l}</button>`).join('');
+  const liste = fAmbre === 'm' ? tous.filter(x => x.f.manque) : fAmbre === 'r' ? tous.filter(x => x.f.bilanSemaine) : fAmbre === 'x' ? tous.filter(x => !cliActive(x.c)) : tous;
+  $('l-ambre').innerHTML = liste.length ? liste.map(({c, f}) => {
+    const k = effCtr(c); const cc = closingCall(f.mail);
+    const nbPres = f.pres.filter(p => p.present).length;
+    const dern = f.bilans[0];
+    return `<div class="ligne">
+      <div class="qui"><div class="nom">${esc(c.n)}</div><div class="sub">${esc(c.mail)}${c.tel ? ' · +' + c.tel : ''}</div>
+        <div style="margin-top:4px"><span class="chip src-live">${esc(c.statut||'Signée')}</span>${ctrChip(k)}${bvChip(c)}
+        ${ecoleCommencee() ? (f.bilanSemaine ? ' <span class="chip src-live" style="background:#E3EFE7;color:#4C7A5E">✅ bilan sem. ' + esc(f.sb.key.replace(/^\d+-W/, '')) + ' reçu</span>' : cliActive(c) ? ' <span class="chip src-webi" style="background:#F7E3D3;color:#A65A2A">⚠️ bilan sem. ' + esc(f.sb.key.replace(/^\d+-W/, '')) + ' pas fait</span>' : '') : ''}
+        ${f.derniere && !f.derniere.present ? ' <span class="chip src-webi">absente au call du ' + esc(f.derniere.date.slice(0,5)) + '</span>' : ''}</div></div>
+      <div class="meta"><b>${c.date ? 'Signée le ' + esc(c.date) : ''}</b>${cc ? `Closing ${esc(quandUtc(cc.c.utc).txt)}${cc.t.q ? ' · qualif ' + cc.t.q + '/10' : ''}` : 'Pas de call iClosed rattaché'}</div>
+      <div class="meta"><b>${ecoleCommencee() ? 'Semaine ' + f.semaine + ' / ' + ECOLE_SEMAINES : 'Démarre le 10/10'}</b><div class="am-prog"><i style="width:${Math.round(100*f.semaine/ECOLE_SEMAINES)}%"></i></div>${f.bilans.length} bilan${f.bilans.length>1?'s':''}${dern ? ' · dernier le ' + esc(dern.date.split(' ')[0]) : ''} · ${nbPres}/${f.pres.length || sess.length || 0} call${(f.pres.length||sess.length)>1?'s':''}</div>
+      <div class="actions">${c.tel ? `<a class="btn-wa" href="${waUrl(c.tel, ambreMsg(c, f))}" target="_blank" rel="noopener">${WA_SVG} ${f.manque ? 'Relancer le bilan' : (f.derniere && !f.derniere.present) ? 'Absente au call' : 'Prendre des nouvelles'}</a>` : ''} <button class="btn-ghost am-copy" data-lien="${esc(eowLienPerso(c))}" title="Lien perso du questionnaire hebdo">🔗 Lien bilan</button>${cc && cc.c.link ? ` <a class="btn-ghost" href="${esc(cc.c.link)}" target="_blank" rel="noopener">🎥 Visio du closing</a>` : ''}${bvBtn(c)}</div>
+      ${dern ? `<div style="grid-column:1/-1">${scoreChip('Ressenti', dern.feel)}${scoreChip('Énergie', dern.energie)}${scoreChip('Confiance', dern.confiance)}${scoreChip('Semaine', dern.note)}${dern.presence ? `<span class="am-sc">calls (déclaré) <b>${esc(dern.presence)}</b></span>` : ''}</div>` : ''}
+      ${cc ? `<details class="sujet"><summary>📞 Call de closing du ${esc(quandUtc(cc.c.utc).txt)}${cc.c.closer ? ' · ' + esc(cc.c.closer) : ''}</summary>
+        ${cc.c.link ? `<div class="rep"><b>Lien de la visio</b><a href="${esc(cc.c.link)}" target="_blank" rel="noopener">${esc(cc.c.link)}</a></div>` : ''}
+        ${cc.t.r ? `<div class="rep"><b>Résultat</b>${esc(cc.t.r)}${cc.t.prix ? ' · ' + EUR(cc.t.prix) : ''}${cc.t.np ? ' · ' + cc.t.np + 'x' : ''}${cc.t.q ? ' · qualifiée ' + cc.t.q + '/10' : ''}</div>` : ''}
+        ${cc.t.retrans ? `<div class="rep"><b>Retranscription</b>${esc(cc.t.retrans)}</div>` : ''}${cc.t.comment ? `<div class="rep"><b>Commentaire</b>${esc(cc.t.comment)}</div>` : ''}
+        ${cc.c.quest && cc.c.quest.length ? cc.c.quest.map(([t,v]) => `<div class="rep"><b>${esc(t)}</b>${esc(v)}</div>`).join('') : ''}</details>` : ''}
+      <details class="sujet"><summary>📝 Bilans de la semaine (${f.bilans.length})</summary>${f.bilans.length ? f.bilans.map(bilanHtml).join('') : '<div class="rep">Aucun bilan reçu pour l\'instant.' + (ecoleCommencee() ? ' Le lien perso est envoyé automatiquement chaque vendredi à 16h par e-mail.' : ' Les envois automatiques (vendredi 16h) démarrent avec l\'école, le 10/10.') + '</div>'}</details>
+      ${f.pres.length ? `<details class="sujet"><summary>👥 Présence aux calls de groupe (${nbPres}/${f.pres.length})</summary><div class="rep">${f.pres.map(p => `${p.present ? '✅' : '❌'} ${esc(p.date)}`).join('<br>')}</div></details>` : ''}
+      ${c.notes ? `<details class="sujet"><summary>Voir les notes</summary><div class="rep">${esc(c.notes)}</div></details>` : ''}
+      ${c.pend ? '' : `<details class="sujet"><summary>✏️ Modifier le suivi</summary>
+        <div class="suivi-form cli-form" data-mail="${esc(c.mail)}" data-nom="${esc(c.n)}">
+          <label>Statut<select class="cl-statut">${selOpts(CLI_STATUTS, c.statut||'Signée')}</select></label>
+          <label>Note<input class="cl-note" placeholder="Ajoutée à la suite dans le Sheet"></label>
+          <button class="btn-add cl-save">Enregistrer</button>
+        </div></details>`}
+    </div>`;
+  }).join('') : `<div class="vide">${tous.length ? 'Personne dans ce filtre.' : 'Pas encore de cliente. Dès qu\'une vente est enregistrée (ou une cliente ajoutée à la main dans « Clientes »), sa fiche de suivi arrive ici.'}</div>`;
+  // pointage des présences
+  let cur = store.get('amsess', '') || sess[0] || '';
+  if (cur && !sess.includes(cur)) cur = sess[0] || '';
+  $('am-sess').innerHTML = sess.map(d => `<button class="pill am-sd${d===cur?' on':''}" data-d="${esc(d)}">Call du ${esc(d)}</button>`).join('') +
+    `<input id="am-sess-new" placeholder="jj/mm/aaaa" inputmode="numeric"><button class="btn-ghost" id="am-sess-add">＋ Ajouter un call</button>`;
+  $('am-pres-liste').innerHTML = !cur ? '<div class="bm-note">Ajoute la date du premier call de groupe pour commencer le pointage.</div>' : (actives.length ? actives.map(({c, f}) => {
+    const p = f.pres.find(x => x.date === cur);
+    return `<div class="am-pres"><div class="n">${esc(c.n)}<small>${esc(c.mail)}</small></div><div class="tk-row">
+      <button class="tk-pill am-p${p && p.present ? ' on' : ''}" data-date="${esc(cur)}" data-mail="${esc(c.mail)}" data-nom="${esc(c.n)}" data-p="1">Présente</button>
+      <button class="tk-pill am-p${p && !p.present ? ' on' : ''}" data-date="${esc(cur)}" data-mail="${esc(c.mail)}" data-nom="${esc(c.n)}" data-p="0">Absente</button></div></div>`;
+  }).join('') : '<div class="bm-note">Pas de cliente active.</div>');
+}
+$('f-ambre').addEventListener('click', e => { const p = e.target.closest('.pill'); if (p){ fAmbre = p.dataset.f; store.set('amf', fAmbre); renderAmbre(); } });
+document.addEventListener('click', async e => {
+  const s = e.target.closest('.am-sd'); if (s){ store.set('amsess', s.dataset.d); renderAmbre(); return; }
+  if (e.target.id === 'am-sess-add'){
+    const v = ($('am-sess-new').value || '').trim(); if (!frToIso(v)) return toast('Date attendue : jj/mm/aaaa');
+    const S = store.get('sessions', []); if (!S.includes(v)) S.push(v); store.set('sessions', S); store.set('amsess', v); renderAmbre(); return;
+  }
+  const cp = e.target.closest('.am-copy'); if (cp){ try { await navigator.clipboard.writeText(cp.dataset.lien); toast('Lien du bilan copié 🔗'); } catch(err){ prompt('Lien perso du bilan :', cp.dataset.lien); } return; }
+  const b = e.target.closest('.am-p'); if (!b) return;
+  const present = b.dataset.p === '1';
+  b.disabled = true;
+  try {
+    const r = await fetch(PONT.url, { method:'POST', body: JSON.stringify({ what:'presence_set', key:PONT.key, date:b.dataset.date, email:b.dataset.mail, nom:b.dataset.nom, present, source:'console' }) });
+    const j = await r.json(); if (!j.ok) throw new Error(j.error || 'refus du pont');
+    const F = store.get('presfix', {}); F[b.dataset.date + '|' + b.dataset.mail.toLowerCase()] = { p:present, when:Date.now() }; store.set('presfix', F);
+    toast(`${present ? 'Présente' : 'Absente'} au call du ${b.dataset.date} ✅`);
+    renderAmbre(); renderTabs();
+  } catch(err){ toast('Échec : ' + err.message); b.disabled = false; }
 });
 
 /* ---------- scholarship ---------- */
@@ -1665,21 +1965,23 @@ $('btn-set').addEventListener('click', () => {
   $('s-tpl-cand').value = SET.tplCand; $('s-tpl-call').value = SET.tplCall;
   $('s-tpl-schol-rel').value = SET.tplScholRel; $('s-tpl-schol-ok').value = SET.tplScholOk;
   $('s-groupe').value = SET.groupe; $('s-iclosed').value = SET.iclosed;
+  $('s-tpl-eow').value = SET.tplEowRelance; $('s-tpl-ambre').value = SET.tplAmbreCheckin; $('s-tpl-ambre-abs').value = SET.tplAmbreAbsente;
   openSet(true);
 });
 $('voile').addEventListener('click', () => openSet(false));
 $('s-save').addEventListener('click', () => {
-  SET = {tplWebi:$('s-tpl-webi').value, tplWebiCoach:$('s-tpl-webi-coach').value, tplWebiEcole:$('s-tpl-webi-ecole').value, tplCand:$('s-tpl-cand').value, tplCall:$('s-tpl-call').value, tplScholRel:$('s-tpl-schol-rel').value, tplScholOk:$('s-tpl-schol-ok').value, groupe:$('s-groupe').value.trim(), iclosed:$('s-iclosed').value.trim()};
-  store.set('reglages', SET); openSet(false); renderWebi(); renderCand(); renderAgenda(); renderSchol(); toast('Enregistré');
+  SET = {tplWebi:$('s-tpl-webi').value, tplWebiCoach:$('s-tpl-webi-coach').value, tplWebiEcole:$('s-tpl-webi-ecole').value, tplCand:$('s-tpl-cand').value, tplCall:$('s-tpl-call').value, tplScholRel:$('s-tpl-schol-rel').value, tplScholOk:$('s-tpl-schol-ok').value, groupe:$('s-groupe').value.trim(), iclosed:$('s-iclosed').value.trim(), tplEowRelance:$('s-tpl-eow').value, tplAmbreCheckin:$('s-tpl-ambre').value, tplAmbreAbsente:$('s-tpl-ambre-abs').value};
+  store.set('reglages', SET); openSet(false); renderWebi(); renderCand(); renderAgenda(); renderSchol(); renderAmbre(); toast('Enregistré');
 });
 $('s-reset').addEventListener('click', () => {
   $('s-tpl-webi').value = TPL_DEF.webi; $('s-tpl-webi-coach').value = TPL_DEF.webiCoach; $('s-tpl-webi-ecole').value = TPL_DEF.webiEcole;
   $('s-tpl-cand').value = TPL_DEF.cand; $('s-tpl-call').value = TPL_DEF.call;
   $('s-tpl-schol-rel').value = TPL_DEF.scholRel; $('s-tpl-schol-ok').value = TPL_DEF.scholOk;
   $('s-groupe').value = DATA.webi.groupe;
+  $('s-tpl-eow').value = TPL_DEF.eowRelance; $('s-tpl-ambre').value = TPL_DEF.ambreCheckin; $('s-tpl-ambre-abs').value = TPL_DEF.ambreAbsente;
 });
 
-renderTabs(); renderWebi(); renderCand(); renderEcole(); renderSchol(); renderAgenda(); renderTrack(); renderClients(); renderCompta(); renderData();
+renderTabs(); renderWebi(); renderCand(); renderEcole(); renderSchol(); renderAgenda(); renderTrack(); renderClients(); renderAmbre(); renderCompta(); renderData();
 refreshContrats();
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshContrats(); });
 

@@ -247,6 +247,9 @@ for r in (track_rows or []):
         "comment": str(r.get("Commentaire") or "").strip(),
     }
 
+def dstr_(v):
+    return v.strftime("%d/%m/%Y %H:%M") if isinstance(v, datetime.datetime) else str(v or "").strip()
+
 # ---- Clientes signées (onglet « Clients », créé par le pont à la 1re vente) ----
 clients_rows = read_tab(ewb, "clients")
 clientes = []
@@ -266,8 +269,24 @@ for r in (clients_rows or []):
         "prix": eur(r.get("Prix")),
         "statut": str(r.get("Statut") or "").strip(),
         "notes": str(r.get("Notes") or "").strip(),
+        # mail de bienvenue envoyé depuis la console (date) + PDF « Ta vision » (Drive)
+        "bienvenue": dstr_(r.get("Mail bienvenue")),
+        "vision": str(r.get("Vision PDF") or "").strip(),
     })
 clientes.sort(key=lambda c: c["ts"], reverse=True)
+
+# ---- Présences aux calls de groupe (onglet « Présences », écrit par la console via presence_set) ----
+pres_rows = read_tab(ewb, "présences")
+presences = []
+for r in (pres_rows or []):
+    mail = str(r.get("E-mail") or "").strip().lower()
+    d = r.get("Date session")
+    date = d.strftime("%d/%m/%Y") if isinstance(d, datetime.datetime) else str(d or "").strip()
+    if not mail or not date or (mail in TEST_EMAILS and not SHOW_TEST):
+        continue
+    presences.append({"date": date, "mail": mail, "nom": str(r.get("Nom") or "").strip(),
+                      "present": str(r.get("Présent") or "").strip().lower() == "oui",
+                      "src": str(r.get("Source") or "").strip()})
 
 # ---- Contrats envoyés / signés (onglet « Contrats », écrit par le pont) ----
 # dossiers Drive (compte selfty.academy) où le script Contrats range les PDF signés et les factures
@@ -516,9 +535,86 @@ if ty_key:
     except Exception as ex:
         print("Tally scholarship KO (on garde la console sans) :", ex)
 
+# ---- Bilans hebdo des clientes (« EOW », form Tally 1AekPO « Mon bilan de la semaine », même clé) ----
+EOW_FORM = "1AekPO"
+ECOLE_DEBUT = "2026-10-10"
+
+def iso_week(at):
+    try:
+        d = datetime.datetime.fromisoformat(at.replace("Z", "+00:00"))
+        if TZ_PARIS:
+            d = d.astimezone(TZ_PARIS)
+        y, w, _ = d.isocalendar()
+        return f"{y}-W{w:02d}"
+    except Exception:
+        return ""
+
+eow_subs, eow_ok = [], False
+if ty_key:
+    try:
+        qlabels, raw_subs, page = {}, [], 1
+        while True:
+            req = urllib.request.Request(
+                f"https://api.tally.so/forms/{EOW_FORM}/submissions?filter=completed&page={page}",
+                headers={"Authorization": "Bearer " + ty_key, "User-Agent": "curl/8.4.0"})
+            d = json.load(urllib.request.urlopen(req, timeout=30))
+            for q in d.get("questions") or []:
+                qlabels[q["id"]] = (str(q.get("title") or "?").strip(), str(q.get("type") or ""))
+            raw_subs += d.get("submissions") or []
+            if not d.get("hasMore"):
+                break
+            page += 1
+        for s in raw_subs:
+            hid, mail, prenom, det, scores = {}, "", "", [], {}
+            for r in s.get("responses") or []:
+                lab, qtype = qlabels.get(r.get("questionId"), ("?", ""))
+                ans = r.get("answer")
+                if qtype == "HIDDEN_FIELDS" and isinstance(ans, dict):
+                    hid = ans
+                    continue
+                if lab == "E-mail":
+                    mail = mail or ty_txt(ans).lower()
+                    continue
+                if lab == "Prénom":
+                    prenom = prenom or ty_txt(ans)
+                    continue
+                v = ty_txt(ans)
+                if v == "":
+                    continue
+                if qtype == "LINEAR_SCALE":
+                    try:
+                        scores[lab] = int(float(v))
+                    except ValueError:
+                        pass
+                det.append([lab, v])
+            mail = str(hid.get("email") or "").strip().lower() or mail
+            prenom = str(hid.get("prenom") or "").strip() or prenom
+            if not mail or (mail in TEST_EMAILS and not SHOW_TEST):
+                continue
+            at = str(s.get("submittedAt") or "")
+            pres = next((v for l, v in det if l.startswith("Cette semaine, aux calls de groupe")), "")
+            eow_subs.append({
+                "id": s.get("id"), "mail": mail, "prenom": prenom, "at": at, "date": iso_paris(at),
+                "week": str(hid.get("semaine") or "").strip() or iso_week(at),
+                "feel": scores.get("Comment tu te sens, là, en cette fin de semaine ?"),
+                "energie": scores.get("Ton niveau d’énergie sur la semaine"),
+                "confiance": scores.get("Ta confiance dans ta posture de coach cette semaine"),
+                "note": scores.get("Ta note globale de la semaine"),
+                "presence": pres,
+                "det": det,
+            })
+        eow_subs.sort(key=lambda x: x["at"], reverse=True)
+        eow_ok = True
+        print(f"Bilans hebdo Tally : {len(eow_subs)} bilan(s)")
+    except Exception as ex:
+        print("Tally bilans KO (on garde la console sans) :", ex)
+
 
 data = {
     "maj": datetime.datetime.now().strftime("%d/%m/%Y %H:%M"),
+    "ecoleDebut": ECOLE_DEBUT,
+    "eow": {"ok": eow_ok, "url": f"https://tally.so/r/{EOW_FORM}", "subs": eow_subs},
+    "presences": presences,
     "webi": {
         "label": "Live du lundi 31 août, 18h",
         "meet": "https://meet.google.com/oxf-vzjg-bhr",
