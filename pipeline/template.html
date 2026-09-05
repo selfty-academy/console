@@ -380,7 +380,7 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
   <div class="champ">
     <label for="s-tpl-webi">Message de relance webi</label>
     <textarea id="s-tpl-webi"></textarea>
-    <div class="note">Variables : {prenom} {groupe} {live} (lien Meet du live)</div>
+    <div class="note">Variables : {prenom} {groupe} {live} (lien visio du live)</div>
   </div>
   <div class="champ">
     <label for="s-tpl-webi-coach">Message relance : live + coaching (leur dire non)</label>
@@ -576,7 +576,7 @@ document.addEventListener('click', e => {
 /* ---------- bandeau webi ---------- */
 $('maj').textContent = DATA.maj;
 $('bandeau-webi').innerHTML = `<strong>${esc(DATA.webi.label)}</strong>
-  <a href="${esc(DATA.webi.meet)}" target="_blank" rel="noopener">Lien Meet du live</a>
+  <a href="${esc(DATA.webi.meet)}" target="_blank" rel="noopener">Lien visio du live</a>
   <a href="${esc(SET.groupe)}" target="_blank" rel="noopener">Groupe WhatsApp</a>
   <a href="${esc(DATA.webi.lp)}" target="_blank" rel="noopener">Page d'inscription</a>`;
 
