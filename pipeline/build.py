@@ -632,7 +632,8 @@ data = {
     "presences": presences,
     "webi": {
         "label": "Live du mercredi 9 septembre, 18h",
-        "meet": "https://meet.google.com/oxf-vzjg-bhr",
+        "meet": "https://us06web.zoom.us/j/88555750551?pwd=LjHAbfU8giQRrlGs6a6LRTggG3Sd8K.1&jst=2",
+        "meetPrec": "https://meet.google.com/oxf-vzjg-bhr",
         "groupe": "https://chat.whatsapp.com/JRCRXWKVg8qBUS0uUUTkCA?mode=gi_t",
         "lp": "https://selfty-academy.github.io/live-9-septembre/",
         "lpPrec": "https://selfty-academy.github.io/live-31-aout/",
