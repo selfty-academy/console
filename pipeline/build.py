@@ -77,6 +77,8 @@ for r in real:
         "ts": r.get("Date").isoformat() if isinstance(r.get("Date"), datetime.datetime) else "",
         "src": src_label(r.get("Source")),
         "live": "9sept" if "9-sept" in str(r.get("Source") or "") else "31aout",
+        # déjà inscrite au live 1 : trace écrite par le webhook dans la Source lors de la réinscription
+        "deja1": "déjà inscrite au live 1" in str(r.get("Source") or ""),
         "statut": str(r.get("Statut ") or "").strip(),
         "etape": r.get("Dernière étape") or "",
     }

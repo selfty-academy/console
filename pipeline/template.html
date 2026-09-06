@@ -220,6 +220,15 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 
 <nav class="tabs" id="tabs"></nav>
 
+<!-- ===================== LIVE 9 SEPT ===================== -->
+<section class="panel" id="p-live2">
+  <p class="intro">Toutes les inscrites au live du mercredi 9 septembre, au fur et à mesure. La mention « aussi au live 1 » signale celles qui étaient déjà inscrites au live du 31 août. Le bouton WhatsApp pré-écrit le message de relance, la coche « Relancée » se garde sur ce navigateur.</p>
+  <div class="kpis" id="k-live2"></div>
+  <div class="pills" id="f-live2"></div>
+  <div style="margin:0 0 14px"><input type="search" id="q-live2" class="search" placeholder="Chercher un prénom, un mail…"></div>
+  <div class="liste" id="l-live2"></div>
+</section>
+
 <!-- ===================== RELANCES WEBI ===================== -->
 <section class="panel" id="p-webi">
   <p class="intro">Toutes les personnes inscrites au live, avec leur numéro. Clique sur le bouton WhatsApp : le message est pré-écrit (c'est ce soir + ajout au groupe), tu n'as plus qu'à envoyer. La coche « Relancée » se garde sur ce navigateur.</p>
@@ -536,6 +545,7 @@ const WA_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10
 
 /* ---------- onglets ---------- */
 const TABS = [
+  {id:'live2', lab:'Live 9 sept'},
   {id:'track', lab:'Calls effectués à remplir'},
   {id:'calls', lab:'Agenda calls'},
   {id:'clients', lab:'Clientes'},
@@ -563,7 +573,8 @@ function renderTabs(){
   const bTrack = trackList().filter(c => { const t = effTrk(c); return !t.s && !t.r; }).length;
   const bCli = clientes().filter(c => { const k = effCtr(c); return !k || k.statut !== 'Signé'; }).length;
   const bPaie = echeancesToutes().filter(x => !x.paye && x.diff !== null && x.diff <= 2).length;
-  const b = {webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, calls:bCalls, track:bTrack, clients:bCli, ambre:ambreManquants().length + eowNonAttribues().length, paie:bPaie, compta:null, data:null};
+  const bLive2 = DATA.inscrits.filter(i => i.live==='9sept' && i.tel && !done[key(i)]).length;
+  const b = {live2:bLive2, webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, calls:bCalls, track:bTrack, clients:bCli, ambre:ambreManquants().length + eowNonAttribues().length, paie:bPaie, compta:null, data:null};
   $('tabs').innerHTML = TABS.map(t =>
     `<button class="tab${t.id===tabOn?' on':''}" data-t="${t.id}">${t.lab}${b[t.id]!==null?` <span class="bdg">${b[t.id]}</span>`:''}</button>`).join('');
   TABS.forEach(t => $('p-'+t.id).classList.toggle('on', t.id===tabOn));
@@ -640,6 +651,52 @@ $('f-webi-seg').addEventListener('click', e => { const p = e.target.closest('.pi
 $('f-webi-live').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ liveWebi = p.dataset.f; store.set('livewebi', liveWebi); renderWebi(); }});
 $('q-webi').addEventListener('input', e => { qWebi = e.target.value.trim().toLowerCase(); renderWebi(); });
 
+/* ---------- live 2 : 9 septembre ---------- */
+let fLive2 = 'a', qLive2 = '';
+function renderLive2(){
+  const done = store.get('relwebi', {});
+  const tous = DATA.inscrits.filter(i => i.live === '9sept');
+  const deja = tous.filter(i => i.deja1);
+  const coach = tous.filter(i => i.coach);
+  $('k-live2').innerHTML = [
+    ['Inscrites', tous.length],
+    ['Aussi au live 1', deja.length],
+    ['Nouvelles', tous.length - deja.length],
+    ['Candidatures coaching', coach.length]
+  ].map(([l,v]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div></div>`).join('');
+  const sansTel = tous.filter(i => !i.tel);
+  const aFaire = tous.filter(i => i.tel && !done[key(i)]);
+  const faits = tous.filter(i => i.tel && done[key(i)]);
+  $('f-live2').innerHTML = [
+    ['a', `À relancer <b>${aFaire.length}</b>`],
+    ['r', `Relancées <b>${faits.length}</b>`],
+    ['t', `Toutes <b>${tous.length}</b>`],
+    ['d', `Aussi au live 1 <b>${deja.length}</b>`],
+    ['s', `Sans numéro <b>${sansTel.length}</b>`]
+  ].map(([v,l]) => `<button class="pill${fLive2===v?' on':''}" data-f="${v}">${l}</button>`).join('');
+  let liste = fLive2==='a' ? aFaire : fLive2==='r' ? faits : fLive2==='s' ? sansTel : fLive2==='d' ? deja : tous;
+  if (qLive2) liste = liste.filter(i => (i.n+' '+i.mail).toLowerCase().includes(qLive2));
+  $('l-live2').innerHTML = liste.length ? liste.map(i => {
+    const ok = !!done[key(i)];
+    const msg = segMsg(i);
+    const tags = (i.coach ? '<span class="tagmode coach">live + coaching</span>' : (i.eco ? '<span class="tagmode" style="background:#EAD9EA;color:#6E4A6E">live + école</span>' : '<span class="tagmode">live seul</span>'))
+      + (i.deja1 ? ' <span class="tagmode" style="background:#FFE7D2;color:#7A4A2A">aussi au live 1</span>' : ' <span class="tagmode" style="background:#E3EFE6;color:#2F6B45">nouvelle</span>');
+    return `<div class="ligne${ok?' done':''}">
+      <div class="qui"><div class="nom">${esc(i.n)} ${tags}</div>
+        <div class="sub">${esc(i.mail)}</div></div>
+      <div class="meta"><b>${i.tel ? '+'+i.tel : 'Pas de numéro'}</b>${esc(i.statut || '')}</div>
+      <div class="meta"><b>${esc(i.date)}</b>${esc(i.src)}</div>
+      <div class="actions">
+        ${i.tel ? `<a class="btn-wa" href="${waUrl(i.tel, msg)}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}
+        <label class="chk"><input type="checkbox" data-relwebi="${esc(key(i))}" ${ok?'checked':''}> Relancée</label>
+      </div>
+      ${i.det && i.det.length ? `<details class="sujet"><summary>Voir ses réponses au questionnaire</summary>${i.det.map(([t,v]) => `<div class="rep"><b>${esc(t)}</b>${esc(v)}</div>`).join('')}</details>` : ''}
+    </div>`;
+  }).join('') : `<div class="vide">Aucune inscrite pour l'instant. Les inscriptions arrivent ici à chaque mise à jour.</div>`;
+}
+$('f-live2').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fLive2 = p.dataset.f; renderLive2(); }});
+$('q-live2').addEventListener('input', e => { qLive2 = e.target.value.trim().toLowerCase(); renderLive2(); });
+
 /* ---------- candidatures ---------- */
 let fCand = 'a';
 function renderCand(){
@@ -675,7 +732,7 @@ $('f-cand').addEventListener('click', e => { const p = e.target.closest('.pill')
 
 document.addEventListener('change', e => {
   const w = e.target.dataset.relwebi, c = e.target.dataset.relcand;
-  if (w){ const d = store.get('relwebi', {}); e.target.checked ? d[w]=1 : delete d[w]; store.set('relwebi', d); renderWebi(); renderTabs(); }
+  if (w){ const d = store.get('relwebi', {}); e.target.checked ? d[w]=1 : delete d[w]; store.set('relwebi', d); renderWebi(); renderLive2(); renderTabs(); }
   if (c){ const d = store.get('relcand', {}); e.target.checked ? d[c]=1 : delete d[c]; store.set('relcand', d); renderCand(); renderTabs(); }
 });
 
@@ -2032,7 +2089,7 @@ $('s-reset').addEventListener('click', () => {
   $('s-tpl-eow').value = TPL_DEF.eowRelance; $('s-tpl-ambre').value = TPL_DEF.ambreCheckin; $('s-tpl-ambre-abs').value = TPL_DEF.ambreAbsente;
 });
 
-renderTabs(); renderWebi(); renderCand(); renderEcole(); renderSchol(); renderAgenda(); renderTrack(); renderClients(); renderAmbre(); renderCompta(); renderData();
+renderTabs(); renderWebi(); renderLive2(); renderCand(); renderEcole(); renderSchol(); renderAgenda(); renderTrack(); renderClients(); renderAmbre(); renderCompta(); renderData();
 refreshContrats();
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshContrats(); });
 
