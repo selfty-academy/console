@@ -427,7 +427,7 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
   <div class="champ">
     <label for="s-tpl-replay">Message « Replay du live » (Agenda calls, leads qui ont booké un call)</label>
     <textarea id="s-tpl-replay"></textarea>
-    <div class="note">Variables : {prenom} {quand} {replay}</div>
+    <div class="note">Variables : {prenom} {quand} {replay}. Le lien visio du call est ajouté automatiquement à la fin.</div>
   </div>
   <div class="champ">
     <label for="s-replay">Lien du replay du live</label>
@@ -549,7 +549,7 @@ const TPL_DEF = {
   webiCoach: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nMerci pour ta candidature au coaching en direct de ce soir. Cette fois on a choisi une autre personne, mais ta candidature nous a beaucoup plu et on la garde précieusement si on refait un live coaching.\n\nEt on t'attend quand même au live CE SOIR à 18h, voici le lien :\n{live}\n\nSi tu n'y es pas, voici le lien du groupe WhatsApp du live :\n{groupe}\n\nÀ ce soir !",
   webiEcole: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nJ'ai vu que tu t'étais inscrit(e) à la liste d'attente de l'école. Elle n'a pas encore ouvert, mais si tu veux, je te propose un call avec moi pour en parler : voir où tu en es et te présenter ce qu'on prépare. Dis-moi si ça te tente et je t'envoie un créneau.\n\nEt en attendant, le live c'est CE SOIR à 18h, voici le lien :\n{live}\n\nSi tu n'y es pas, voici le lien du groupe WhatsApp du live :\n{groupe}\n\nÀ ce soir !",
   cand: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nMerci pour ta candidature au coaching en direct. Cette fois on a choisi une autre personne, mais ta candidature nous a beaucoup plu et on la garde précieusement : si on refait un live coaching un jour, tu fais partie des personnes à qui on pensera en premier.\n\nEt bien sûr on t'attend au live ce soir à 18h, voici le lien :\n{live}",
-  replay: "Hello {prenom}, c'est Alex de la Selfty Academy 🌸\n\nEn attendant notre appel {quand}, voici le replay du live d'Anaïs si tu veux le voir ou le revoir avant qu'on se parle :\n{replay}\n\nÀ très vite !",
+  replay: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nEn attendant ton appel avec Anaïs {quand}, voici le replay de son live si tu veux le voir ou le revoir avant de lui parler :\n{replay}\n\nÀ très vite !",
   call: "Hello {prenom}, c'est Alex de la Selfty Academy 🌸 Petit rappel pour notre appel {quand}. À tout à l'heure !",
   scholRel: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nJ'ai vu que tu avais commencé ta candidature pour la bourse mais qu'elle n'est pas allée au bout. Les candidatures ferment le 15 septembre : si tu veux ta chance, tu peux la finir ici :\n{lien}\n\nEt si tu bloques quelque part, dis-moi !",
   scholOk: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nOn a bien reçu ta candidature pour la bourse, merci pour ta confiance. Anaïs lit tout personnellement : tu auras une réponse avant le 15 septembre.",
@@ -985,7 +985,8 @@ function renderAgenda(){
     if (q.passe) return;
     let msg = SET.tplCall.replaceAll('{prenom}', c.n.split(' ')[0]).replaceAll('{quand}', q.txt);
     if (c.link) msg += '\n\nLe lien pour nous rejoindre :\n' + c.link;
-    const msgReplay = SET.tplReplay.replaceAll('{prenom}', c.n.split(' ')[0]).replaceAll('{quand}', q.txt).replaceAll('{replay}', SET.replay);
+    let msgReplay = SET.tplReplay.replaceAll('{prenom}', c.n.split(' ')[0]).replaceAll('{quand}', q.txt).replaceAll('{replay}', SET.replay);
+    if (c.link) msgReplay += '\n\nEt le lien pour l\'appel avec Anaïs :\n' + c.link;
     const heure = c.utc ? new Date(c.utc).toLocaleTimeString('fr-FR',{timeZone:'Europe/Paris',hour:'2-digit',minute:'2-digit'}).replace(':','h') : '?';
     items.push({key: c.utc ? dayKey(new Date(c.utc)) : '', sort: c.utc || '9999',
       html: `<div class="ligne${done[c.id]?' done':''}">
