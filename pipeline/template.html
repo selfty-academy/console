@@ -425,6 +425,15 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
     <div class="note">Variables : {prenom} {quand}</div>
   </div>
   <div class="champ">
+    <label for="s-tpl-replay">Message « Replay du live » (Agenda calls, leads qui ont booké un call)</label>
+    <textarea id="s-tpl-replay"></textarea>
+    <div class="note">Variables : {prenom} {quand} {replay}</div>
+  </div>
+  <div class="champ">
+    <label for="s-replay">Lien du replay du live</label>
+    <input type="url" id="s-replay" placeholder="https://selfty-academy.github.io/replay/">
+  </div>
+  <div class="champ">
     <label for="s-tpl-schol-rel">Message scholarship : candidature pas finie</label>
     <textarea id="s-tpl-schol-rel"></textarea>
     <div class="note">Variables : {prenom} {lien} (lien du formulaire)</div>
@@ -533,12 +542,14 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 /* ---------- réglages ---------- */
+const REPLAY_DEF = 'https://selfty-academy.github.io/replay/';
 const TPL_DEF = {
   webi: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nPetit rappel : le live c'est CE SOIR à 18h ! Voici le lien pour nous rejoindre :\n{live}\n\nSi tu n'y es pas, voici le lien du groupe WhatsApp du live :\n{groupe}\n\nÀ ce soir !",
   invite: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nTu t'étais inscrite au live d'Anaïs du 31 août, alors je te préviens en avance : elle refait un live DEMAIN, mercredi à 18h, sur un nouveau thème : « Tu es formée mais tu ne t'es pas encore lancée ».\n\nVoici le lien Zoom pour nous rejoindre demain :\n{live}\n\nEt le groupe WhatsApp du live pour être sûre de ne pas le rater :\n{groupe}\n\nÀ demain !",
   webiCoach: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nMerci pour ta candidature au coaching en direct de ce soir. Cette fois on a choisi une autre personne, mais ta candidature nous a beaucoup plu et on la garde précieusement si on refait un live coaching.\n\nEt on t'attend quand même au live CE SOIR à 18h, voici le lien :\n{live}\n\nSi tu n'y es pas, voici le lien du groupe WhatsApp du live :\n{groupe}\n\nÀ ce soir !",
   webiEcole: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nJ'ai vu que tu t'étais inscrit(e) à la liste d'attente de l'école. Elle n'a pas encore ouvert, mais si tu veux, je te propose un call avec moi pour en parler : voir où tu en es et te présenter ce qu'on prépare. Dis-moi si ça te tente et je t'envoie un créneau.\n\nEt en attendant, le live c'est CE SOIR à 18h, voici le lien :\n{live}\n\nSi tu n'y es pas, voici le lien du groupe WhatsApp du live :\n{groupe}\n\nÀ ce soir !",
   cand: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nMerci pour ta candidature au coaching en direct. Cette fois on a choisi une autre personne, mais ta candidature nous a beaucoup plu et on la garde précieusement : si on refait un live coaching un jour, tu fais partie des personnes à qui on pensera en premier.\n\nEt bien sûr on t'attend au live ce soir à 18h, voici le lien :\n{live}",
+  replay: "Hello {prenom}, c'est Alex de la Selfty Academy 🌸\n\nEn attendant notre appel {quand}, voici le replay du live d'Anaïs si tu veux le voir ou le revoir avant qu'on se parle :\n{replay}\n\nÀ très vite !",
   call: "Hello {prenom}, c'est Alex de la Selfty Academy 🌸 Petit rappel pour notre appel {quand}. À tout à l'heure !",
   scholRel: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nJ'ai vu que tu avais commencé ta candidature pour la bourse mais qu'elle n'est pas allée au bout. Les candidatures ferment le 15 septembre : si tu veux ta chance, tu peux la finir ici :\n{lien}\n\nEt si tu bloques quelque part, dis-moi !",
   scholOk: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nOn a bien reçu ta candidature pour la bourse, merci pour ta confiance. Anaïs lit tout personnellement : tu auras une réponse avant le 15 septembre.",
@@ -551,8 +562,10 @@ const store = {
   get: (k, d) => { try { const v = localStorage.getItem('sc-'+k); return v===null ? d : JSON.parse(v); } catch(e){ return k in MEM ? MEM[k] : d; } },
   set: (k, v) => { MEM[k] = v; try { localStorage.setItem('sc-'+k, JSON.stringify(v)); } catch(e){} }
 };
-let SET = Object.assign({tplWebi:TPL_DEF.webi, tplInvite:TPL_DEF.invite, tplWebiCoach:TPL_DEF.webiCoach, tplWebiEcole:TPL_DEF.webiEcole, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, tplScholRel:TPL_DEF.scholRel, tplScholOk:TPL_DEF.scholOk, tplEowRelance:TPL_DEF.eowRelance, tplAmbreCheckin:TPL_DEF.ambreCheckin, tplAmbreAbsente:TPL_DEF.ambreAbsente, groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
+let SET = Object.assign({tplWebi:TPL_DEF.webi, tplInvite:TPL_DEF.invite, tplWebiCoach:TPL_DEF.webiCoach, tplWebiEcole:TPL_DEF.webiEcole, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, tplReplay:TPL_DEF.replay, replay:REPLAY_DEF, tplScholRel:TPL_DEF.scholRel, tplScholOk:TPL_DEF.scholOk, tplEowRelance:TPL_DEF.eowRelance, tplAmbreCheckin:TPL_DEF.ambreCheckin, tplAmbreAbsente:TPL_DEF.ambreAbsente, groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
 if (!SET.tplInvite) SET.tplInvite = TPL_DEF.invite;
+if (!SET.tplReplay) SET.tplReplay = TPL_DEF.replay;
+if (!SET.replay) SET.replay = REPLAY_DEF;
 
 function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),2200); }
 function waUrl(tel, msg){ return 'https://wa.me/'+tel+'?text='+encodeURIComponent(msg); }
@@ -963,6 +976,7 @@ function renderAgenda(){
     ? `<strong>Connecté à iClosed ✅</strong> ${IC.calls.length} call${IC.calls.length>1?'s':''} booké${IC.calls.length>1?'s':''} au total. <a href="https://app.iclosed.io" target="_blank" rel="noopener">Ouvrir iClosed ↗</a>`
     : `<strong>iClosed injoignable à la dernière mise à jour.</strong> Les calls affichés peuvent dater ; relance une mise à jour avec ↻.`;
   const done = store.get('icdone', {});
+  const rep = store.get('icreplay', {});
   const items = [];
   IC.calls.forEach(c => {
     if (c.cancel) return;
@@ -971,6 +985,7 @@ function renderAgenda(){
     if (q.passe) return;
     let msg = SET.tplCall.replaceAll('{prenom}', c.n.split(' ')[0]).replaceAll('{quand}', q.txt);
     if (c.link) msg += '\n\nLe lien pour nous rejoindre :\n' + c.link;
+    const msgReplay = SET.tplReplay.replaceAll('{prenom}', c.n.split(' ')[0]).replaceAll('{quand}', q.txt).replaceAll('{replay}', SET.replay);
     const heure = c.utc ? new Date(c.utc).toLocaleTimeString('fr-FR',{timeZone:'Europe/Paris',hour:'2-digit',minute:'2-digit'}).replace(':','h') : '?';
     items.push({key: c.utc ? dayKey(new Date(c.utc)) : '', sort: c.utc || '9999',
       html: `<div class="ligne${done[c.id]?' done':''}">
@@ -981,6 +996,8 @@ function renderAgenda(){
       <div class="actions">
         ${c.tel ? `<a class="btn-wa" href="${waUrl(c.tel, msg)}" target="_blank" rel="noopener">${WA_SVG} Rappel</a>` : ''}
         <label class="chk"><input type="checkbox" data-icdone="${c.id}" ${done[c.id]?'checked':''}> Rappel envoyé</label>
+        ${c.tel ? `<a class="btn-wa" style="background:#966868" href="${waUrl(c.tel, msgReplay)}" target="_blank" rel="noopener">${WA_SVG} Replay</a>` : ''}
+        <label class="chk"><input type="checkbox" data-icreplay="${c.id}" ${rep[c.id]?'checked':''}> Replay envoyé</label>
         <button class="btn-ghost ic-test" data-id="${esc(c.id)}" data-nom="${esc(c.n)}" data-mail="${esc(c.mail)}" data-tel="${esc(c.tel||'')}" data-utc="${esc(c.utc)}">Call test 🧪</button>
       </div>
       ${icQuest(c)}
@@ -990,6 +1007,7 @@ function renderAgenda(){
     const passe = c.date && new Date(c.date+'T'+(c.heure||'23:59')) < new Date();
     if (passe && c.fait) return;
     const msg = SET.tplCall.replaceAll('{prenom}', c.nom).replaceAll('{quand}', quandTxt(c));
+    const msgReplayM = SET.tplReplay.replaceAll('{prenom}', c.nom).replaceAll('{quand}', quandTxt(c)).replaceAll('{replay}', SET.replay);
     items.push({key: c.date || '', sort: (c.date||'9999')+'T'+(c.heure||'23:59'),
       html: `<div class="ligne${c.fait?' done':''}">
       <div class="qui"><div class="nom">${esc(c.nom)}</div><div class="sub">${esc(c.note||'')}</div>
@@ -998,6 +1016,7 @@ function renderAgenda(){
       <div class="meta">${c.rappel ? '<span class="tag-ok">Rappel envoyé</span>' : ''}</div>
       <div class="actions">
         ${c.tel ? `<a class="btn-wa" href="${waUrl(c.tel,msg)}" target="_blank" rel="noopener">${WA_SVG} Rappel</a>` : ''}
+        ${c.tel ? `<a class="btn-wa" style="background:#966868" href="${waUrl(c.tel,msgReplayM)}" target="_blank" rel="noopener">${WA_SVG} Replay</a>` : ''}
         <label class="chk"><input type="checkbox" data-call-rappel="${c.id}" ${c.rappel?'checked':''}> Rappel envoyé</label>
         <label class="chk"><input type="checkbox" data-call-fait="${c.id}" ${c.fait?'checked':''}> Appel fait</label>
         <button class="btn-ghost btn-danger" data-call-del="${c.id}">Suppr.</button>
@@ -1025,7 +1044,8 @@ function renderAgenda(){
   }).join('') : `<div class="vide">Aucun call annulé.</div>`;
 }
 document.addEventListener('change', e => {
-  const d = e.target.dataset.icdone, s = e.target.dataset.scholdone;
+  const d = e.target.dataset.icdone, s = e.target.dataset.scholdone, rp = e.target.dataset.icreplay;
+  if (rp){ const m = store.get('icreplay', {}); e.target.checked ? m[rp]=1 : delete m[rp]; store.set('icreplay', m); renderAgenda(); }
   if (d){ const m = store.get('icdone', {}); e.target.checked ? m[d]=1 : delete m[d]; store.set('icdone', m); renderAgenda(); renderTabs(); }
   if (s){ const m = store.get('scholdone', {}); e.target.checked ? m[s]=1 : delete m[s]; store.set('scholdone', m); renderSchol(); renderTabs(); }
 });
@@ -2141,7 +2161,7 @@ function renderCompta(){
 function openSet(o){ $('voile').classList.toggle('on', o); $('panneau').classList.toggle('on', o); }
 $('btn-set').addEventListener('click', () => {
   $('s-tpl-webi').value = SET.tplWebi; $('s-tpl-invite').value = SET.tplInvite; $('s-tpl-webi-coach').value = SET.tplWebiCoach; $('s-tpl-webi-ecole').value = SET.tplWebiEcole;
-  $('s-tpl-cand').value = SET.tplCand; $('s-tpl-call').value = SET.tplCall;
+  $('s-tpl-cand').value = SET.tplCand; $('s-tpl-call').value = SET.tplCall; $('s-tpl-replay').value = SET.tplReplay; $('s-replay').value = SET.replay;
   $('s-tpl-schol-rel').value = SET.tplScholRel; $('s-tpl-schol-ok').value = SET.tplScholOk;
   $('s-groupe').value = SET.groupe; $('s-iclosed').value = SET.iclosed;
   $('s-tpl-eow').value = SET.tplEowRelance; $('s-tpl-ambre').value = SET.tplAmbreCheckin; $('s-tpl-ambre-abs').value = SET.tplAmbreAbsente;
@@ -2149,12 +2169,12 @@ $('btn-set').addEventListener('click', () => {
 });
 $('voile').addEventListener('click', () => openSet(false));
 $('s-save').addEventListener('click', () => {
-  SET = {tplWebi:$('s-tpl-webi').value, tplInvite:$('s-tpl-invite').value, tplWebiCoach:$('s-tpl-webi-coach').value, tplWebiEcole:$('s-tpl-webi-ecole').value, tplCand:$('s-tpl-cand').value, tplCall:$('s-tpl-call').value, tplScholRel:$('s-tpl-schol-rel').value, tplScholOk:$('s-tpl-schol-ok').value, groupe:$('s-groupe').value.trim(), iclosed:$('s-iclosed').value.trim(), tplEowRelance:$('s-tpl-eow').value, tplAmbreCheckin:$('s-tpl-ambre').value, tplAmbreAbsente:$('s-tpl-ambre-abs').value};
+  SET = {tplWebi:$('s-tpl-webi').value, tplInvite:$('s-tpl-invite').value, tplWebiCoach:$('s-tpl-webi-coach').value, tplWebiEcole:$('s-tpl-webi-ecole').value, tplCand:$('s-tpl-cand').value, tplCall:$('s-tpl-call').value, tplReplay:$('s-tpl-replay').value, replay:($('s-replay').value.trim() || REPLAY_DEF), tplScholRel:$('s-tpl-schol-rel').value, tplScholOk:$('s-tpl-schol-ok').value, groupe:$('s-groupe').value.trim(), iclosed:$('s-iclosed').value.trim(), tplEowRelance:$('s-tpl-eow').value, tplAmbreCheckin:$('s-tpl-ambre').value, tplAmbreAbsente:$('s-tpl-ambre-abs').value};
   store.set('reglages', SET); openSet(false); renderWebi(); renderLive1(); renderCand(); renderAgenda(); renderSchol(); renderAmbre(); toast('Enregistré');
 });
 $('s-reset').addEventListener('click', () => {
   $('s-tpl-webi').value = TPL_DEF.webi; $('s-tpl-invite').value = TPL_DEF.invite; $('s-tpl-webi-coach').value = TPL_DEF.webiCoach; $('s-tpl-webi-ecole').value = TPL_DEF.webiEcole;
-  $('s-tpl-cand').value = TPL_DEF.cand; $('s-tpl-call').value = TPL_DEF.call;
+  $('s-tpl-cand').value = TPL_DEF.cand; $('s-tpl-call').value = TPL_DEF.call; $('s-tpl-replay').value = TPL_DEF.replay; $('s-replay').value = REPLAY_DEF;
   $('s-tpl-schol-rel').value = TPL_DEF.scholRel; $('s-tpl-schol-ok').value = TPL_DEF.scholOk;
   $('s-groupe').value = DATA.webi.groupe;
   $('s-tpl-eow').value = TPL_DEF.eowRelance; $('s-tpl-ambre').value = TPL_DEF.ambreCheckin; $('s-tpl-ambre-abs').value = TPL_DEF.ambreAbsente;
