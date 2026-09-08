@@ -229,6 +229,14 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
   <div class="liste" id="l-live2"></div>
 </section>
 
+<section class="panel" id="p-live1">
+  <p class="intro">Les inscrites au live du 31 août qui ne se sont pas (encore) inscrites au live du 9 septembre. Le bouton WhatsApp pré-écrit un message pour leur dire qu'il y a un live demain à 18h avec le lien Zoom. La coche « Prévenue » est propre à cet onglet et se garde sur ce navigateur. Dès qu'une personne s'inscrit au live 2, elle sort de cette liste à la mise à jour suivante.</p>
+  <div class="kpis" id="k-live1"></div>
+  <div class="pills" id="f-live1"></div>
+  <div style="margin:0 0 14px"><input type="search" id="q-live1" class="search" placeholder="Chercher un prénom, un mail…"></div>
+  <div class="liste" id="l-live1"></div>
+</section>
+
 <!-- ===================== RELANCES WEBI ===================== -->
 <section class="panel" id="p-webi">
   <p class="intro">Toutes les personnes inscrites au live, avec leur numéro. Clique sur le bouton WhatsApp : le message est pré-écrit (c'est ce soir + ajout au groupe), tu n'as plus qu'à envoyer. La coche « Relancée » se garde sur ce navigateur.</p>
@@ -392,6 +400,11 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
     <div class="note">Variables : {prenom} {groupe} {live} (lien visio du live)</div>
   </div>
   <div class="champ">
+    <label for="s-tpl-invite">Message « À inviter au live 2 » (inscrites du live 1 pas inscrites au live 2)</label>
+    <textarea id="s-tpl-invite"></textarea>
+    <div class="note">Variables : {prenom} {live} (lien Zoom) {groupe} {lp} (page d'inscription)</div>
+  </div>
+  <div class="champ">
     <label for="s-tpl-webi-coach">Message relance : live + coaching (leur dire non)</label>
     <textarea id="s-tpl-webi-coach"></textarea>
     <div class="note">Variables : {prenom} {groupe} {live}</div>
@@ -522,6 +535,7 @@ const esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;',
 /* ---------- réglages ---------- */
 const TPL_DEF = {
   webi: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nPetit rappel : le live c'est CE SOIR à 18h ! Voici le lien pour nous rejoindre :\n{live}\n\nSi tu n'y es pas, voici le lien du groupe WhatsApp du live :\n{groupe}\n\nÀ ce soir !",
+  invite: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nTu t'étais inscrite au live d'Anaïs du 31 août, alors je te préviens en avance : elle refait un live DEMAIN, mercredi à 18h, sur un nouveau thème : « Tu es formée mais tu ne t'es pas encore lancée ».\n\nVoici le lien Zoom pour nous rejoindre demain :\n{live}\n\nEt le groupe WhatsApp du live pour être sûre de ne pas le rater :\n{groupe}\n\nÀ demain !",
   webiCoach: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nMerci pour ta candidature au coaching en direct de ce soir. Cette fois on a choisi une autre personne, mais ta candidature nous a beaucoup plu et on la garde précieusement si on refait un live coaching.\n\nEt on t'attend quand même au live CE SOIR à 18h, voici le lien :\n{live}\n\nSi tu n'y es pas, voici le lien du groupe WhatsApp du live :\n{groupe}\n\nÀ ce soir !",
   webiEcole: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nJ'ai vu que tu t'étais inscrit(e) à la liste d'attente de l'école. Elle n'a pas encore ouvert, mais si tu veux, je te propose un call avec moi pour en parler : voir où tu en es et te présenter ce qu'on prépare. Dis-moi si ça te tente et je t'envoie un créneau.\n\nEt en attendant, le live c'est CE SOIR à 18h, voici le lien :\n{live}\n\nSi tu n'y es pas, voici le lien du groupe WhatsApp du live :\n{groupe}\n\nÀ ce soir !",
   cand: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nMerci pour ta candidature au coaching en direct. Cette fois on a choisi une autre personne, mais ta candidature nous a beaucoup plu et on la garde précieusement : si on refait un live coaching un jour, tu fais partie des personnes à qui on pensera en premier.\n\nEt bien sûr on t'attend au live ce soir à 18h, voici le lien :\n{live}",
@@ -537,7 +551,8 @@ const store = {
   get: (k, d) => { try { const v = localStorage.getItem('sc-'+k); return v===null ? d : JSON.parse(v); } catch(e){ return k in MEM ? MEM[k] : d; } },
   set: (k, v) => { MEM[k] = v; try { localStorage.setItem('sc-'+k, JSON.stringify(v)); } catch(e){} }
 };
-let SET = Object.assign({tplWebi:TPL_DEF.webi, tplWebiCoach:TPL_DEF.webiCoach, tplWebiEcole:TPL_DEF.webiEcole, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, tplScholRel:TPL_DEF.scholRel, tplScholOk:TPL_DEF.scholOk, tplEowRelance:TPL_DEF.eowRelance, tplAmbreCheckin:TPL_DEF.ambreCheckin, tplAmbreAbsente:TPL_DEF.ambreAbsente, groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
+let SET = Object.assign({tplWebi:TPL_DEF.webi, tplInvite:TPL_DEF.invite, tplWebiCoach:TPL_DEF.webiCoach, tplWebiEcole:TPL_DEF.webiEcole, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, tplScholRel:TPL_DEF.scholRel, tplScholOk:TPL_DEF.scholOk, tplEowRelance:TPL_DEF.eowRelance, tplAmbreCheckin:TPL_DEF.ambreCheckin, tplAmbreAbsente:TPL_DEF.ambreAbsente, groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
+if (!SET.tplInvite) SET.tplInvite = TPL_DEF.invite;
 
 function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),2200); }
 function waUrl(tel, msg){ return 'https://wa.me/'+tel+'?text='+encodeURIComponent(msg); }
@@ -546,6 +561,7 @@ const WA_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10
 /* ---------- onglets ---------- */
 const TABS = [
   {id:'live2', lab:'Live 9 sept'},
+  {id:'live1', lab:'À inviter au live 2'},
   {id:'track', lab:'Calls effectués à remplir'},
   {id:'calls', lab:'Agenda calls'},
   {id:'clients', lab:'Clientes'},
@@ -574,7 +590,9 @@ function renderTabs(){
   const bCli = clientes().filter(c => { const k = effCtr(c); return !k || k.statut !== 'Signé'; }).length;
   const bPaie = echeancesToutes().filter(x => !x.paye && x.diff !== null && x.diff <= 2).length;
   const bLive2 = DATA.inscrits.filter(i => i.live==='9sept' && i.tel && !done[key(i)]).length;
-  const b = {live2:bLive2, webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, calls:bCalls, track:bTrack, clients:bCli, ambre:ambreManquants().length + eowNonAttribues().length, paie:bPaie, compta:null, data:null};
+  const done1 = store.get('rel1to2', {});
+  const bLive1 = live1Seules().filter(i => i.tel && !done1[key(i)]).length;
+  const b = {live2:bLive2, live1:bLive1, webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, calls:bCalls, track:bTrack, clients:bCli, ambre:ambreManquants().length + eowNonAttribues().length, paie:bPaie, compta:null, data:null};
   $('tabs').innerHTML = TABS.map(t =>
     `<button class="tab${t.id===tabOn?' on':''}" data-t="${t.id}">${t.lab}${b[t.id]!==null?` <span class="bdg">${b[t.id]}</span>`:''}</button>`).join('');
   TABS.forEach(t => $('p-'+t.id).classList.toggle('on', t.id===tabOn));
@@ -697,6 +715,58 @@ function renderLive2(){
 $('f-live2').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fLive2 = p.dataset.f; renderLive2(); }});
 $('q-live2').addEventListener('input', e => { qLive2 = e.target.value.trim().toLowerCase(); renderLive2(); });
 
+/* ---------- inscrites du live 1 pas inscrites au live 2 (à inviter) ---------- */
+// une réinscription au live 2 est fusionnée par le webhook (Source « 9-sept » + « déjà inscrite au live 1 »),
+// on exclut en plus par e-mail et par numéro au cas où elle se serait réinscrite avec une autre adresse
+function live1Seules(){
+  const l2 = DATA.inscrits.filter(i => i.live === '9sept');
+  const mails = new Set(l2.map(i => (i.mail||'').toLowerCase()).filter(Boolean));
+  const tels = new Set(l2.map(i => i.tel).filter(Boolean));
+  return DATA.inscrits.filter(i => i.live !== '9sept' && !(i.mail && mails.has(i.mail.toLowerCase())) && !(i.tel && tels.has(i.tel)));
+}
+const inviteMsg = i => SET.tplInvite.replaceAll('{prenom}', i.n).replaceAll('{live}', DATA.webi.meet)
+  .replaceAll('{groupe}', SET.groupe).replaceAll('{lp}', DATA.webi.lp);
+let fLive1 = 'a', qLive1 = '';
+function renderLive1(){
+  const done = store.get('rel1to2', {});
+  const tous = live1Seules();
+  const insc1 = DATA.inscrits.filter(i => i.live !== '9sept' || i.deja1);
+  const sansTel = tous.filter(i => !i.tel);
+  const aFaire = tous.filter(i => i.tel && !done[key(i)]);
+  const faits = tous.filter(i => i.tel && done[key(i)]);
+  $('k-live1').innerHTML = [
+    ['Inscrites au live 1', insc1.length],
+    ['Déjà inscrites au live 2', insc1.length - tous.length],
+    ['À inviter', tous.length],
+    ['Prévenues', faits.length]
+  ].map(([l,v]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div></div>`).join('');
+  $('f-live1').innerHTML = [
+    ['a', `À prévenir <b>${aFaire.length}</b>`],
+    ['r', `Prévenues <b>${faits.length}</b>`],
+    ['t', `Toutes <b>${tous.length}</b>`],
+    ['s', `Sans numéro <b>${sansTel.length}</b>`]
+  ].map(([v,l]) => `<button class="pill${fLive1===v?' on':''}" data-f="${v}">${l}</button>`).join('');
+  let liste = fLive1==='a' ? aFaire : fLive1==='r' ? faits : fLive1==='s' ? sansTel : tous;
+  if (qLive1) liste = liste.filter(i => (i.n+' '+i.mail).toLowerCase().includes(qLive1));
+  $('l-live1').innerHTML = liste.length ? liste.map(i => {
+    const ok = !!done[key(i)];
+    const msg = inviteMsg(i);
+    const tags = i.coach ? '<span class="tagmode coach">live + coaching</span>' : (i.eco ? '<span class="tagmode" style="background:#EAD9EA;color:#6E4A6E">live + école</span>' : '<span class="tagmode">live seul</span>');
+    return `<div class="ligne${ok?' done':''}">
+      <div class="qui"><div class="nom">${esc(i.n)} ${tags}</div>
+        <div class="sub">${esc(i.mail)}</div></div>
+      <div class="meta"><b>${i.tel ? '+'+i.tel : 'Pas de numéro'}</b>${esc(i.statut || '')}</div>
+      <div class="meta"><b>${esc(i.date)}</b>${esc(i.src)}</div>
+      <div class="actions">
+        ${i.tel ? `<a class="btn-wa" href="${waUrl(i.tel, msg)}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}
+        <label class="chk"><input type="checkbox" data-rel1to2="${esc(key(i))}" ${ok?'checked':''}> Prévenue</label>
+      </div>
+    </div>`;
+  }).join('') : `<div class="vide">Personne ici : toutes les inscrites du live 1 sont déjà inscrites au live 2.</div>`;
+}
+$('f-live1').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fLive1 = p.dataset.f; renderLive1(); }});
+$('q-live1').addEventListener('input', e => { qLive1 = e.target.value.trim().toLowerCase(); renderLive1(); });
+
 /* ---------- candidatures ---------- */
 let fCand = 'a';
 function renderCand(){
@@ -731,7 +801,8 @@ function renderCand(){
 $('f-cand').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fCand = p.dataset.f; renderCand(); }});
 
 document.addEventListener('change', e => {
-  const w = e.target.dataset.relwebi, c = e.target.dataset.relcand;
+  const w = e.target.dataset.relwebi, c = e.target.dataset.relcand, v = e.target.dataset.rel1to2;
+  if (v){ const d = store.get('rel1to2', {}); e.target.checked ? d[v]=1 : delete d[v]; store.set('rel1to2', d); renderLive1(); renderTabs(); }
   if (w){ const d = store.get('relwebi', {}); e.target.checked ? d[w]=1 : delete d[w]; store.set('relwebi', d); renderWebi(); renderLive2(); renderTabs(); }
   if (c){ const d = store.get('relcand', {}); e.target.checked ? d[c]=1 : delete d[c]; store.set('relcand', d); renderCand(); renderTabs(); }
 });
@@ -2069,7 +2140,7 @@ function renderCompta(){
 /* ---------- panneau réglages ---------- */
 function openSet(o){ $('voile').classList.toggle('on', o); $('panneau').classList.toggle('on', o); }
 $('btn-set').addEventListener('click', () => {
-  $('s-tpl-webi').value = SET.tplWebi; $('s-tpl-webi-coach').value = SET.tplWebiCoach; $('s-tpl-webi-ecole').value = SET.tplWebiEcole;
+  $('s-tpl-webi').value = SET.tplWebi; $('s-tpl-invite').value = SET.tplInvite; $('s-tpl-webi-coach').value = SET.tplWebiCoach; $('s-tpl-webi-ecole').value = SET.tplWebiEcole;
   $('s-tpl-cand').value = SET.tplCand; $('s-tpl-call').value = SET.tplCall;
   $('s-tpl-schol-rel').value = SET.tplScholRel; $('s-tpl-schol-ok').value = SET.tplScholOk;
   $('s-groupe').value = SET.groupe; $('s-iclosed').value = SET.iclosed;
@@ -2078,18 +2149,18 @@ $('btn-set').addEventListener('click', () => {
 });
 $('voile').addEventListener('click', () => openSet(false));
 $('s-save').addEventListener('click', () => {
-  SET = {tplWebi:$('s-tpl-webi').value, tplWebiCoach:$('s-tpl-webi-coach').value, tplWebiEcole:$('s-tpl-webi-ecole').value, tplCand:$('s-tpl-cand').value, tplCall:$('s-tpl-call').value, tplScholRel:$('s-tpl-schol-rel').value, tplScholOk:$('s-tpl-schol-ok').value, groupe:$('s-groupe').value.trim(), iclosed:$('s-iclosed').value.trim(), tplEowRelance:$('s-tpl-eow').value, tplAmbreCheckin:$('s-tpl-ambre').value, tplAmbreAbsente:$('s-tpl-ambre-abs').value};
-  store.set('reglages', SET); openSet(false); renderWebi(); renderCand(); renderAgenda(); renderSchol(); renderAmbre(); toast('Enregistré');
+  SET = {tplWebi:$('s-tpl-webi').value, tplInvite:$('s-tpl-invite').value, tplWebiCoach:$('s-tpl-webi-coach').value, tplWebiEcole:$('s-tpl-webi-ecole').value, tplCand:$('s-tpl-cand').value, tplCall:$('s-tpl-call').value, tplScholRel:$('s-tpl-schol-rel').value, tplScholOk:$('s-tpl-schol-ok').value, groupe:$('s-groupe').value.trim(), iclosed:$('s-iclosed').value.trim(), tplEowRelance:$('s-tpl-eow').value, tplAmbreCheckin:$('s-tpl-ambre').value, tplAmbreAbsente:$('s-tpl-ambre-abs').value};
+  store.set('reglages', SET); openSet(false); renderWebi(); renderLive1(); renderCand(); renderAgenda(); renderSchol(); renderAmbre(); toast('Enregistré');
 });
 $('s-reset').addEventListener('click', () => {
-  $('s-tpl-webi').value = TPL_DEF.webi; $('s-tpl-webi-coach').value = TPL_DEF.webiCoach; $('s-tpl-webi-ecole').value = TPL_DEF.webiEcole;
+  $('s-tpl-webi').value = TPL_DEF.webi; $('s-tpl-invite').value = TPL_DEF.invite; $('s-tpl-webi-coach').value = TPL_DEF.webiCoach; $('s-tpl-webi-ecole').value = TPL_DEF.webiEcole;
   $('s-tpl-cand').value = TPL_DEF.cand; $('s-tpl-call').value = TPL_DEF.call;
   $('s-tpl-schol-rel').value = TPL_DEF.scholRel; $('s-tpl-schol-ok').value = TPL_DEF.scholOk;
   $('s-groupe').value = DATA.webi.groupe;
   $('s-tpl-eow').value = TPL_DEF.eowRelance; $('s-tpl-ambre').value = TPL_DEF.ambreCheckin; $('s-tpl-ambre-abs').value = TPL_DEF.ambreAbsente;
 });
 
-renderTabs(); renderWebi(); renderLive2(); renderCand(); renderEcole(); renderSchol(); renderAgenda(); renderTrack(); renderClients(); renderAmbre(); renderCompta(); renderData();
+renderTabs(); renderWebi(); renderLive2(); renderLive1(); renderCand(); renderEcole(); renderSchol(); renderAgenda(); renderTrack(); renderClients(); renderAmbre(); renderCompta(); renderData();
 refreshContrats();
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshContrats(); });
 
