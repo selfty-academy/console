@@ -233,6 +233,20 @@ for r in (charges_rows or []):
         "montant": eur(r.get("Montant")),
         "note": str(r.get("Note") or "").strip(),
     })
+# Charges mensuelles : une ligne dont la note contient « [mensuel] » est reportée
+# automatiquement chaque mois (même jour) depuis sa date jusqu'à aujourd'hui.
+def _mois_suivant(d):
+    y, m = (d.year + 1, 1) if d.month == 12 else (d.year, d.month + 1)
+    return d.replace(year=y, month=m)
+_rec = []
+for c in charges:
+    if "[mensuel]" not in c["note"].lower() or not c["ts"]:
+        continue
+    d = _mois_suivant(datetime.datetime.fromisoformat(c["ts"]))
+    while d <= datetime.datetime.now():
+        _rec.append(dict(c, date=fmt_date(d), ts=d.isoformat(), note=c["note"].replace("[mensuel]", "(mensuel, reporté auto)")))
+        d = _mois_suivant(d)
+charges += _rec
 # ---- Suivi calls (onglet « Suivi Calls », écrit par la console via le pont) ----
 track_rows = read_tab(ewb, "suivi calls")
 track = {}
@@ -248,6 +262,8 @@ for r in (track_rows or []):
         "q": int(eur(r.get("Qualif /10")) or 0),
         "retrans": str(r.get("Retranscription") or "").strip(),
         "comment": str(r.get("Commentaire") or "").strip(),
+        "prep": str(r.get("Prépa Alex") or "").strip(),
+        "prepMaj": str(r.get("Prépa MAJ") or "").strip(),
     }
 
 def dstr_(v):
