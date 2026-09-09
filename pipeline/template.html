@@ -203,6 +203,8 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
   header img{height:36px}
   input,textarea,select{font-size:16px}
 }
+.prep-alex{grid-column:1/-1;background:#FFF7E6;border:1px solid #F3D9A4;border-radius:10px;padding:8px 10px;margin-top:6px;white-space:pre-wrap}
+.prep-alex b{display:block;color:#8a5a00;margin-bottom:2px}
 </style>
 
 <div class="wrap">
@@ -963,6 +965,11 @@ function dayLabel(k){
   if (k===dem) return 'Demain · '+lab;
   return lab.charAt(0).toUpperCase()+lab.slice(1);
 }
+function icPrep(c){
+  const t = c.trk || {};
+  if (!t.prep) return '';
+  return `<div class="rep prep-alex"><b>📞 Infos d'Alex avant le call${t.prepMaj ? ' · ' + esc(t.prepMaj) : ''}</b>${esc(t.prep)}</div>`;
+}
 function icQuest(c){
   const rep = [...c.quest.map(([t,v]) => `<div class="rep"><b>${esc(t)}</b>${esc(v)}</div>`),
                c.notes ? `<div class="rep"><b>Notes iClosed</b>${esc(c.notes)}</div>` : ''].filter(Boolean).join('');
@@ -1001,6 +1008,7 @@ function renderAgenda(){
         <label class="chk"><input type="checkbox" data-icreplay="${c.id}" ${rep[c.id]?'checked':''}> Replay envoyé</label>
         <button class="btn-ghost ic-test" data-id="${esc(c.id)}" data-nom="${esc(c.n)}" data-mail="${esc(c.mail)}" data-tel="${esc(c.tel||'')}" data-utc="${esc(c.utc)}">Call test 🧪</button>
       </div>
+      ${icPrep(c)}
       ${icQuest(c)}
     </div>`});
   });
@@ -1076,7 +1084,7 @@ const trackList = () => DATA.icalls.calls.filter(c => !c.cancel && quandUtc(c.ut
 function effTrk(c){
   const F = store.get('trackfix', {});
   const f = F[c.id];
-  const base = c.trk || {s:'', r:'', prix:0, np:0, q:0, retrans:'', comment:''};
+  const base = c.trk || {s:'', r:'', prix:0, np:0, q:0, retrans:'', comment:'', prep:''};
   if (!f) return base;
   const caught = (f.s===undefined || base.s===f.s) && (f.r===undefined || base.r===f.r);
   if (caught || Date.now()-(f.when||0) > 3*86400000){ delete F[c.id]; store.set('trackfix', F); return base; }
@@ -1120,6 +1128,7 @@ function renderTrack(){
       <div class="meta"><b>${q.txt}</b>${c.tel?'+'+c.tel:''}</div>
       <div class="meta">${t.s ? (t.s==='Présente' ? '<span class="tag-ok">Présente</span>' : '<span class="tag-warn">'+esc(t.s)+'</span>') : '<span class="tag-warn">À remplir</span>'}</div>
       <div class="actions">${c.tel ? `<a class="btn-wa" href="https://wa.me/${c.tel}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}</div>
+      ${icPrep(c)}
       ${icQuest(c)}
       ${t.retrans || t.comment ? `<details class="sujet"><summary>Voir ce qui est déjà enregistré</summary>${t.retrans?`<div class="rep"><b>Retranscription</b>${esc(t.retrans)}</div>`:''}${t.comment?`<div class="rep"><b>Commentaire</b>${esc(t.comment)}</div>`:''}</details>` : ''}
       <div class="tk-form" data-id="${esc(c.id)}" data-nom="${esc(c.n)}" data-mail="${esc(c.mail)}" data-tel="${esc(c.tel||'')}" data-utc="${esc(c.utc)}" data-show="${esc(t.s||'')}" data-res="${esc(t.r||'')}" data-res0="${esc(t.r||'')}" data-np="${t.np||''}" data-qualif="${t.q||''}">
