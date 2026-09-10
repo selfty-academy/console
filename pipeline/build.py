@@ -194,6 +194,17 @@ def read_tab(wb_, name):
             return [dict(zip(h, [c.value for c in r])) for r in ws_.iter_rows(min_row=2) if any(c.value for c in r)]
     return None
 
+def montants(prix, np, ac=0):
+    """Montants des virements, comme dans le contrat (script Contrats, même règle).
+    Avec un acompte (ex. 1 600 € d'abord) : la 1re tranche = le tiers plancher, réglée en 2 virements (acompte + complément)."""
+    np = max(1, int(np or 1)); prix = int(prix or 0); ac = int(ac or 0)
+    if not ac or ac >= prix:
+        base = prix // np
+        return [prix - base * (np - 1)] + [base] * (np - 1)
+    base = prix // np; rest = prix - base * np
+    t = [base + (1 if i >= np - rest else 0) for i in range(np)]
+    return [ac, t[0] - ac] + t[1:]
+
 def eur(v):
     if v is None:
         return 0.0
@@ -259,6 +270,7 @@ for r in (track_rows or []):
         "r": str(r.get("Résultat") or "").strip(),
         "prix": eur(r.get("Prix")),
         "np": int(eur(r.get("Nb paiements")) or 0),
+        "ac": int(eur(r.get("Acompte")) or 0),
         "q": int(eur(r.get("Qualif /10")) or 0),
         "retrans": str(r.get("Retranscription") or "").strip(),
         "comment": str(r.get("Commentaire") or "").strip(),
@@ -328,6 +340,7 @@ for r in (contrats_rows or []):
         "nom": str(r.get("Nom") or "").strip(),
         "prix": eur(r.get("Prix")),
         "np": int(eur(r.get("Nb paiements")) or 1),
+        "ac": int(eur(r.get("Acompte")) or 0),
         "statut": st,
         "sent": dstr(r.get("Date envoi")),
         "signedAt": dstr(r.get("Date signature")),
@@ -341,12 +354,10 @@ for r in (contrats_rows or []):
                  "siege": str(r.get("Siège") or "").strip(), "fonction": str(r.get("Fonction") or "").strip()}
                 if str(r.get("Type") or "").strip() == "Société" else None),
     }
-    _np = rec["np"]
-    _dates = [d.strip() for d in str(r.get("Échéances") or "").split("|") if d.strip()][:_np]
+    _m = montants(rec["prix"], rec["np"], rec["ac"])
+    _dates = [d.strip() for d in str(r.get("Échéances") or "").split("|") if d.strip()][:len(_m)]
     _rap = dict(x.split(":", 1) for x in str(r.get("Rappels") or "").split(";") if ":" in x)
-    _base = int(rec["prix"] // _np) if _np else 0
-    _first = int(rec["prix"] - _base * (_np - 1)) if _np else 0
-    rec["ech"] = [{"k": i + 1, "n": _np, "date": d, "montant": _first if i == 0 else _base,
+    rec["ech"] = [{"k": i + 1, "n": len(_m), "date": d, "montant": _m[i] if i < len(_m) else 0,
                    "paye": False, "rappel": _rap.get(str(i + 1), "")} for i, d in enumerate(_dates)]
     prev = contrats.get(mail)
     # un contrat signé prime ; sinon le plus récent (dernière ligne) l'emporte
