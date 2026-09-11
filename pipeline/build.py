@@ -195,15 +195,25 @@ def read_tab(wb_, name):
     return None
 
 def montants(prix, np, ac=0):
-    """Montants des virements, comme dans le contrat (script Contrats, même règle).
-    Avec un acompte (ex. 1 600 € d'abord) : la 1re tranche = le tiers plancher, réglée en 2 virements (acompte + complément)."""
+    """Montants par défaut des versements, comme dans le contrat (script Contrats, même règle) :
+    parts égales, l'arrondi sur le DERNIER (5 000 € en 3x = 1 666 + 1 666 + 1 668).
+    Avec un acompte (Amandine : 1 600 € d'abord) : le complément du 1er versement s'ajoute au 2e (1 600 + 1 732 + 1 668)."""
     np = max(1, int(np or 1)); prix = int(prix or 0); ac = int(ac or 0)
-    if not ac or ac >= prix:
-        base = prix // np
-        return [prix - base * (np - 1)] + [base] * (np - 1)
-    base = prix // np; rest = prix - base * np
-    t = [base + (1 if i >= np - rest else 0) for i in range(np)]
-    return [ac, t[0] - ac] + t[1:]
+    base = prix // np
+    t = [base] * (np - 1) + [prix - base * (np - 1)]
+    if not ac or ac >= prix or np < 2:
+        return t
+    return [ac, t[1] + t[0] - ac] + t[2:]
+
+def montants_fixes(raw, prix, np):
+    """Colonne « Montants » d'un contrat (« 1600|1732|1668 », fixée à l'envoi, modifiable dans la console) ; None si absente ou incohérente."""
+    try:
+        m = [float(x.strip().replace(" ", "").replace(",", ".")) for x in str(raw or "").split("|") if x.strip()]
+    except ValueError:
+        return None
+    if len(m) != max(1, int(np or 1)) or any(x <= 0 for x in m) or abs(sum(m) - float(prix or 0)) > 0.5:
+        return None
+    return [int(x) if x.is_integer() else x for x in m]
 
 def eur(v):
     if v is None:
@@ -355,7 +365,8 @@ for r in (contrats_rows or []):
                  "siege": str(r.get("Siège") or "").strip(), "fonction": str(r.get("Fonction") or "").strip()}
                 if str(r.get("Type") or "").strip() == "Société" else None),
     }
-    _m = montants(rec["prix"], rec["np"], rec["ac"])
+    _m = montants_fixes(r.get("Montants"), rec["prix"], rec["np"]) or montants(rec["prix"], rec["np"], rec["ac"])
+    rec["mt"] = _m
     _dates = [d.strip() for d in str(r.get("Échéances") or "").split("|") if d.strip()][:len(_m)]
     _rap = dict(x.split(":", 1) for x in str(r.get("Rappels") or "").split(";") if ":" in x)
     rec["ech"] = [{"k": i + 1, "n": len(_m), "date": d, "montant": _m[i] if i < len(_m) else 0,

@@ -191,7 +191,10 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 @keyframes cmFill{0%{background:#E3EFE6;border-color:var(--ok)}100%{background:var(--surface);border-color:var(--border)}}
 .cm-ech{display:flex;flex-direction:column;gap:7px}
 .cm-ech .er,.ech-row{display:flex;gap:9px;align-items:center;flex-wrap:wrap;font-size:14px}
-.cm-ech .er b{min-width:170px}
+.cm-ech .er b{min-width:96px}
+.cm-mt{display:inline-flex;align-items:center;gap:5px;min-width:122px;font-weight:600}
+.cm-mt input.tk-prix{max-width:92px;padding:7px 10px;font-size:14px;font-weight:400}
+#cm-reste.ko,#cm-mt-info .ko{color:var(--danger)}
 .cm-ech input[type=date],.ech-row input[type=date]{width:auto;padding:7px 10px;font-size:14px}
 .cm-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:4px}
 .cm-prixq.on{background:var(--ok);border-color:var(--ok)}
@@ -552,7 +555,7 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
     <div class="tk-row"><span class="tk-lab">Prix (€)</span><button class="tk-pill tk-mini cm-prixq" data-prix="5000">5 000 €</button><button class="tk-pill tk-mini cm-prixq" data-prix="6000">6 000 €</button><input class="tk-prix" id="cm-prix" inputmode="numeric" placeholder="autre"></div>
     <div class="tk-row"><span class="tk-lab">Payé en</span><button class="tk-pill tk-mini" data-cmnp="1">1x</button><button class="tk-pill tk-mini" data-cmnp="2">2x</button><button class="tk-pill tk-mini" data-cmnp="3">3x</button><button class="tk-pill tk-mini" data-cmnp="3" data-cmac="1600" id="cm-ac" hidden>3x · 1 600 € d'abord</button><span class="tk-hint">3 fois maximum (article 5)</span></div>
     <div class="cm-ech" id="cm-ech"></div>
-    <div class="tk-hint">Proposition automatique : tous les versements le 1er du mois (1er versement = le prochain 1er du mois, puis le 1er des mois suivants). Chaque date est modifiable : elles figurent dans le contrat et déclenchent le rappel J-2 par e-mail.</div>
+    <div class="tk-hint">Proposition automatique : parts égales (l'arrondi sur le dernier versement), 1er versement le jour de la vente, les suivants le 1er du mois. Montants et dates sont modifiables : le dernier versement s'ajuste tout seul pour que le total fasse le prix. Tout figure dans le contrat, et chaque date déclenche le rappel J-2 par e-mail.</div>
     <div class="cm-actions"><button class="btn-ghost" id="cm-cancel">Annuler</button><button class="btn-add" id="cm-go">📄 Envoyer le contrat</button></div>
   </div>
 </div>
@@ -1191,9 +1194,9 @@ function renderTrack(){
           <button class="tk-pill${t.s==='Call test'?' on':''}" data-group="show" data-val="Call test">Call test 🧪</button></div>
         <div class="tk-row"><span class="tk-lab">Résultat</span>
           ${RES_OPTS.filter(Boolean).map(o => `<button class="tk-pill${t.r===o?' on':''}" data-group="res" data-val="${esc(o)}">${o==='Vente'?'Vente 🎉':esc(o)}</button>`).join('')}</div>
-        <div class="tk-row tk-prix-row"${vente?'':' style="display:none"'}><span class="tk-lab">Prix (€)</span>${[5000,6000].map(n => `<button class="tk-pill tk-mini tk-prixq${t.prix===n?' on':''}" data-prix="${n}">${EUR(n)}</button>`).join('')}<input class="tk-prix" inputmode="numeric" placeholder="autre" value="${t.prix||''}"><span class="tk-lab" style="min-width:auto">payé en</span>${[1,2,3].map(n => `<button class="tk-pill tk-mini${t.np===n&&!t.ac?' on':''}" data-group="np" data-val="${n}">${n}x</button>`).join('')}${acPossible(c.n, t.ac) ? `<button class="tk-pill tk-mini${t.np===3&&t.ac?' on':''}" data-group="np" data-val="3" data-ac="${AC_DEFAUT}" title="3 paiements, mais le 1er tiers est réglé en 2 virements : ${EUR(AC_DEFAUT)} d'abord, puis le complément">3x · ${EUR(AC_DEFAUT)} d'abord</button>` : ''}</div>
+        <div class="tk-row tk-prix-row"${vente?'':' style="display:none"'}><span class="tk-lab">Prix (€)</span>${[5000,6000].map(n => `<button class="tk-pill tk-mini tk-prixq${t.prix===n?' on':''}" data-prix="${n}">${EUR(n)}</button>`).join('')}<input class="tk-prix" inputmode="numeric" placeholder="autre" value="${t.prix||''}"><span class="tk-lab" style="min-width:auto">payé en</span>${[1,2,3].map(n => `<button class="tk-pill tk-mini${t.np===n&&!t.ac?' on':''}" data-group="np" data-val="${n}">${n}x</button>`).join('')}${acPossible(c.n, t.ac) ? `<button class="tk-pill tk-mini${t.np===3&&t.ac?' on':''}" data-group="np" data-val="3" data-ac="${AC_DEFAUT}" title="3 versements : ${EUR(AC_DEFAUT)} d'abord, le complément du 1er tiers s'ajoute au 2e versement, le 3e = le reste">3x · ${EUR(AC_DEFAUT)} d'abord</button>` : ''}</div>
         <div class="tk-row tk-dclose-row"${vente?'':' style="display:none"'}><span class="tk-lab">Date du close</span><input type="date" class="tk-dclose" value="${esc(t.dc ? frToIso(t.dc) : (quandUtc(c.utc).passe ? (c.utc||'').slice(0,10) : todayIso()))}"><span class="tk-hint">= date de signature sur la fiche cliente (par défaut le jour du call)</span></div>
-        ${vente && t.prix && c.mail ? paieRow({n:c.n, mail:c.mail}, {prix:t.prix, np:t.np||1, ac:t.ac||0}, 'Virement reçu') : ''}
+        ${vente && t.prix && c.mail ? paieRow({n:c.n, mail:c.mail}, effCtr({mail:c.mail}) || {prix:t.prix, np:t.np||1, ac:t.ac||0}, 'Virement reçu') : ''}
         <div class="tk-row"><span class="tk-lab">Qualifiée</span>${[1,2,3,4,5,6,7,8,9,10].map(n => `<button class="tk-pill tk-mini${t.q===n?' on':''}" data-group="qualif" data-val="${n}">${n}</button>`).join('')}<span style="font-size:12.5px;color:var(--muted)">/10</span></div>
         <textarea class="tk-retrans" placeholder="Retranscription du call : ce qui s'est dit… (ajoutée à la suite dans le Sheet)"></textarea>
         <textarea class="tk-comment" placeholder="Commentaire : ton avis, les objections, la prochaine étape…"></textarea>
@@ -1355,8 +1358,8 @@ async function envoyerContrat(o){
   const j = await r.json();
   if (!j.ok) throw new Error(j.error || 'refus du pont');
   if (!j.already){
-    const C = store.get('ctrpend', {}); const dates = j.dates || o.dates || [], v = versements(o.prix||0, o.np||1, o.acompte||0);
-    C[(o.email||'').toLowerCase()] = { statut:'Envoyé', sent:j.sent, token:j.token, np:o.np, ac:o.acompte||0, prix:o.prix, when:Date.now(),
+    const C = store.get('ctrpend', {}); const dates = j.dates || o.dates || [], v = j.montants || o.montants || versements(o.prix||0, o.np||1, o.acompte||0);
+    C[(o.email||'').toLowerCase()] = { statut:'Envoyé', sent:j.sent, token:j.token, np:o.np, ac:o.acompte||0, prix:o.prix, mt:v, when:Date.now(),
       type: o.type === 'societe' ? 'Société' : 'Particulier', soc: o.type === 'societe' ? o.soc : null,
       ech: dates.map((d, i) => ({ k:i+1, n:v.length, date:d, montant:v[i]||0, paye:false, rappel:'' })) };
     store.set('ctrpend', C);
@@ -1388,21 +1391,26 @@ function effCtr(c){
   const L = mail && store.get('ctrlive', {})[mail];
   const inSheet = (DATA.suivi.contrats||[]).find(x => x.mail === mail) || null;
   // le statut live (script) prime sur les datas du build ; found:false = plus de contrat pour ce mail
-  const fromSheet = L ? (L.found ? { mail, token:L.token, prix:L.prix, np:L.np, ac:L.ac||0, statut:L.statut, sent:L.sent, signedAt:L.signedAt, pdf:L.pdf, caseA:L.caseA, caseB:L.caseB, type:L.type, soc:L.soc, ech:L.ech||[], rappels:L.rappels } : null) : inSheet;
+  const fromSheet = L ? (L.found ? { mail, token:L.token, prix:L.prix, np:L.np, ac:L.ac||0, mt:L.mt||[], statut:L.statut, sent:L.sent, signedAt:L.signedAt, pdf:L.pdf, caseA:L.caseA, caseB:L.caseB, type:L.type, soc:L.soc, ech:L.ech||[], rappels:L.rappels } : null) : inSheet;
   const C = store.get('ctrpend', {}); const p = mail && C[mail];
   if (!p) return fromSheet;
   const caught = fromSheet && (fromSheet.statut === 'Signé' || (fromSheet.statut === 'Envoyé' && fromSheet.token === p.token));
   if (caught || Date.now()-(p.when||0) > 3*86400000){ delete C[mail]; store.set('ctrpend', C); return fromSheet; }
-  return Object.assign({}, fromSheet||{}, { statut:'Envoyé', sent:p.sent, token:p.token, np:p.np, ac:p.ac||0, prix:p.prix||(fromSheet&&fromSheet.prix)||0, type:p.type, soc:p.soc, ech:p.ech||[], pend:true });
+  return Object.assign({}, fromSheet||{}, { statut:'Envoyé', sent:p.sent, token:p.token, np:p.np, ac:p.ac||0, mt:p.mt||[], prix:p.prix||(fromSheet&&fromSheet.prix)||0, type:p.type, soc:p.soc, ech:p.ech||[], pend:true });
 }
-/* versements : montants comme dans le contrat (1er versement ajusté), coche = ligne dans « Paiements » */
+/* versements : montants par défaut comme dans le contrat (parts égales, l'arrondi sur le DERNIER : 5 000 € en 3x = 1 666 + 1 666 + 1 668), coche = ligne dans « Paiements » */
 function versements(prix, np, ac){
   np = Math.max(1, np|0); ac = +ac || 0;
-  if (!ac || ac >= prix){ const base = Math.floor(prix/np), first = prix - base*(np-1); return Array.from({length:np}, (_,i) => i ? base : first); }
-  // acompte (ex. Amandine : 1 600 € d'abord) : la 1re tranche = le tiers plancher, réglée en 2 virements (acompte + complément), les autres tranches se partagent le reste
-  const base = Math.floor(prix/np), rest = prix - base*np;
-  const t = Array.from({length:np}, (_,i) => base + (i >= np - rest ? 1 : 0));
-  return [ac, t[0] - ac].concat(t.slice(1));
+  const base = Math.floor(prix/np), t = Array.from({length:np}, (_,i) => i < np-1 ? base : prix - base*(np-1));
+  if (!ac || ac >= prix || np < 2) return t;
+  // acompte (Amandine : 1 600 € d'abord) : le complément du 1er versement s'ajoute au 2e, le dernier = le reste (1 600 + 1 732 + 1 668)
+  return [ac, t[1] + t[0] - ac].concat(t.slice(2));
+}
+/* montants d'un contrat : ceux fixés à l'envoi (modifiables dans la modale, colonne « Montants ») sinon la répartition par défaut */
+function montantsDe(k, prix){
+  prix = +prix || 0; const np = Math.max(1, (k && k.np) || 1), mt = ((k && k.mt) || []).map(Number);
+  if (mt.length === np && mt.every(x => x > 0) && Math.abs(mt.reduce((s,x) => s + x, 0) - prix) < 0.5) return mt;
+  return versements(prix, np, k && k.ac);
 }
 const AC_DEFAUT = 1600;
 // acompte : cas particulier négocié avec Amandine (10/09/2026), pas proposé aux autres leads (sauf si un acompte est déjà enregistré)
@@ -1423,7 +1431,7 @@ function paiesDe(mail){
 function effRecu(c, k){
   // encaissé = Sheet + versements cochés localement pas encore dans le Sheet
   const mail = (c.mail||'').toLowerCase(); if (!mail) return c.recu||0;
-  const prix = (k && k.prix) || c.prix || c.total || 0, np = (k && k.np) || 1, v = versements(prix, np, k && k.ac);
+  const prix = (k && k.prix) || c.prix || c.total || 0, v = montantsDe(k, prix);
   const inSheet = {}; (DATA.compta.paiements||[]).forEach(p => { if (p.mail === mail){ const m = /Versement (\d+)\/(\d+)/.exec(p.note||''); if (m) inSheet[+m[1]] = p.montant; } });
   let recu = c.recu||0; const f = (store.get('paiefix', {})[mail]) || {};
   Object.keys(f).forEach(kk => { if (f[kk].on && !inSheet[kk]) recu += v[kk-1]||0; if (!f[kk].on && inSheet[kk]) recu -= inSheet[kk]; });
@@ -1432,7 +1440,7 @@ function effRecu(c, k){
 function paieRow(c, k, label){
   const mail = (c.mail||'').toLowerCase();
   const prix = (k && k.prix) || c.prix || c.total || 0; if (!mail || !prix) return '';
-  const v = versements(prix, (k && k.np) || 1, k && k.ac), np = v.length, on = paiesDe(mail);
+  const v = montantsDe(k, prix), np = v.length, on = paiesDe(mail);
   return `<div class="paie-row" data-mail="${esc(mail)}" data-nom="${esc(c.n)}" data-total="${prix}" data-np="${np}">
     <span class="tk-lab">${label || 'Encaissé'}</span>${v.map((m,i) => `<button class="tk-pill tk-mini paie-pill${on[i+1]?' on':''}" data-k="${i+1}" data-montant="${m}">${np===1?'Payé':'Versement '+(i+1)} · ${EUR(m)}</button>`).join('')}
     <span class="tk-hint">${np>1 ? 'clique chaque versement reçu' : 'clique quand le virement est reçu'} : paiement dans « Paiements » + facture envoyée</span>
@@ -1517,7 +1525,7 @@ document.addEventListener('click', async e => {
   }
   const k0 = effCtr({ mail: f.dataset.mail });
   const m = await openCtrModal({ nom:f.dataset.nom, mail:f.dataset.mail, prix: parseFloat(f.querySelector('.tk-prix').value.trim().replace(',','.')) || 0,
-    np: Math.min(parseInt(f.dataset.np) || 1, 3), ac: parseInt(f.dataset.ac) || (k0 && k0.ac) || 0, type: k0 && k0.type, soc: k0 && k0.soc, dates: (k0 && k0.ech || []).map(x => x.date) });
+    np: Math.min(parseInt(f.dataset.np) || 1, 3), ac: parseInt(f.dataset.ac) || (k0 && k0.ac) || 0, type: k0 && k0.type, soc: k0 && k0.soc, dates: (k0 && k0.ech || []).map(x => x.date), mt: k0 && k0.mt });
   if (!m) return;
   const prix = m.prix, np = m.np, ac = m.ac || 0;
   // le choix fait dans la modale se reflète dans le formulaire du call
@@ -1540,7 +1548,7 @@ document.addEventListener('click', async e => {
     if (!P.some(x => x.mail === f.dataset.mail)) P.push({n:f.dataset.nom, mail:f.dataset.mail, tel:f.dataset.tel, prix, when:Date.now()});
     store.set('clipend', P);
     tgVente(f, prix, np, ac);
-    const k = await envoyerContrat({ email:f.dataset.mail, nom:f.dataset.nom, tel:f.dataset.tel, prix, np, acompte:ac, callId:f.dataset.id, type:m.type, soc:m.soc, dates:m.dates });
+    const k = await envoyerContrat({ email:f.dataset.mail, nom:f.dataset.nom, tel:f.dataset.tel, prix, np, acompte:ac, callId:f.dataset.id, type:m.type, soc:m.soc, dates:m.dates, montants:m.montants });
     toast(k.already ? 'Vente enregistrée. Son contrat était déjà signé ✅' : 'Vente enregistrée 🎉 Contrat envoyé à ' + f.dataset.mail);
     renderTrack(); renderClients(); renderTabs();
   } catch(err){
@@ -1551,12 +1559,12 @@ document.addEventListener('click', async e => {
 document.addEventListener('click', async e => {
   const b = e.target.closest('.cl-contrat'); if (!b) return;
   const k0 = effCtr({ mail: b.dataset.mail });
-  const m = await openCtrModal({ nom:b.dataset.nom, mail:b.dataset.mail, prix: parseFloat(b.dataset.prix) || 0, np: Math.min(parseInt(b.dataset.np) || 1, 3), ac: parseInt(b.dataset.ac) || 0,
-    type: k0 && k0.type, soc: k0 && k0.soc, dates: (k0 && k0.ech || []).map(x => x.date) });
+  const m = await openCtrModal({ nom:b.dataset.nom, mail:b.dataset.mail, prix: (k0 && k0.prix) || parseFloat(b.dataset.prix) || 0, np: Math.min(parseInt(b.dataset.np) || 1, 3), ac: parseInt(b.dataset.ac) || 0,
+    type: k0 && k0.type, soc: k0 && k0.soc, dates: (k0 && k0.ech || []).map(x => x.date), mt: k0 && k0.mt });
   if (!m) return;
   b.disabled = true; b.textContent = 'Envoi…';
   try {
-    const j = await envoyerContrat({ email:b.dataset.mail, nom:b.dataset.nom, tel:b.dataset.tel, prix:m.prix, np:m.np, acompte:m.ac||0, type:m.type, soc:m.soc, dates:m.dates });
+    const j = await envoyerContrat({ email:b.dataset.mail, nom:b.dataset.nom, tel:b.dataset.tel, prix:m.prix, np:m.np, acompte:m.ac||0, type:m.type, soc:m.soc, dates:m.dates, montants:m.montants });
     toast(j.already ? 'Ce contrat est déjà signé ✅' : 'Contrat envoyé à ' + b.dataset.mail + ' 📄');
     renderClients(); renderTabs();
   } catch(err){
@@ -1579,20 +1587,36 @@ function addMonthsIso(iso, n){ const d = new Date(iso + 'T12:00:00'); d.setMonth
 /* proposition d'échéancier (règle du 05/09 soir) : 1er versement = le jour de la vente (ou la date choisie à la main) ;
    les suivants = le 1er du mois, en sautant le mois qui suit (vente le 5/09 en 2x -> 05/09 puis 01/11 ; en 3x -> + 01/12). Chaque date reste modifiable. */
 function premierDuMois(iso, plus){ const m = /^(\d{4})-(\d{2})/.exec(iso); const d = new Date(+m[1], +m[2]-1 + (plus||0), 1, 12); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`; }
-function proposeDates(np, firstIso, ac){
+function proposeDates(np, firstIso){
   firstIso = firstIso || todayIso();
   const out = [firstIso];
-  if (+ac) out.push(addDaysIso(firstIso, 7));   // complément de l'acompte : proposé 7 jours après, modifiable
   for (let k = 1; k < np; k++) out.push(premierDuMois(firstIso, k + 1));
   return out;
 }
-const CM = { type:'perso', np:1, ac:0, prix:0, dates:[] };
-const cmN = () => CM.np + (CM.ac ? 1 : 0);   // nombre de virements (acompte = 1 ligne de plus)
+const CM = { type:'perso', np:1, ac:0, prix:0, dates:[], mt:[] };
+const cmN = () => CM.np;   // 1 virement par versement (l'acompte d'Amandine ne crée plus de virement en plus)
+/* montants : répartition par défaut (ou préréglage acompte), modifiables par Anaïs ; le dernier versement = le reste, le total fait toujours le prix */
+const cmMtDefaut = () => versements(CM.prix || 0, CM.np, CM.ac);
+const cmReste = () => (CM.prix || 0) - CM.mt.slice(0, -1).reduce((s, x) => s + x, 0);
 function cmRenderEch(){
-  const v = versements(CM.prix || 0, CM.np, CM.ac);
-  while (CM.dates.length < cmN()) CM.dates = proposeDates(CM.np, CM.dates[0], CM.ac);
-  CM.dates = CM.dates.slice(0, cmN());
-  $('cm-ech').innerHTML = CM.dates.map((d, i) => `<div class="er"><b>${CM.np > 1 ? 'Versement ' + (i+1) : 'Règlement'} · ${EUR(v[i]||0)}</b><input type="date" data-cmdate="${i}" value="${esc(d)}">${i === 0 ? '<span class="tk-hint">1er versement' + (CM.ac ? ' (acompte)' : '') + '</span>' : (CM.ac && i === 1 ? '<span class="tk-hint">complément du 1er tiers, modifiable</span>' : '<span class="tk-hint">proposé, modifiable</span>')}</div>`).join('');
+  const n = cmN();
+  if (CM.mt.length !== n) CM.mt = cmMtDefaut();
+  while (CM.dates.length < n) CM.dates = proposeDates(n, CM.dates[0]);
+  CM.dates = CM.dates.slice(0, n);
+  $('cm-ech').innerHTML = CM.dates.map((d, i) => `<div class="er"><b>${n > 1 ? 'Versement ' + (i+1) : 'Règlement'}</b><span class="cm-mt">${n > 1 && i < n-1
+      ? `<input class="tk-prix" inputmode="numeric" data-cmmt="${i}" value="${CM.mt[i]}" aria-label="Montant du versement ${i+1}"> €`
+      : '<span id="cm-reste"></span>'}</span><input type="date" data-cmdate="${i}" value="${esc(d)}"><span class="tk-hint">${n === 1 ? 'en une fois' : i === 0 ? '1er versement' : i === n-1 ? 'le reste, calculé tout seul' : 'modifiable'}</span></div>`).join('') +
+    '<div class="tk-hint" id="cm-mt-info"></div>';
+  cmMajReste();
+}
+function cmMajReste(){
+  const n = cmN(), def = cmMtDefaut();
+  if (n > 1) CM.mt[n-1] = cmReste(); else CM.mt = [CM.prix || 0];
+  const last = CM.mt[n-1], ko = n > 1 && CM.prix > 0 && last <= 0;
+  $('cm-reste').textContent = EUR(last); $('cm-reste').classList.toggle('ko', ko);
+  const perso = n > 1 && CM.mt.some((x, i) => x !== def[i]);
+  $('cm-mt-info').innerHTML = (ko ? '<span class="ko">Les premiers versements dépassent le prix : baisse un montant.</span> ' : perso ? `Montants modifiés à la main, total ${EUR(CM.prix || 0)}. ` : '') +
+    (perso ? `<button class="btn-ghost cm-mt-reset" type="button">↺ Revenir à ${def.map(EUR).join(' + ')}</button>` : '');
 }
 function cmSync(){
   $('cm-voile').querySelectorAll('[data-cmtype]').forEach(x => x.classList.toggle('on', x.dataset.cmtype === CM.type));
@@ -1607,8 +1631,11 @@ function openCtrModal(o){
   CM.type = o.type === 'Société' || o.type === 'societe' ? 'societe' : 'perso';
   CM.np = Math.min(Math.max(o.np || 1, 1), 3); CM.ac = acPossible(o.nom, o.ac) ? (+o.ac || 0) : 0; CM.prix = o.prix || 0;
   $('cm-ac').hidden = !acPossible(o.nom, o.ac);
+  // montants déjà fixés (renvoi d'un contrat) : repris s'ils collent au prix et au nombre de versements, sinon répartition par défaut
+  const mt0 = (o.mt || []).map(Number);
+  CM.mt = mt0.length === CM.np && Math.abs(mt0.reduce((s, x) => s + x, 0) - CM.prix) < 0.5 ? mt0 : [];
   CM.dates = (o.dates || []).map(frToIso).filter(Boolean);
-  if (CM.dates.length !== cmN()) CM.dates = proposeDates(CM.np, CM.dates[0], CM.ac);
+  if (CM.dates.length !== cmN()) CM.dates = proposeDates(CM.np, CM.dates[0]);
   const S = o.soc || {};
   $('cm-soc-nom').value = S.nom || ''; setForme(S.forme || 'SASU'); $('cm-soc-siren').value = S.siren || '';
   $('cm-soc-tva').value = S.tva || ''; $('cm-soc-siege').value = S.siege || ''; $('cm-soc-fonction').value = S.fonction || '';
@@ -1625,16 +1652,23 @@ $('cm-voile').addEventListener('click', e => { if (e.target === $('cm-voile')) c
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('cm-voile').hidden) closeCtrModal(null); });
 $('cm-voile').addEventListener('click', e => {
   const t = e.target.closest('[data-cmtype]'); if (t){ CM.type = t.dataset.cmtype; cmSync(); return; }
-  const n = e.target.closest('[data-cmnp]'); if (n){ CM.np = +n.dataset.cmnp; CM.ac = +n.dataset.cmac || 0; CM.dates = proposeDates(CM.np, CM.dates[0], CM.ac); cmSync(); return; }
-  const q = e.target.closest('.cm-prixq'); if (q){ CM.prix = +q.dataset.prix; cmSync(); }
+  const n = e.target.closest('[data-cmnp]'); if (n){ CM.np = +n.dataset.cmnp; CM.ac = +n.dataset.cmac || 0; CM.dates = proposeDates(CM.np, CM.dates[0]); CM.mt = []; cmSync(); return; }
+  const q = e.target.closest('.cm-prixq'); if (q){ CM.prix = +q.dataset.prix; CM.mt = []; cmSync(); }
 });
-$('cm-prix').addEventListener('input', () => { CM.prix = parseFloat($('cm-prix').value.trim().replace(',','.')) || 0; $('cm-voile').querySelectorAll('.cm-prixq').forEach(x => x.classList.toggle('on', +x.dataset.prix === CM.prix)); cmRenderEch(); });
+$('cm-prix').addEventListener('input', () => { CM.prix = parseFloat($('cm-prix').value.trim().replace(',','.')) || 0; CM.mt = []; $('cm-voile').querySelectorAll('.cm-prixq').forEach(x => x.classList.toggle('on', +x.dataset.prix === CM.prix)); cmRenderEch(); });
 $('cm-ech').addEventListener('change', e => {
   const i = e.target.dataset.cmdate; if (i === undefined || !e.target.value) return;
-  if (+i === 0) CM.dates = proposeDates(CM.np, e.target.value, CM.ac);   // le 1er versement change : on repropose les suivants
+  if (+i === 0) CM.dates = proposeDates(CM.np, e.target.value);   // le 1er versement change : on repropose les suivants
   else CM.dates[+i] = e.target.value;
   cmRenderEch();
 });
+// montant d'un versement tapé à la main : le dernier se recalcule (sans redessiner les champs, pour garder le curseur)
+$('cm-ech').addEventListener('input', e => {
+  const i = e.target.dataset.cmmt; if (i === undefined) return;
+  CM.mt[+i] = Math.max(0, Math.round(parseFloat(e.target.value.replace(/\s/g, '').replace(',', '.')) || 0));
+  cmMajReste();
+});
+$('cm-ech').addEventListener('click', e => { if (e.target.closest('.cm-mt-reset')){ CM.mt = []; cmRenderEch(); } });
 $('cm-go').addEventListener('click', () => {
   if (!CM.prix) return toast('Choisis le prix (5 000 € / 6 000 € ou autre)');
   const soc = CM.type === 'societe' ? { nom:$('cm-soc-nom').value.trim(), forme:$('cm-soc-forme').value, siren:$('cm-soc-siren').value.replace(/\D/g,''), tva:$('cm-soc-tva').value.trim().toUpperCase(), siege:$('cm-soc-siege').value.trim(), fonction:$('cm-soc-fonction').value.trim() } : null;
@@ -1643,7 +1677,8 @@ $('cm-go').addEventListener('click', () => {
   if (CM.ac && CM.ac >= CM.prix) return toast('L\'acompte doit être inférieur au prix');
   if (CM.dates.length !== cmN() || CM.dates.some(d => !d)) return toast('Il manque une date de versement');
   for (let i = 1; i < CM.dates.length; i++) if (CM.dates[i] <= CM.dates[i-1]) return toast('Les dates doivent se suivre dans l\'ordre');
-  closeCtrModal({ prix:CM.prix, np:CM.np, ac:CM.ac, type:CM.type, soc, dates:CM.dates.map(isoToFr) });
+  if (CM.mt.length !== cmN() || CM.mt.some(x => !(x > 0))) return toast('Chaque versement doit être supérieur à 0 € (le dernier = le reste du prix)');
+  closeCtrModal({ prix:CM.prix, np:CM.np, ac:CM.ac, type:CM.type, soc, dates:CM.dates.map(isoToFr), montants:CM.mt.slice() });
 });
 
 /* ---------- société : coller le lien Pappers (ou le SIREN) remplit les infos ----------
@@ -1775,7 +1810,7 @@ function echeancesToutes(){
   clientes().forEach(c => {
     const k = effCtr(c); if (!k || !(k.ech||[]).length) return;
     const mail = (c.mail||'').toLowerCase(), on = paiesDe(mail);
-    const v = versements(k.prix || c.prix || c.total || 0, k.np || 1, k.ac);
+    const v = montantsDe(k, k.prix || c.prix || c.total || 0);
     k.ech.forEach((e, i) => {
       const iso = frToIso(e.date);
       const diff = iso ? Math.round((new Date(iso+'T12:00:00') - new Date(today+'T12:00:00')) / 86400000) : null;
