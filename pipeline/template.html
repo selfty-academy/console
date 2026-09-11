@@ -595,22 +595,22 @@ const WA_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10
 
 /* ---------- onglets ---------- */
 const TABS = [
+  {id:'track', lab:'Calls effectués à remplir'},
+  {id:'calls', lab:'Prochains calls'},
+  {id:'leads', lab:'Leads sans call'},
+  {id:'clients', lab:'Clientes'},
+  {id:'ambre', lab:'Ambre suivi client'},
+  {id:'paie', lab:'Paiements'},
+  {id:'ecole', lab:"Liste d'attente école"},
   {id:'webis', lab:'Webinaires', sub:[
     {id:'live2', lab:'Live 9 sept'},
     {id:'live1', lab:'À inviter au live 2'},
     {id:'webi',  lab:'Relances webi'},
     {id:'cand',  lab:'Candidatures live'}
   ]},
-  {id:'track', lab:'Calls effectués à remplir'},
-  {id:'calls', lab:'Agenda calls'},
-  {id:'leads', lab:'Leads sans call'},
-  {id:'clients', lab:'Clientes'},
-  {id:'ambre', lab:'Ambre suivi client'},
-  {id:'paie', lab:'Paiements'},
-  {id:'ecole', lab:"Liste d'attente école (questionnaire initial)"},
   {id:'schol', lab:'Scholarship'},
-  {id:'data',  lab:'Datas'},
-  {id:'compta', lab:'Compta'}
+  {id:'compta', lab:'Compta'},
+  {id:'data',  lab:'Datas'}
 ];
 const LEAVES = TABS.flatMap(t => t.sub ? t.sub : [t]);           // onglets « feuilles » = panneaux
 const groupOf = id => (TABS.find(t => t.sub && t.sub.some(x => x.id === id)) || {}).id || null;
