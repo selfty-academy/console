@@ -176,6 +176,19 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 .cm-soc label{font-size:12.5px;color:var(--muted);display:block}
 .cm-soc label.wide{grid-column:1/-1}
 .cm-soc input,.cm-soc select{display:block;width:100%;border:1px solid var(--border);border-radius:10px;padding:8px 10px;font:14.5px "Jost",sans-serif;color:var(--ink);background:var(--surface);margin-top:3px}
+.cm-pap{grid-column:1/-1;display:flex;flex-direction:column;gap:5px;padding-bottom:11px;border-bottom:1px dashed var(--border)}
+.cm-pap-top{display:flex;justify-content:space-between;align-items:baseline;gap:4px 10px;flex-wrap:wrap}
+.cm-pap-top a{font-size:12.5px;color:var(--mauve-deep);white-space:nowrap}
+.cm-pap-row{display:flex;gap:8px;align-items:center}
+.cm-soc .cm-pap-row input{margin-top:0;flex:1;min-width:0}
+.cm-pap-info{font-size:12.5px;line-height:1.5;color:var(--muted)}
+.cm-pap-info:empty{display:none}
+.cm-pap-info.ok{color:var(--ok)}
+.cm-pap-info.err{color:var(--danger)}
+.cm-pap-info .w{display:block;color:var(--warn)}
+.cm-pap-info .n{display:block;color:var(--muted)}
+.cm-soc .cm-filled{animation:cmFill 1.8s ease-out}
+@keyframes cmFill{0%{background:#E3EFE6;border-color:var(--ok)}100%{background:var(--surface);border-color:var(--border)}}
 .cm-ech{display:flex;flex-direction:column;gap:7px}
 .cm-ech .er,.ech-row{display:flex;gap:9px;align-items:center;flex-wrap:wrap;font-size:14px}
 .cm-ech .er b{min-width:170px}
@@ -524,6 +537,11 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
       <button class="tk-pill" data-cmtype="perso">👤 En perso (particulier)</button>
       <button class="tk-pill" data-cmtype="societe">🏢 Sa société</button></div>
     <div class="cm-soc" id="cm-soc" hidden>
+      <div class="cm-pap">
+        <div class="cm-pap-top"><label for="cm-soc-pap">🔎 Colle le lien Pappers de sa société (ou son SIREN) : tout se remplit tout seul</label><a id="cm-soc-pap-find" href="https://www.pappers.fr/" target="_blank" rel="noopener">Chercher sur Pappers ↗</a></div>
+        <div class="cm-pap-row"><input id="cm-soc-pap" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://www.pappers.fr/entreprise/…"><button type="button" class="btn-ghost" id="cm-soc-pap-go">Remplir</button></div>
+        <div class="cm-pap-info" id="cm-soc-pap-info"></div>
+      </div>
       <label>Raison sociale *<input id="cm-soc-nom" placeholder="Camille Coaching"></label>
       <label>Forme juridique<select id="cm-soc-forme"><option>SASU</option><option>SAS</option><option>EURL</option><option>SARL</option><option>EI / micro-entreprise</option><option>Association</option><option>Autre</option></select></label>
       <label>SIREN ou SIRET *<input id="cm-soc-siren" inputmode="numeric" placeholder="123 456 789"></label>
@@ -1592,8 +1610,9 @@ function openCtrModal(o){
   CM.dates = (o.dates || []).map(frToIso).filter(Boolean);
   if (CM.dates.length !== cmN()) CM.dates = proposeDates(CM.np, CM.dates[0], CM.ac);
   const S = o.soc || {};
-  $('cm-soc-nom').value = S.nom || ''; $('cm-soc-forme').value = S.forme || 'SASU'; $('cm-soc-siren').value = S.siren || '';
+  $('cm-soc-nom').value = S.nom || ''; setForme(S.forme || 'SASU'); $('cm-soc-siren').value = S.siren || '';
   $('cm-soc-tva').value = S.tva || ''; $('cm-soc-siege').value = S.siege || ''; $('cm-soc-fonction').value = S.fonction || '';
+  papReset(o.nom);
   $('cm-qui').textContent = `Pour ${o.nom} (${o.mail}). Le contrat part par e-mail avec son lien de signature.`;
   $('cm-go').disabled = false; $('cm-go').textContent = '📄 Envoyer le contrat';
   cmSync();
@@ -1626,6 +1645,127 @@ $('cm-go').addEventListener('click', () => {
   for (let i = 1; i < CM.dates.length; i++) if (CM.dates[i] <= CM.dates[i-1]) return toast('Les dates doivent se suivre dans l\'ordre');
   closeCtrModal({ prix:CM.prix, np:CM.np, ac:CM.ac, type:CM.type, soc, dates:CM.dates.map(isoToFr) });
 });
+
+/* ---------- société : coller le lien Pappers (ou le SIREN) remplit les infos ----------
+   Pappers bloque les appels automatiques : on lit le SIREN dans le lien et on interroge l'API publique
+   recherche-entreprises.api.gouv.fr (mêmes données INSEE / RNE que Pappers, gratuite, sans clé, CORS ouvert).
+   Siège : version propre de la Base Adresse Nationale (casse, accents) seulement si numéro, voie et code postal
+   collent au registre, sinon l'adresse du registre telle quelle. Tout reste modifiable avant l'envoi. */
+const PAP = { seq:0, last:'', nom:'', fct:'', t:null };
+const sansAccents = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const fmtSiren = s => String(s).replace(/(\d{3})(?=\d)/g, '$1 ');
+function sirenDe(txt){
+  const s = String(txt || '').replace(/(\d)[\s.\u00a0\u202f]+(?=\d)/g, '$1');   // « 931 033 062 » -> 931033062
+  const nums = [...s.matchAll(/(?:^|\D)(\d{14}|\d{9})(?=\D|$)/g)].map(m => m[1].slice(0, 9)).reverse();   // SIRET -> SIREN, le dernier du lien d'abord
+  const luhn = n => [...n].reverse().reduce((t, c, i) => { let d = +c; if (i % 2){ d *= 2; if (d > 9) d -= 9; } return t + d; }, 0) % 10 === 0;
+  return nums.find(luhn) || nums[0] || '';
+}
+const FORMES = { '1000':'EI / micro-entreprise', '5498':'EURL', '5710':'SAS', '5720':'SASU', '5485':'SELARL', '5785':'SELAS', '5202':'SNC', '6540':'SCI', '5800':'SE' };
+function formeDe(e){
+  const c = String(e.nature_juridique || ''), n = String(e.nom_raison_sociale || e.nom_complet || '').toUpperCase();
+  if (c.startsWith('54') && /^EURL\b/.test(n)) return 'EURL';   // l'INSEE classe souvent les EURL en « SARL » (5499)
+  if (c.startsWith('57') && /^SASU\b/.test(n)) return 'SASU';
+  if (FORMES[c]) return FORMES[c];
+  if (e.complements && e.complements.est_entrepreneur_individuel) return 'EI / micro-entreprise';
+  return c.startsWith('54') ? 'SARL' : c.startsWith('57') ? 'SAS' : /^5[56]/.test(c) ? 'SA' : c.startsWith('65') ? 'Société civile' : c.startsWith('92') ? 'Association' : 'Autre';
+}
+function setForme(v){
+  const s = $('cm-soc-forme');
+  if (v && ![...s.options].some(o => o.value === v)) s.add(new Option(v, v), s.options[s.options.length - 1]);   // forme hors liste (SCI, SELARL…) : ajoutée avant « Autre »
+  s.value = v || 'SASU';
+}
+const VOIES = { ALL:'allée', AV:'avenue', BD:'boulevard', CAR:'carrefour', CHE:'chemin', CHS:'chaussée', CITE:'cité', COR:'corniche', CRS:'cours', DOM:'domaine', DSC:'descente', ECA:'écart', ESP:'esplanade', FG:'faubourg', GR:'grande rue', HAM:'hameau', HLE:'halle', IMP:'impasse', LD:'lieu-dit', LOT:'lotissement', MAR:'marché', MTE:'montée', PAS:'passage', PL:'place', PLN:'plaine', PLT:'plateau', PRO:'promenade', PRV:'parvis', QUA:'quartier', QUAI:'quai', RES:'résidence', RLE:'ruelle', ROC:'rocade', RPT:'rond-point', RTE:'route', SEN:'sentier', SQ:'square', TPL:'terre-plein', TRA:'traverse', VLA:'villa', VLGE:'village' };
+const nonDiffuse = v => /NON-DIFFUSIBLE/i.test(v || '');
+function adresseRegistre(s){
+  if (!s || nonDiffuse(s.adresse) || nonDiffuse(s.libelle_voie)) return '';
+  const voie = [s.numero_voie, { B:'BIS', T:'TER', Q:'QUATER' }[s.indice_repetition] || s.indice_repetition, VOIES[s.type_voie] ? VOIES[s.type_voie].toUpperCase() : s.type_voie, s.libelle_voie].filter(Boolean).join(' ');
+  const ville = s.libelle_commune_etranger ? [s.libelle_commune_etranger, s.libelle_pays_etranger].filter(Boolean).join(', ')
+    : s.cedex ? [s.cedex, s.libelle_cedex || s.libelle_commune].filter(Boolean).join(' ') : [s.code_postal, s.libelle_commune].filter(Boolean).join(' ');
+  return [s.complement_adresse, voie, s.distribution_speciale, ville].filter(Boolean).join(', ') || String(s.adresse || '').trim();
+}
+async function adresseJolie(s, brut){
+  if (!brut || s.complement_adresse || s.indice_repetition || s.cedex || s.distribution_speciale || s.libelle_commune_etranger || !s.code_postal || !s.libelle_voie) return brut;
+  try {
+    const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 8000);
+    const q = [s.numero_voie, VOIES[s.type_voie] || s.type_voie, s.libelle_voie, s.code_postal, s.libelle_commune].filter(Boolean).join(' ');
+    const r = await fetch('https://data.geopf.fr/geocodage/search?limit=1&postcode=' + encodeURIComponent(s.code_postal) + '&q=' + encodeURIComponent(q), { signal: ctl.signal });
+    clearTimeout(to);
+    const p = (((await r.json()).features || [])[0] || {}).properties;
+    if (!p || !(p.score >= 0.6) || p.postcode !== s.code_postal || String(p.housenumber || '') !== String(s.numero_voie || '')) return brut;
+    const mots = x => sansAccents(x).split(/[^a-z0-9]+/).filter(w => w.length > 2);
+    const reg = mots(s.libelle_voie), ban = new Set(mots(p.street || p.name));
+    if (reg.filter(w => ban.has(w)).length < Math.ceil(reg.length * 0.6)) return brut;
+    return `${p.name.charAt(0).toUpperCase()}${p.name.slice(1)}, ${p.postcode} ${p.city}`;
+  } catch(e){ return brut; }
+}
+const PARTICULES = new Set(['de','du','des','la','le','les','d','l','van','von','der','den','di','da','del','el','y']);
+function signataire(dirs, nomCliente, ei){
+  // la cliente parmi les dirigeant(e)s du registre : nom ET prénom doivent coller, sinon on ne devine pas
+  const mots = x => sansAccents(x).split(/[^a-z]+/).filter(w => w && !PARTICULES.has(w));
+  const cli = new Set(mots(nomCliente));
+  const d = (dirs || []).find(d => d.type_dirigeant === 'personne physique' && (d.qualite || ei) && mots(d.nom).some(w => cli.has(w)) && mots(d.prenoms).some(w => cli.has(w)));
+  if (!d) return null;
+  const roles = String(d.qualite || 'Entrepreneur individuel').split(/\s*,\s*/);
+  const role = roles.find(q => /président|gérant|directeur/i.test(q)) || roles[0];
+  return { d, fonction: role.replace(/\s+de\s+SASU?$/i, '').replace(/\s+et\s+associé.*$/i, '').trim() };
+}
+const nomPers = d => [String(d.prenoms || '').split(/\s+/)[0], d.nom].filter(Boolean).join(' ').toLowerCase().replace(/(^|[\s('\u2019-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+function papInfo(cls, html){ const el = $('cm-soc-pap-info'); el.className = 'cm-pap-info' + (cls ? ' ' + cls : ''); el.innerHTML = html; }
+function papReset(nomCliente){
+  PAP.nom = nomCliente || ''; PAP.last = ''; PAP.fct = ''; PAP.seq++; clearTimeout(PAP.t);
+  $('cm-soc-pap').value = ''; $('cm-soc-pap-go').disabled = false; papInfo('', '');
+  $('cm-soc-pap-find').href = 'https://www.pappers.fr/recherche?q=' + encodeURIComponent(PAP.nom);
+}
+async function papRemplir(force){
+  const raw = $('cm-soc-pap').value.trim(), siren = sirenDe(raw);
+  if (!raw){ PAP.last = ''; PAP.seq++; papInfo('', ''); return; }
+  if (!siren){
+    if (force) papInfo('err', 'Je ne trouve pas de SIREN dans ce lien : colle le lien de la page de l\'entreprise sur Pappers (pappers.fr/entreprise/…) ou ses 9 chiffres.');
+    else if (/pappers|https?:|www\./i.test(raw)) papInfo('', 'Il me faut le lien de la page de l\'entreprise (pappers.fr/entreprise/…) ou son SIREN.');
+    return;
+  }
+  if (siren === PAP.last && !force) return;
+  PAP.last = siren; const seq = ++PAP.seq, go = $('cm-soc-pap-go');
+  go.disabled = true; papInfo('', 'Recherche au registre des entreprises…');
+  try {
+    const r = await fetch('https://recherche-entreprises.api.gouv.fr/search?per_page=5&q=' + siren);
+    if (!r.ok) throw new Error(r.status === 429 ? 'trop de demandes d\'un coup' : 'erreur ' + r.status);
+    const e = ((await r.json()).results || []).find(x => x.siren === siren);
+    if (seq !== PAP.seq) return;
+    if (!e) return papInfo('err', `Aucune entreprise au registre avec le SIREN ${fmtSiren(siren)} : vérifie le lien.`);
+    const s = e.siege || {}, brut = adresseRegistre(s);
+    const nom = nonDiffuse(e.nom_raison_sociale || e.nom_complet) ? '' : String(e.nom_raison_sociale || e.nom_complet || '').trim();
+    const forme = formeDe(e), tva = (e.tva || [])[0] || '', sg = signataire(e.dirigeants, PAP.nom, forme === 'EI / micro-entreprise');
+    const flash = el => { el.classList.remove('cm-filled'); void el.offsetWidth; el.classList.add('cm-filled'); };
+    const put = (id, v) => { const el = $(id); el.value = v; flash(el); };
+    put('cm-soc-nom', nom); setForme(forme); flash($('cm-soc-forme')); put('cm-soc-siren', fmtSiren(siren)); put('cm-soc-tva', tva); put('cm-soc-siege', brut);
+    if (sg){ put('cm-soc-fonction', sg.fonction); PAP.fct = sg.fonction; }
+    else if (PAP.fct && $('cm-soc-fonction').value === PAP.fct){ $('cm-soc-fonction').value = ''; PAP.fct = ''; }   // fonction remplie pour une autre société : on l'enlève
+    const L = [`<b>✓ ${esc(nom || 'Entreprise trouvée')}</b> · ${esc(forme)} · SIREN ${fmtSiren(siren)} : infos remplies depuis le registre, vérifie puis envoie.`];
+    if (e.etat_administratif === 'C') L.push(`<span class="w">⚠️ Entreprise fermée au registre${e.date_fermeture ? ' depuis le ' + isoToFr(e.date_fermeture) : ''} : vérifie avec la cliente.</span>`);
+    if (!nom) L.push('<span class="w">⚠️ Nom non diffusé publiquement : à demander à la cliente.</span>');
+    if (!brut) L.push('<span class="w">⚠️ Adresse du siège non diffusée publiquement : à demander à la cliente.</span>');
+    if (forme === 'Autre') L.push('<span class="w">⚠️ Forme juridique à choisir dans la liste.</span>');
+    if (sg) L.push(`<span class="n">Signataire : ${esc(nomPers(sg.d))}, ${esc(sg.fonction)} (d'après le registre).</span>`);
+    else {
+      const ds = (e.dirigeants || []).filter(d => d.type_dirigeant === 'personne physique' && d.nom && !/liquidateur|commissaire/i.test(d.qualite || '')).slice(0, 3);
+      L.push(`<span class="w">Sa fonction : ${$('cm-soc-fonction').value.trim() ? 'à vérifier' : 'à compléter'}${ds.length ? ' (au registre : ' + ds.map(d => esc(nomPers(d)) + (d.qualite ? ', ' + esc(d.qualite) : '')).join(' ; ') + ')' : ''}.</span>`);
+    }
+    if (!tva) L.push('<span class="n">Pas de n° de TVA au registre : laissé vide.</span>');
+    papInfo('ok', L.join(''));
+    // puis la version propre de l'adresse (Base Adresse Nationale) dès qu'elle arrive, si le champ n'a pas été retouché entre-temps
+    adresseJolie(s, brut).then(j => { if (seq === PAP.seq && j !== brut && $('cm-soc-siege').value === brut) put('cm-soc-siege', j); });
+  } catch(err){
+    if (seq !== PAP.seq) return;
+    PAP.last = '';
+    papInfo('err', 'Registre injoignable (' + esc(err.message) + ') : réessaie dans un instant ou remplis à la main.');
+  } finally { if (seq === PAP.seq) go.disabled = false; }
+}
+$('cm-soc-pap').addEventListener('input', () => { clearTimeout(PAP.t); PAP.t = setTimeout(() => papRemplir(false), 350); });
+$('cm-soc-pap').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); clearTimeout(PAP.t); papRemplir(true); } });
+$('cm-soc-pap-go').addEventListener('click', () => { clearTimeout(PAP.t); papRemplir(true); });
+// « Sa société » cliqué et rien de rempli : curseur direct dans le champ Pappers
+$('cm-voile').addEventListener('click', e => { if (e.target.closest('[data-cmtype="societe"]') && !$('cm-soc-nom').value.trim()) $('cm-soc-pap').focus(); });
 
 /* ---------- onglet Paiements : échéances datées, rappels J-2, reçu / restant ---------- */
 let fPaie = 'agenda';
