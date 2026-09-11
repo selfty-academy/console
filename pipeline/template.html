@@ -48,6 +48,9 @@ h2{font:600 20px "Playfair Display",Georgia,serif;margin:26px 0 10px}
 .pill{border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:6px 13px;font-size:13.5px;color:var(--ink-soft);cursor:pointer}
 .pill.on{background:var(--ink);color:#FFFDFB;border-color:var(--ink)}
 .pill b{font-variant-numeric:tabular-nums}
+.subtabs{margin:-8px 0 18px;padding:0 2px}
+.subtabs[hidden]{display:none}
+.subtabs .pill.on{background:var(--mauve);border-color:var(--mauve)}
 input[type=search],input[type=text],input[type=tel],input[type=date],input[type=time],textarea{
   border:1px solid var(--border);border-radius:10px;padding:9px 12px;font:15px "Jost",sans-serif;color:var(--ink);background:var(--surface);width:100%}
 textarea{min-height:96px;resize:vertical}
@@ -221,6 +224,7 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 <div class="bandeau" id="bandeau-webi"></div>
 
 <nav class="tabs" id="tabs"></nav>
+<div class="pills subtabs" id="subtabs" hidden></div>
 
 <!-- ===================== LIVE 9 SEPT ===================== -->
 <section class="panel" id="p-live2">
@@ -314,6 +318,15 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
   <div class="liste" id="l-track"></div>
 </section>
 
+<!-- ===================== LEADS ICLOSED SANS CALL ===================== -->
+<section class="panel" id="p-leads">
+  <p class="intro">Les personnes qui ont commencé le formulaire iClosed (nom, numéro, e-mail) mais n'ont réservé aucun call. Elles viennent directement d'iClosed (mise à jour auto). Le bouton WhatsApp pré-écrit la relance avec ton lien de réservation (à mettre dans ⚙️), puis note où tu en es : les pills et la note s'écrivent dans l'onglet « Leads iClosed » du Sheet École. Dès qu'une personne réserve un call, elle sort de cette liste toute seule.</p>
+  <div class="kpis kpis-mini" id="leads-kpis"></div>
+  <div class="pills" id="f-leads"></div>
+  <div style="margin:0 0 14px"><input type="search" id="q-leads" class="search" placeholder="Chercher un prénom, un mail, un numéro…"></div>
+  <div class="liste" id="l-leads"></div>
+</section>
+
 <!-- ===================== CLIENTES ===================== -->
 <section class="panel" id="p-clients">
   <p class="intro">Le suivi des clientes signées. Une vente marquée dans « Calls effectués » crée la fiche toute seule ; tu peux aussi en ajouter une à la main. Statut et notes s'écrivent dans l'onglet « Clients » du Sheet ; l'encaissé vient de l'onglet « Paiements » de la Compta : coche chaque versement reçu directement sur la fiche. « Envoyer le contrat » envoie par e-mail le contrat à signer en ligne (signature au doigt, PDF automatique pour elle et pour toi) ; le statut suit ici.</p>
@@ -355,6 +368,7 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 <section class="panel" id="p-paie">
   <p class="intro">Le suivi des versements, centralisé : les dates prévues (fixées à l'envoi du contrat, modifiables ici), les rappels envoyés automatiquement par e-mail 2 jours avant depuis selfty.academy@gmail.com, et ce qui est reçu ou reste à recevoir. Coche « Reçu » dès que le virement arrive : la facture acquittée part toute seule. « Facturer avant paiement » envoie la facture à régler avant l'échéance (elle passe en acquittée à la réception). <a id="paie-drive" href="__DRIVE_CONTRATS__" target="_blank" rel="noopener">📁 Dossier Drive des contrats</a> · <a href="__DRIVE_FACTURES__" target="_blank" rel="noopener">🧾 Factures</a></p>
   <div class="kpis kpis-mini" id="paie-kpis"></div>
+  <div class="carte" id="paie-chart-carte" style="padding:14px 16px 8px"><h3 style="margin:0 0 6px;font-size:15px">Reçu et à recevoir, mois par mois</h3><div class="chart-scroll" id="paie-chart"></div></div>
   <div class="pills" id="f-paie"></div>
   <div id="l-paie"></div>
 </section>
@@ -439,6 +453,9 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
     <label for="s-tpl-schol-rel">Message scholarship : candidature pas finie</label>
     <textarea id="s-tpl-schol-rel"></textarea>
     <div class="note">Variables : {prenom} {lien} (lien du formulaire)</div>
+    <label for="s-tpl-lead">Lead iClosed sans call : relance</label>
+    <textarea id="s-tpl-lead"></textarea>
+    <div class="note">Variables : {prenom} {iclosed} (ton lien de réservation iClosed, réglé ci-dessus)</div>
   </div>
   <div class="champ">
     <label for="s-tpl-schol-ok">Message scholarship : candidature bien reçue</label>
@@ -481,10 +498,12 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
   <div class="cm-card bm-card" role="dialog" aria-modal="true" aria-labelledby="bm-titre">
     <h3 id="bm-titre">💌 Mail de bienvenue</h3>
     <div class="cm-qui" id="bm-qui"></div>
-    <div class="bm-note">Le mail d'Anaïs (« Bienvenue dans l'Academy !! 🎉🎉🎉 »), envoyé depuis selfty.academy@gmail.com : accueil, ton petit mot perso, la facture en pièce jointe si elle existe, sa vision en PDF « Ta vision » (DA Selfty, aussi rangé dans le Drive), la phrase sur le contrat adaptée à son statut, et la date d'accès au premier module.</div>
+    <div class="bm-note">Le mail d'Anaïs (« Bienvenue dans l'Academy !! 🎉🎉🎉 »), envoyé depuis selfty.academy@gmail.com : accueil, ton petit mot perso, la facture en pièce jointe si elle existe, sa vision en PDF « Ta vision » (généré en DA Selfty depuis le texte, ou ton propre PDF si tu en joins un ; rangé dans le Drive), la phrase sur le contrat adaptée à son statut, et la date d'accès au premier module.</div>
     <label>Prénom<input type="text" id="bm-prenom"></label>
     <label>Petit mot perso (ce que tu as envie de lui dire, ce que tu as hâte de voir chez elle)<textarea id="bm-perso" placeholder="Ex. : hâte de te voir prendre confiance de ta posture, de tes outils, et de te voir être au service de personnes qui seront ravies de tes services !"></textarea></label>
     <label>Sa vision (telle que formulée au call ; laisse vide pour ne pas joindre le PDF)<textarea id="bm-vision" placeholder="Ex. : un groupe formé, quelques clients alignés, un salaire à 2 000 € et un événement à Monaco avec tes bols chantants."></textarea></label>
+    <label>Ou sa vision déjà mise en page, en PDF (si tu l'as faite toi-même : ce fichier est joint au mail à la place du PDF automatique, et rangé dans le Drive)<input type="file" id="bm-pdf" accept="application/pdf,.pdf"></label>
+    <div class="bm-note" id="bm-pdf-info"></div>
     <label class="chk"><input type="checkbox" id="bm-facture" checked> Joindre sa facture <span id="bm-facture-info" class="bm-note"></span></label>
     <label>Accès au premier module le<input type="text" id="bm-acces" value="15 septembre"></label>
     <div class="bm-note" id="bm-ctr"></div>
@@ -554,6 +573,7 @@ const TPL_DEF = {
   replay: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nEn attendant ton appel avec Anaïs {quand}, voici le replay de son live si tu veux le voir ou le revoir avant de lui parler :\n{replay}\n\nÀ très vite !",
   call: "Hello {prenom}, c'est Alex de la Selfty Academy 🌸 Petit rappel pour notre appel {quand}. À tout à l'heure !",
   scholRel: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nJ'ai vu que tu avais commencé ta candidature pour la bourse mais qu'elle n'est pas allée au bout. Les candidatures ferment le 15 septembre : si tu veux ta chance, tu peux la finir ici :\n{lien}\n\nEt si tu bloques quelque part, dis-moi !",
+  lead: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nJ'ai vu que tu avais commencé ta candidature pour l'Academy mais que tu n'as pas encore réservé ton appel avec Anaïs. C'est un échange de 45 minutes, sans engagement, pour voir si l'école est faite pour toi.\n\nTu peux choisir ton créneau ici :\n{iclosed}\n\nEt si tu as une question avant, dis-moi !",
   scholOk: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nOn a bien reçu ta candidature pour la bourse, merci pour ta confiance. Anaïs lit tout personnellement : tu auras une réponse avant le 15 septembre.",
   eowRelance: "Hello {prenom}, c'est Ambre de la Selfty Academy 🌸\n\nJe n'ai pas encore vu ton bilan de la semaine. Cinq minutes pour prendre du recul sur ta semaine, et ça nous aide à t'accompagner au plus près. Voici ton lien perso :\n{lien}\n\nMerci, et belle journée !",
   ambreCheckin: "Hello {prenom}, c'est Ambre de la Selfty Academy 🌸\n\nJe prends de tes nouvelles : comment tu te sens en ce moment dans la formation ? Y a-t-il quelque chose qu'on peut faire pour mieux t'accompagner ? Je suis là si besoin.",
@@ -564,7 +584,7 @@ const store = {
   get: (k, d) => { try { const v = localStorage.getItem('sc-'+k); return v===null ? d : JSON.parse(v); } catch(e){ return k in MEM ? MEM[k] : d; } },
   set: (k, v) => { MEM[k] = v; try { localStorage.setItem('sc-'+k, JSON.stringify(v)); } catch(e){} }
 };
-let SET = Object.assign({tplWebi:TPL_DEF.webi, tplInvite:TPL_DEF.invite, tplWebiCoach:TPL_DEF.webiCoach, tplWebiEcole:TPL_DEF.webiEcole, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, tplReplay:TPL_DEF.replay, replay:REPLAY_DEF, tplScholRel:TPL_DEF.scholRel, tplScholOk:TPL_DEF.scholOk, tplEowRelance:TPL_DEF.eowRelance, tplAmbreCheckin:TPL_DEF.ambreCheckin, tplAmbreAbsente:TPL_DEF.ambreAbsente, groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
+let SET = Object.assign({tplWebi:TPL_DEF.webi, tplInvite:TPL_DEF.invite, tplWebiCoach:TPL_DEF.webiCoach, tplWebiEcole:TPL_DEF.webiEcole, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, tplReplay:TPL_DEF.replay, replay:REPLAY_DEF, tplScholRel:TPL_DEF.scholRel, tplScholOk:TPL_DEF.scholOk, tplLead:TPL_DEF.lead, tplEowRelance:TPL_DEF.eowRelance, tplAmbreCheckin:TPL_DEF.ambreCheckin, tplAmbreAbsente:TPL_DEF.ambreAbsente, groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
 if (!SET.tplInvite) SET.tplInvite = TPL_DEF.invite;
 if (!SET.tplReplay) SET.tplReplay = TPL_DEF.replay;
 if (!SET.replay) SET.replay = REPLAY_DEF;
@@ -575,21 +595,27 @@ const WA_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10
 
 /* ---------- onglets ---------- */
 const TABS = [
-  {id:'live2', lab:'Live 9 sept'},
-  {id:'live1', lab:'À inviter au live 2'},
+  {id:'webis', lab:'Webinaires', sub:[
+    {id:'live2', lab:'Live 9 sept'},
+    {id:'live1', lab:'À inviter au live 2'},
+    {id:'webi',  lab:'Relances webi'},
+    {id:'cand',  lab:'Candidatures live'}
+  ]},
   {id:'track', lab:'Calls effectués à remplir'},
   {id:'calls', lab:'Agenda calls'},
+  {id:'leads', lab:'Leads sans call'},
   {id:'clients', lab:'Clientes'},
   {id:'ambre', lab:'Ambre suivi client'},
   {id:'paie', lab:'Paiements'},
-  {id:'webi',  lab:'Relances webi'},
-  {id:'cand',  lab:'Candidatures live'},
   {id:'ecole', lab:"Liste d'attente école (questionnaire initial)"},
   {id:'schol', lab:'Scholarship'},
   {id:'data',  lab:'Datas'},
   {id:'compta', lab:'Compta'}
 ];
+const LEAVES = TABS.flatMap(t => t.sub ? t.sub : [t]);           // onglets « feuilles » = panneaux
+const groupOf = id => (TABS.find(t => t.sub && t.sub.some(x => x.id === id)) || {}).id || null;
 let tabOn = store.get('tab','track');
+if (!LEAVES.some(t => t.id === tabOn)) tabOn = 'track';
 function renderTabs(){
   const done = store.get('relwebi', {});
   const doneC = store.get('relcand', {});
@@ -607,14 +633,24 @@ function renderTabs(){
   const bLive2 = DATA.inscrits.filter(i => i.live==='9sept' && i.tel && !done[key(i)]).length;
   const done1 = store.get('rel1to2', {});
   const bLive1 = live1Seules().filter(i => i.tel && !done1[key(i)]).length;
-  const b = {live2:bLive2, live1:bLive1, webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, calls:bCalls, track:bTrack, clients:bCli, ambre:ambreManquants().length + eowNonAttribues().length, paie:bPaie, compta:null, data:null};
+  const bLeads = leadsList().filter(l => !l.statut).length;
+  const b = {live2:bLive2, live1:bLive1, webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, calls:bCalls, track:bTrack, leads:bLeads, clients:bCli, ambre:ambreManquants().length + eowNonAttribues().length, paie:bPaie, compta:null, data:null};
+  TABS.filter(t => t.sub).forEach(t => { b[t.id] = t.sub.reduce((n, x) => n + (b[x.id] || 0), 0); });
+  const g = groupOf(tabOn);
   $('tabs').innerHTML = TABS.map(t =>
-    `<button class="tab${t.id===tabOn?' on':''}" data-t="${t.id}">${t.lab}${b[t.id]!==null?` <span class="bdg">${b[t.id]}</span>`:''}</button>`).join('');
-  TABS.forEach(t => $('p-'+t.id).classList.toggle('on', t.id===tabOn));
+    `<button class="tab${(t.id===tabOn || t.id===g)?' on':''}" data-t="${t.id}">${t.lab}${b[t.id]!==null&&b[t.id]!==undefined?` <span class="bdg">${b[t.id]}</span>`:''}</button>`).join('');
+  const grp = TABS.find(t => t.id === g);
+  $('subtabs').hidden = !grp;
+  if (grp) $('subtabs').innerHTML = grp.sub.map(x => `<button class="pill${x.id===tabOn?' on':''}" data-t="${x.id}">${x.lab}${b[x.id]?` <b>${b[x.id]}</b>`:''}</button>`).join('');
+  LEAVES.forEach(t => $('p-'+t.id).classList.toggle('on', t.id===tabOn));
 }
 document.addEventListener('click', e => {
-  const t = e.target.closest('.tab'); if(!t) return;
-  tabOn = t.dataset.t; store.set('tab', tabOn); renderTabs();
+  const t = e.target.closest('.tab, #subtabs .pill'); if(!t) return;
+  const grp = TABS.find(x => x.id === t.dataset.t && x.sub);
+  if (grp){ const last = store.get('subtab', {})[grp.id]; tabOn = grp.sub.some(x => x.id === last) ? last : grp.sub[0].id; }
+  else tabOn = t.dataset.t;
+  const g = groupOf(tabOn); if (g){ const S = store.get('subtab', {}); S[g] = tabOn; store.set('subtab', S); }
+  store.set('tab', tabOn); renderTabs();
 });
 
 /* ---------- bandeau webi ---------- */
@@ -1084,12 +1120,12 @@ const trackList = () => DATA.icalls.calls.filter(c => !c.cancel && quandUtc(c.ut
 function effTrk(c){
   const F = store.get('trackfix', {});
   const f = F[c.id];
-  const base = c.trk || {s:'', r:'', prix:0, np:0, ac:0, q:0, retrans:'', comment:'', prep:''};
+  const base = c.trk || {s:'', r:'', prix:0, np:0, ac:0, q:0, retrans:'', comment:'', prep:'', dc:''};
   if (!f) return base;
   const caught = (f.s===undefined || base.s===f.s) && (f.r===undefined || base.r===f.r);
   if (caught || Date.now()-(f.when||0) > 3*86400000){ delete F[c.id]; store.set('trackfix', F); return base; }
   return Object.assign({}, base, {s:f.s!==undefined?f.s:base.s, r:f.r!==undefined?f.r:base.r,
-    prix:f.prix!==undefined?f.prix:base.prix, np:f.np!==undefined?f.np:base.np, ac:f.ac!==undefined?f.ac:base.ac, q:f.q!==undefined?f.q:base.q});
+    prix:f.prix!==undefined?f.prix:base.prix, np:f.np!==undefined?f.np:base.np, ac:f.ac!==undefined?f.ac:base.ac, q:f.q!==undefined?f.q:base.q, dc:f.dc!==undefined?f.dc:base.dc});
 }
 const SHOW_OPTS = ['', 'Présente', 'No-show', 'Reporté', 'Annulé'];
 const RES_OPTS = ['', 'Vente', 'Pas de vente', 'Follow-up', 'Pas pitché'];
@@ -1124,7 +1160,7 @@ function renderTrack(){
     const vente = t.r === 'Vente';
     return `<div class="ligne">
       <div class="qui"><div class="nom">${esc(c.n)}</div><div class="sub">${esc(c.mail)}</div>
-        <div style="margin-top:4px"><span class="chip src-form">${esc(c.event||'iClosed')}</span>${t.r?` <span class="chip ${vente?'src-live':'src-webi'}">${esc(t.r)}${vente&&t.prix?' · '+EUR(t.prix):''}${vente&&t.np?' · '+t.np+'x'+(t.ac?' ('+EUR(t.ac)+' d\'abord)':''):''}</span>`:''}${vente&&c.mail&&Object.keys(paiesDe(c.mail.toLowerCase())).length?` <span class="chip src-live" style="background:#E3EFE7;color:#4C7A5E">💶 virement reçu ${Object.keys(paiesDe(c.mail.toLowerCase())).length}/${t.np||1}</span>`:''}${t.q?` <span class="chip src-webi">qualif ${t.q}/10</span>`:''}</div></div>
+        <div style="margin-top:4px"><span class="chip src-form">${esc(c.event||'iClosed')}</span>${t.r?` <span class="chip ${vente?'src-live':'src-webi'}">${esc(t.r)}${vente&&t.prix?' · '+EUR(t.prix):''}${vente&&t.np?' · '+t.np+'x'+(t.ac?' ('+EUR(t.ac)+' d\'abord)':''):''}${vente&&t.dc?' · closé le '+esc(t.dc):''}</span>`:''}${vente&&c.mail&&Object.keys(paiesDe(c.mail.toLowerCase())).length?` <span class="chip src-live" style="background:#E3EFE7;color:#4C7A5E">💶 virement reçu ${Object.keys(paiesDe(c.mail.toLowerCase())).length}/${t.np||1}</span>`:''}${t.q?` <span class="chip src-webi">qualif ${t.q}/10</span>`:''}</div></div>
       <div class="meta"><b>${q.txt}</b>${c.tel?'+'+c.tel:''}</div>
       <div class="meta">${t.s ? (t.s==='Présente' ? '<span class="tag-ok">Présente</span>' : '<span class="tag-warn">'+esc(t.s)+'</span>') : '<span class="tag-warn">À remplir</span>'}</div>
       <div class="actions">${c.tel ? `<a class="btn-wa" href="https://wa.me/${c.tel}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}</div>
@@ -1138,6 +1174,7 @@ function renderTrack(){
         <div class="tk-row"><span class="tk-lab">Résultat</span>
           ${RES_OPTS.filter(Boolean).map(o => `<button class="tk-pill${t.r===o?' on':''}" data-group="res" data-val="${esc(o)}">${o==='Vente'?'Vente 🎉':esc(o)}</button>`).join('')}</div>
         <div class="tk-row tk-prix-row"${vente?'':' style="display:none"'}><span class="tk-lab">Prix (€)</span>${[5000,6000].map(n => `<button class="tk-pill tk-mini tk-prixq${t.prix===n?' on':''}" data-prix="${n}">${EUR(n)}</button>`).join('')}<input class="tk-prix" inputmode="numeric" placeholder="autre" value="${t.prix||''}"><span class="tk-lab" style="min-width:auto">payé en</span>${[1,2,3].map(n => `<button class="tk-pill tk-mini${t.np===n&&!t.ac?' on':''}" data-group="np" data-val="${n}">${n}x</button>`).join('')}<button class="tk-pill tk-mini${t.np===3&&t.ac?' on':''}" data-group="np" data-val="3" data-ac="${AC_DEFAUT}" title="3 paiements, mais le 1er tiers est réglé en 2 virements : ${EUR(AC_DEFAUT)} d'abord, puis le complément">3x · ${EUR(AC_DEFAUT)} d'abord</button></div>
+        <div class="tk-row tk-dclose-row"${vente?'':' style="display:none"'}><span class="tk-lab">Date du close</span><input type="date" class="tk-dclose" value="${esc(t.dc ? frToIso(t.dc) : (quandUtc(c.utc).passe ? (c.utc||'').slice(0,10) : todayIso()))}"><span class="tk-hint">= date de signature sur la fiche cliente (par défaut le jour du call)</span></div>
         ${vente && t.prix && c.mail ? paieRow({n:c.n, mail:c.mail}, {prix:t.prix, np:t.np||1, ac:t.ac||0}, 'Virement reçu') : ''}
         <div class="tk-row"><span class="tk-lab">Qualifiée</span>${[1,2,3,4,5,6,7,8,9,10].map(n => `<button class="tk-pill tk-mini${t.q===n?' on':''}" data-group="qualif" data-val="${n}">${n}</button>`).join('')}<span style="font-size:12.5px;color:var(--muted)">/10</span></div>
         <textarea class="tk-retrans" placeholder="Retranscription du call : ce qui s'est dit… (ajoutée à la suite dans le Sheet)"></textarea>
@@ -1168,6 +1205,7 @@ document.addEventListener('click', e => {
     f.querySelectorAll('.tk-pill[data-group="res"]').forEach(b => b.classList.remove('on'));
   }
   f.querySelector('.tk-prix-row').style.display = f.dataset.res === 'Vente' ? '' : 'none';
+  f.querySelector('.tk-dclose-row').style.display = f.dataset.res === 'Vente' ? '' : 'none';
 });
 // prix rapide : clic = remplit le champ (re-clic = vide), la saisie libre reste possible
 document.addEventListener('click', e => {
@@ -1197,6 +1235,8 @@ document.addEventListener('click', async e => {
   const payload = { what:'call_track', key:PONT.key, id:f.dataset.id, nom:f.dataset.nom, email:f.dataset.mail,
     tel:f.dataset.tel, utc:f.dataset.utc, showup, resultat, prix: prixRaw==='' ? '' : (parseFloat(prixRaw)||0),
     npaie: np, acompte: ac, qualif, retrans, comment };
+  const dclose = resultat === 'Vente' ? isoToFr(f.querySelector('.tk-dclose').value) : '';
+  if (dclose) payload.dateClose = dclose;
   b.disabled = true; b.textContent = 'Envoi…';
   try {
     const r = await fetch(PONT.url, { method:'POST', body: JSON.stringify(payload) });
@@ -1204,7 +1244,7 @@ document.addEventListener('click', async e => {
     if (!j.ok) throw new Error(j.error || 'refus du pont');
     const F = store.get('trackfix', {});
     F[f.dataset.id] = { s: showup, r: resultat, prix: prixRaw==='' ? 0 : (parseFloat(prixRaw)||0),
-      np: parseInt(np)||0, ac: parseInt(ac)||0, q: parseInt(qualif)||0, when: Date.now() };
+      np: parseInt(np)||0, ac: parseInt(ac)||0, q: parseInt(qualif)||0, dc: dclose || undefined, when: Date.now() };
     store.set('trackfix', F);
     if (showup === 'Call test'){
       const mail = (f.dataset.mail||'').toLowerCase();
@@ -1227,6 +1267,68 @@ document.addEventListener('click', async e => {
     toast('Échec : ' + err.message);
     b.disabled = false; b.textContent = 'Valider';
   }
+});
+
+/* ---------- leads iClosed sans call (relances + suivi dans le Sheet) ---------- */
+const LEAD_STATUTS = ['Relancée', 'Relancée x2', 'Call booké', 'Pas intéressée', 'Injoignable'];
+function effLead(l){
+  const F = store.get('leadfix', {}); const f = F[l.id];
+  if (!f) return l;
+  if (l.statut === f.statut || Date.now()-(f.when||0) > 3*86400000){ delete F[l.id]; store.set('leadfix', F); return l; }
+  return Object.assign({}, l, { statut: f.statut, notes: f.note ? (l.notes ? l.notes + '\n' : '') + f.note : l.notes });
+}
+const leadsList = () => ((DATA.leads && DATA.leads.list) || []).map(effLead);
+function relFr(iso){
+  if (!iso) return '';
+  const d = Math.round((Date.now() - new Date(iso)) / 86400000);
+  return d <= 0 ? "aujourd'hui" : d === 1 ? 'hier' : `il y a ${d} j`;
+}
+function leadMsg(l){
+  const prenom = (l.n || '').split(' ')[0] || '';
+  return (SET.tplLead || TPL_DEF.lead).replaceAll('{prenom}', prenom).replaceAll('{iclosed}', SET.iclosed || '(ton lien iClosed, à régler dans ⚙️)');
+}
+let fLeads = 'a', qLeads = '';
+function renderLeads(){
+  if (!$('l-leads')) return;
+  const tous = leadsList();
+  const aRel = tous.filter(l => !l.statut), rel = tous.filter(l => /^relanc/i.test(l.statut));
+  const book = tous.filter(l => l.statut === 'Call booké'), perdus = tous.filter(l => l.statut === 'Pas intéressée' || l.statut === 'Injoignable');
+  $('leads-kpis').innerHTML = [
+    [tous.length, 'leads sans call'], [aRel.length, 'à relancer'], [rel.length, 'relancées'], [book.length, 'calls bookés après relance'], [perdus.length, 'pas intéressées / injoignables'],
+    [tous.filter(l => !l.tel).length, 'sans numéro'],
+  ].map(([v,l]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div></div>`).join('');
+  $('f-leads').innerHTML = [
+    ['a', `À relancer <b>${aRel.length}</b>`], ['r', `Relancées <b>${rel.length}</b>`], ['b', `Call booké <b>${book.length}</b>`], ['p', `Perdues <b>${perdus.length}</b>`], ['t', `Toutes <b>${tous.length}</b>`]
+  ].map(([v,l]) => `<button class="pill${fLeads===v?' on':''}" data-f="${v}">${l}</button>`).join('');
+  let liste = fLeads==='a' ? aRel : fLeads==='r' ? rel : fLeads==='b' ? book : fLeads==='p' ? perdus : tous;
+  if (qLeads) liste = liste.filter(l => (l.n+' '+l.mail+' '+l.tel).toLowerCase().includes(qLeads));
+  if (!DATA.leads || !DATA.leads.ok) { $('l-leads').innerHTML = `<div class="vide">iClosed n'a pas répondu à la dernière mise à jour : réessaie avec ↻ Mettre à jour.</div>`; return; }
+  $('l-leads').innerHTML = liste.length ? liste.map(l => `<div class="ligne">
+      <div class="qui"><div class="nom">${esc(l.n)}</div><div class="sub">${esc(l.mail || 'pas d\'e-mail')}</div><div style="margin-top:4px"><span class="chip src-form">iClosed · formulaire commencé</span>${l.statut ? ` <span class="chip ${l.statut==='Call booké'?'src-live':'src-webi'}">${esc(l.statut)}</span>` : ''}</div></div>
+      <div class="meta"><b>${l.tel ? '+'+l.tel : 'Pas de numéro'}</b>arrivée ${relFr(l.cree)}${l.maj ? ' · suivi ' + esc(l.maj.split(' ')[0]) : ''}</div>
+      <div class="meta">${l.statut ? '' : '<span class="tag-warn">À relancer</span>'}</div>
+      <div class="actions">${l.tel ? `<a class="btn-wa" href="${waUrl(l.tel, leadMsg(l))}" target="_blank" rel="noopener">${WA_SVG} Relancer</a>` : ''}</div>
+      ${l.notes ? `<details class="sujet"><summary>Voir les notes</summary><div class="rep"><b>Notes</b>${esc(l.notes)}</div></details>` : ''}
+      <div class="tk-form ld-form" data-id="${esc(l.id)}" data-nom="${esc(l.n)}" data-mail="${esc(l.mail)}" data-tel="${esc(l.tel||'')}" data-cree="${esc(l.cree)}" data-statut="${esc(l.statut||'')}">
+        <div class="tk-row"><span class="tk-lab">Suivi</span>${LEAD_STATUTS.map(o => `<button class="tk-pill${l.statut===o?' on':''}" data-group="statut" data-val="${esc(o)}">${esc(o)}</button>`).join('')}</div>
+        <div class="tk-row"><input class="ld-note" placeholder="Note (ajoutée à la suite dans le Sheet)" style="flex:1;min-width:200px"><button class="btn-add ld-save">Enregistrer</button></div>
+      </div>
+    </div>`).join('') : `<div class="vide">Personne ici.</div>`;
+}
+$('f-leads').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fLeads = p.dataset.f; renderLeads(); }});
+$('q-leads').addEventListener('input', e => { qLeads = e.target.value.trim().toLowerCase(); renderLeads(); });
+document.addEventListener('click', async e => {
+  const b = e.target.closest('.ld-save'); if (!b) return;
+  const f = b.closest('.ld-form'); const note = f.querySelector('.ld-note').value.trim();
+  const statut = f.dataset.statut || '';
+  if (!statut && !note) return toast('Coche un suivi ou écris une note');
+  b.disabled = true; b.textContent = 'Envoi…';
+  try {
+    const r = await fetch(PONT.url, { method:'POST', body: JSON.stringify({ what:'lead_update', key:PONT.key, id:f.dataset.id, nom:f.dataset.nom, email:f.dataset.mail, tel:f.dataset.tel, cree:f.dataset.cree, statut, note }) });
+    const j = await r.json(); if (!j.ok) throw new Error(j.error || 'refus du pont');
+    const F = store.get('leadfix', {}); F[f.dataset.id] = { statut, note, when: Date.now() }; store.set('leadfix', F);
+    toast('Suivi enregistré dans le Sheet ✅'); renderLeads(); renderTabs();
+  } catch(err){ toast('Échec : ' + err.message); b.disabled = false; b.textContent = 'Enregistrer'; }
 });
 
 /* ---------- contrat : envoi + signature en ligne ---------- */
@@ -1391,7 +1493,7 @@ document.addEventListener('click', async e => {
     f.dataset.res = 'Vente'; if (!f.dataset.show) f.dataset.show = 'Présente';
     f.querySelectorAll('.tk-pill[data-group="res"]').forEach(x => x.classList.toggle('on', x.dataset.val === 'Vente'));
     f.querySelectorAll('.tk-pill[data-group="show"]').forEach(x => x.classList.toggle('on', x.dataset.val === f.dataset.show));
-    f.querySelector('.tk-prix-row').style.display = '';
+    f.querySelector('.tk-prix-row').style.display = ''; f.querySelector('.tk-dclose-row').style.display = '';
   }
   const k0 = effCtr({ mail: f.dataset.mail });
   const m = await openCtrModal({ nom:f.dataset.nom, mail:f.dataset.mail, prix: parseFloat(f.querySelector('.tk-prix').value.trim().replace(',','.')) || 0,
@@ -1405,13 +1507,14 @@ document.addEventListener('click', async e => {
   b.disabled = true; b.textContent = 'Envoi…';
   const qualif = f.dataset.qualif || '', retrans = f.querySelector('.tk-retrans').value.trim(), comment = f.querySelector('.tk-comment').value.trim();
   const showup = f.dataset.show || 'Présente';
+  const dclose = isoToFr(f.querySelector('.tk-dclose').value);
   try {
     const r = await fetch(PONT.url, { method:'POST', body: JSON.stringify({ what:'call_track', key:PONT.key, id:f.dataset.id, nom:f.dataset.nom, email:f.dataset.mail,
-      tel:f.dataset.tel, utc:f.dataset.utc, showup, resultat:'Vente', prix, npaie:np, acompte:ac, qualif, retrans, comment }) });
+      tel:f.dataset.tel, utc:f.dataset.utc, showup, resultat:'Vente', prix, npaie:np, acompte:ac, qualif, retrans, comment, dateClose: dclose || undefined }) });
     const j = await r.json();
     if (!j.ok) throw new Error(j.error || 'refus du pont');
     const F = store.get('trackfix', {});
-    F[f.dataset.id] = { s:showup, r:'Vente', prix, np, ac, q:parseInt(qualif)||0, when:Date.now() };
+    F[f.dataset.id] = { s:showup, r:'Vente', prix, np, ac, q:parseInt(qualif)||0, dc: dclose || undefined, when:Date.now() };
     store.set('trackfix', F);
     const P = store.get('clipend', []);
     if (!P.some(x => x.mail === f.dataset.mail)) P.push({n:f.dataset.nom, mail:f.dataset.mail, tel:f.dataset.tel, prix, when:Date.now()});
@@ -1564,6 +1667,33 @@ function echActions(x){
     <input type="date" class="ech-date" data-mail="${esc(mail)}" data-k="${x.kk}" value="${esc(x.iso)}" title="Modifier la date prévue"${x.paye ? ' disabled' : ''}>
   </div>`;
 }
+/* graphique : par mois, barres empilées reçu (vert) / à recevoir (mauve, hachuré si en retard) + courbe du cumul encaissé */
+function renderPaieChart(all){
+  const el = $('paie-chart'); if (!el) return;
+  const dated = all.filter(x => x.iso);
+  if (!dated.length){ $('paie-chart-carte').style.display = 'none'; return; }
+  $('paie-chart-carte').style.display = '';
+  const M = {};
+  dated.forEach(x => { const k = x.iso.slice(0,7); const m = M[k] = M[k] || { recu:0, attendu:0, retard:0 }; if (x.paye) m.recu += x.montant; else if (x.diff < 0) m.retard += x.montant; else m.attendu += x.montant; });
+  const keys = Object.keys(M).sort();
+  const max = Math.max(1, ...keys.map(k => M[k].recu + M[k].attendu + M[k].retard));
+  const bw = 74, gap = 22, W = keys.length*(bw+gap)+40, H = 170, top = 26;
+  let cum = 0; const pts = [];
+  const bars = keys.map((k, i) => {
+    const m = M[k], x = 30 + i*(bw+gap), tot = m.recu + m.attendu + m.retard;
+    const hR = m.recu/max*H, hA = m.attendu/max*H, hL = m.retard/max*H;
+    cum += m.recu; pts.push([x + bw/2, top + H - cum/Math.max(max, cum)*H]);
+    const [y, mo] = k.split('-'); const lab = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'][+mo-1] + ' ' + y.slice(2);
+    return `<rect x="${x}" y="${top+H-hR}" width="${bw}" height="${hR}" fill="#4C7A5E" rx="4"></rect>
+      <rect x="${x}" y="${top+H-hR-hA}" width="${bw}" height="${hA}" fill="#966868" rx="4"></rect>
+      <rect x="${x}" y="${top+H-hR-hA-hL}" width="${bw}" height="${hL}" fill="#C4645A" rx="4"></rect>
+      <text x="${x+bw/2}" y="${top+H-hR-hA-hL-6}" text-anchor="middle" font-size="12" font-weight="600" fill="#3A2A2A">${EUR(tot)}</text>
+      <text x="${x+bw/2}" y="${top+H+16}" text-anchor="middle" font-size="11" fill="#8A7070">${lab}</text>
+      ${m.recu ? `<text x="${x+bw/2}" y="${top+H-hR/2+4}" text-anchor="middle" font-size="10.5" fill="#FFFDFB">${EUR(m.recu)}</text>` : ''}`;
+  }).join('');
+  el.innerHTML = `<svg width="${W}" height="${H+top+40}" role="img" aria-label="Paiements par mois">${bars}</svg>
+    <div class="tk-hint" style="margin:2px 0 6px"><span style="display:inline-block;width:10px;height:10px;background:#4C7A5E;border-radius:3px;vertical-align:-1px"></span> reçu &nbsp; <span style="display:inline-block;width:10px;height:10px;background:#966868;border-radius:3px;vertical-align:-1px"></span> à recevoir &nbsp; <span style="display:inline-block;width:10px;height:10px;background:#C4645A;border-radius:3px;vertical-align:-1px"></span> en retard &nbsp;· total encaissé à ce jour : <b>${EUR(dated.filter(x=>x.paye).reduce((s,x)=>s+x.montant,0))}</b> sur ${EUR(dated.reduce((s,x)=>s+x.montant,0))} planifiés</div>`;
+}
 function renderPaie(){
   if (!$('l-paie')) return;
   const all = echeancesToutes();
@@ -1578,6 +1708,7 @@ function renderPaie(){
     [soon.length ? EUR(soon.reduce((s,x)=>s+x.montant,0)) : '0', 'à recevoir sous 7 jours'],
     [all.filter(x => x.rappel).length, 'rappels envoyés'],
   ].map(([v,l]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div></div>`).join('');
+  renderPaieChart(all);
   $('f-paie').innerHTML = [['agenda', `Agenda <b>${all.filter(x=>!x.paye).length}</b>`], ['cli', `Par cliente <b>${tous.length}</b>`]]
     .map(([v,l]) => `<button class="pill${fPaie===v?' on':''}" data-f="${v}">${l}</button>`).join('');
   const sans = tous.filter(c => { const k = effCtr(c); return !k || !(k.ech||[]).length; });
@@ -1782,6 +1913,7 @@ function openBienvenue(o){
   const prenom = D.prenom || ((o.nom||'').includes('@') ? '' : (o.nom||'').trim().split(' ')[0]);
   $('bm-qui').innerHTML = `<b>${esc(o.nom||bmMail)}</b> · ${esc(bmMail)}`;
   $('bm-prenom').value = prenom; $('bm-perso').value = D.perso || ''; $('bm-vision').value = D.vision || '';
+  $('bm-pdf').value = ''; $('bm-pdf-info').textContent = '';
   $('bm-acces').value = D.acces || '15 septembre';
   const f = facturesDe(bmMail);
   $('bm-facture').checked = f.length > 0; $('bm-facture').disabled = !f.length;
@@ -1797,10 +1929,18 @@ function bmSaveDraft(){
   D[bmMail] = { prenom:$('bm-prenom').value.trim(), perso:$('bm-perso').value, vision:$('bm-vision').value, acces:$('bm-acces').value.trim(), when:Date.now() };
   store.set('bvdraft', D);
 }
-function bmPayload(preview){
-  return { what:'mail_bienvenue', key:PONT.key, email:bmMail, prenom:$('bm-prenom').value.trim(), perso:$('bm-perso').value.trim(),
+async function bmPayload(preview){
+  const p = { what:'mail_bienvenue', key:PONT.key, email:bmMail, prenom:$('bm-prenom').value.trim(), perso:$('bm-perso').value.trim(),
     vision:$('bm-vision').value.trim(), facture:$('bm-facture').checked, acces:$('bm-acces').value.trim(), preview: !!preview };
+  const file = $('bm-pdf').files && $('bm-pdf').files[0];
+  if (file && !preview){
+    if (file.size > 8*1024*1024) throw new Error('PDF trop lourd (8 Mo max)');
+    const b64 = await new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = () => ko(new Error('lecture du PDF impossible')); r.readAsDataURL(file); });
+    p.visionPdf = { name: file.name, b64 };
+  }
+  return p;
 }
+$('bm-pdf').addEventListener('change', () => { const f = $('bm-pdf').files && $('bm-pdf').files[0]; $('bm-pdf-info').textContent = f ? `${f.name} (${Math.round(f.size/1024)} Ko) sera joint au mail` : ''; });
 document.addEventListener('click', e => {
   const b = e.target.closest('.cl-bienvenue'); if (!b) return;
   openBienvenue({ mail:b.dataset.mail, nom:b.dataset.nom, tel:b.dataset.tel });
@@ -1811,7 +1951,7 @@ $('bm-voile').addEventListener('click', e => { if (e.target === $('bm-voile')){ 
 $('bm-preview').addEventListener('click', async () => {
   const b = $('bm-preview'); b.disabled = true; b.textContent = 'Aperçu…';
   try {
-    const r = await fetch(PONT_CTR, { method:'POST', body: JSON.stringify(bmPayload(true)) });
+    const r = await fetch(PONT_CTR, { method:'POST', body: JSON.stringify(await bmPayload(true)) });
     const j = await r.json(); if (!j.ok) throw new Error(j.error || 'refus du script');
     const w = window.open('', '_blank'); if (!w) throw new Error('popup bloquée');
     w.document.write('<!doctype html><meta charset="utf-8"><title>Aperçu du mail</title>' + j.html); w.document.close();
@@ -1822,12 +1962,12 @@ $('bm-send').addEventListener('click', async () => {
   if (!$('bm-prenom').value.trim()) return toast('Il manque le prénom');
   const b = $('bm-send'); b.disabled = true; b.textContent = 'Envoi…';
   try {
-    const r = await fetch(PONT_CTR, { method:'POST', body: JSON.stringify(bmPayload(false)) });
+    const r = await fetch(PONT_CTR, { method:'POST', body: JSON.stringify(await bmPayload(false)) });
     const j = await r.json(); if (!j.ok) throw new Error(j.error || 'refus du script');
     const P = store.get('bvpend', {}); P[bmMail] = { sent:j.sent, when:Date.now() }; store.set('bvpend', P);
     const D = store.get('bvdraft', {}); delete D[bmMail]; store.set('bvdraft', D);
     $('bm-voile').hidden = true;
-    toast(`Mail de bienvenue envoyé 💌${j.facture ? ' avec la facture ' + j.facture : ''}${j.vision ? ' + PDF Ta vision' : ''}`);
+    toast(`Mail de bienvenue envoyé 💌${j.facture ? ' avec la facture ' + j.facture : ''}${j.vision ? ' + PDF de sa vision' : ''}`);
     renderClients(); renderTrack(); renderTabs(); setTimeout(refreshContrats, 1500);
   } catch(err){ toast('Échec : ' + err.message); b.disabled = false; b.textContent = 'Envoyer le mail'; }
 });
@@ -2187,15 +2327,15 @@ function openSet(o){ $('voile').classList.toggle('on', o); $('panneau').classLis
 $('btn-set').addEventListener('click', () => {
   $('s-tpl-webi').value = SET.tplWebi; $('s-tpl-invite').value = SET.tplInvite; $('s-tpl-webi-coach').value = SET.tplWebiCoach; $('s-tpl-webi-ecole').value = SET.tplWebiEcole;
   $('s-tpl-cand').value = SET.tplCand; $('s-tpl-call').value = SET.tplCall; $('s-tpl-replay').value = SET.tplReplay; $('s-replay').value = SET.replay;
-  $('s-tpl-schol-rel').value = SET.tplScholRel; $('s-tpl-schol-ok').value = SET.tplScholOk;
+  $('s-tpl-schol-rel').value = SET.tplScholRel; $('s-tpl-schol-ok').value = SET.tplScholOk; $('s-tpl-lead').value = SET.tplLead || TPL_DEF.lead;
   $('s-groupe').value = SET.groupe; $('s-iclosed').value = SET.iclosed;
   $('s-tpl-eow').value = SET.tplEowRelance; $('s-tpl-ambre').value = SET.tplAmbreCheckin; $('s-tpl-ambre-abs').value = SET.tplAmbreAbsente;
   openSet(true);
 });
 $('voile').addEventListener('click', () => openSet(false));
 $('s-save').addEventListener('click', () => {
-  SET = {tplWebi:$('s-tpl-webi').value, tplInvite:$('s-tpl-invite').value, tplWebiCoach:$('s-tpl-webi-coach').value, tplWebiEcole:$('s-tpl-webi-ecole').value, tplCand:$('s-tpl-cand').value, tplCall:$('s-tpl-call').value, tplReplay:$('s-tpl-replay').value, replay:($('s-replay').value.trim() || REPLAY_DEF), tplScholRel:$('s-tpl-schol-rel').value, tplScholOk:$('s-tpl-schol-ok').value, groupe:$('s-groupe').value.trim(), iclosed:$('s-iclosed').value.trim(), tplEowRelance:$('s-tpl-eow').value, tplAmbreCheckin:$('s-tpl-ambre').value, tplAmbreAbsente:$('s-tpl-ambre-abs').value};
-  store.set('reglages', SET); openSet(false); renderWebi(); renderLive1(); renderCand(); renderAgenda(); renderSchol(); renderAmbre(); toast('Enregistré');
+  SET = {tplWebi:$('s-tpl-webi').value, tplInvite:$('s-tpl-invite').value, tplWebiCoach:$('s-tpl-webi-coach').value, tplWebiEcole:$('s-tpl-webi-ecole').value, tplCand:$('s-tpl-cand').value, tplCall:$('s-tpl-call').value, tplReplay:$('s-tpl-replay').value, replay:($('s-replay').value.trim() || REPLAY_DEF), tplScholRel:$('s-tpl-schol-rel').value, tplScholOk:$('s-tpl-schol-ok').value, tplLead:$('s-tpl-lead').value, groupe:$('s-groupe').value.trim(), iclosed:$('s-iclosed').value.trim(), tplEowRelance:$('s-tpl-eow').value, tplAmbreCheckin:$('s-tpl-ambre').value, tplAmbreAbsente:$('s-tpl-ambre-abs').value};
+  store.set('reglages', SET); openSet(false); renderWebi(); renderLive1(); renderCand(); renderAgenda(); renderSchol(); renderAmbre(); renderLeads(); toast('Enregistré');
 });
 $('s-reset').addEventListener('click', () => {
   $('s-tpl-webi').value = TPL_DEF.webi; $('s-tpl-invite').value = TPL_DEF.invite; $('s-tpl-webi-coach').value = TPL_DEF.webiCoach; $('s-tpl-webi-ecole').value = TPL_DEF.webiEcole;
@@ -2205,7 +2345,7 @@ $('s-reset').addEventListener('click', () => {
   $('s-tpl-eow').value = TPL_DEF.eowRelance; $('s-tpl-ambre').value = TPL_DEF.ambreCheckin; $('s-tpl-ambre-abs').value = TPL_DEF.ambreAbsente;
 });
 
-renderTabs(); renderWebi(); renderLive2(); renderLive1(); renderCand(); renderEcole(); renderSchol(); renderAgenda(); renderTrack(); renderClients(); renderAmbre(); renderCompta(); renderData();
+renderTabs(); renderWebi(); renderLive2(); renderLive1(); renderCand(); renderEcole(); renderSchol(); renderAgenda(); renderTrack(); renderLeads(); renderClients(); renderAmbre(); renderCompta(); renderData();
 refreshContrats();
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshContrats(); });
 

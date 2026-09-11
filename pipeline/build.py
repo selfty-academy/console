@@ -276,6 +276,7 @@ for r in (track_rows or []):
         "comment": str(r.get("Commentaire") or "").strip(),
         "prep": str(r.get("Prépa Alex") or "").strip(),
         "prepMaj": str(r.get("Prépa MAJ") or "").strip(),
+        "dc": str(r.get("Date close") or "").strip(),   # date réelle du closing saisie dans la console
     }
 
 def dstr_(v):
@@ -443,6 +444,7 @@ if ic_key:
             task = (c.get("task") or [{}])[0]
             icalls.append({
                 "id": c.get("id"),
+                "cid": c.get("contactId") or "",
                 "n": str(c.get("inviteeName") or "?").strip(),
                 "mail": str(c.get("inviteeEmail") or "").strip().lower(),
                 "tel": norm_phone(c.get("phoneNumber")),
@@ -470,6 +472,48 @@ if raw_tc.strip():
     fake = json.loads(raw_tc)
     icalls += fake
     print(f"faux calls ajoutés : {len(fake)}")
+# ---- Leads iClosed sans call : contacts iClosed (formulaire commencé) sans aucun call booké ----
+# suivi (statut de relance + notes) dans l'onglet « Leads iClosed » du Sheet École, écrit par la console (lead_update)
+leads, leads_ok = [], False
+if ic_key:
+    try:
+        req = urllib.request.Request("https://public.api.iclosed.io/v1/contacts?limit=100&page=0",
+                                     headers={"Authorization": "Bearer " + ic_key})
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            cdata = json.loads(resp.read().decode("utf-8")).get("data", {})
+        contacts = cdata.get("contacts") or []
+        booked_ids = {str(c.get("cid") or "") for c in icalls}
+        booked_mails = {c["mail"] for c in icalls if c.get("mail")}
+        booked_tels = {c["tel"] for c in icalls if c.get("tel")}
+        lead_rows = read_tab(ewb, "leads iclosed") or []
+        lead_suivi = {str(r.get("Contact ID") or "").strip(): r for r in lead_rows}
+        for ct in contacts:
+            cid = str(ct.get("id") or "")
+            mail = str(ct.get("email") or "").strip().lower()
+            if "@" not in mail:
+                mail = ""   # iClosed recopie le numéro dans l'e-mail quand le formulaire s'arrête au téléphone
+            tel = norm_phone(ct.get("phoneNumber"))
+            if tel.startswith("330") and len(tel) == 12:
+                tel = "33" + tel[3:]   # « +33 06… » saisi avec le 0
+            nom = (str(ct.get("firstName") or "") + " " + str(ct.get("lastName") or "")).strip()
+            if cid in booked_ids or (mail and mail in booked_mails) or (tel and tel in booked_tels):
+                continue
+            if mail in TEST_EMAILS or nom.lower().startswith("alex") and "test" in nom.lower():
+                continue
+            sv = lead_suivi.get(cid, {})
+            leads.append({
+                "id": cid, "n": nom or mail or ("+" + tel if tel else "?"), "mail": mail, "tel": tel,
+                "cree": str(ct.get("createdAt") or ""),
+                "st": str(ct.get("status") or ""),
+                "statut": str(sv.get("Statut") or "").strip(),
+                "notes": str(sv.get("Notes") or "").strip(),
+                "maj": dstr_(sv.get("MAJ")) if sv else "",
+            })
+        leads_ok = True
+        print(f"Leads iClosed sans call : {len(leads)} / {len(contacts)} contacts")
+    except Exception as ex:
+        print("iClosed contacts KO (onglet leads vide) :", ex)
+
 # suivi closing du Sheet accroché à chaque call ; « Call test » = exclu de partout
 for c in icalls:
     c["trk"] = track.get(str(c["id"]))
@@ -678,6 +722,7 @@ data = {
     "ecole": ecole,
     "ecoleUniques": ecole_uniques,
     "icalls": {"ok": ic_ok, "calls": sorted(icalls, key=lambda x: x["utc"])},
+    "leads": {"ok": leads_ok, "list": sorted(leads, key=lambda x: x["cree"], reverse=True)},
     "suivi": {
         "trackOk": track_rows is not None,
         "clientsOk": clients_rows is not None,
