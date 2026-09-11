@@ -532,7 +532,7 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
       <label>Sa fonction dans la société<input id="cm-soc-fonction" placeholder="Présidente, gérante…"></label>
     </div>
     <div class="tk-row"><span class="tk-lab">Prix (€)</span><button class="tk-pill tk-mini cm-prixq" data-prix="5000">5 000 €</button><button class="tk-pill tk-mini cm-prixq" data-prix="6000">6 000 €</button><input class="tk-prix" id="cm-prix" inputmode="numeric" placeholder="autre"></div>
-    <div class="tk-row"><span class="tk-lab">Payé en</span><button class="tk-pill tk-mini" data-cmnp="1">1x</button><button class="tk-pill tk-mini" data-cmnp="2">2x</button><button class="tk-pill tk-mini" data-cmnp="3">3x</button><button class="tk-pill tk-mini" data-cmnp="3" data-cmac="1600">3x · 1 600 € d'abord</button><span class="tk-hint">3 fois maximum (article 5) ; « 1 600 € d'abord » = le 1er tiers réglé en 2 virements (acompte puis complément)</span></div>
+    <div class="tk-row"><span class="tk-lab">Payé en</span><button class="tk-pill tk-mini" data-cmnp="1">1x</button><button class="tk-pill tk-mini" data-cmnp="2">2x</button><button class="tk-pill tk-mini" data-cmnp="3">3x</button><button class="tk-pill tk-mini" data-cmnp="3" data-cmac="1600" id="cm-ac" hidden>3x · 1 600 € d'abord</button><span class="tk-hint">3 fois maximum (article 5)</span></div>
     <div class="cm-ech" id="cm-ech"></div>
     <div class="tk-hint">Proposition automatique : tous les versements le 1er du mois (1er versement = le prochain 1er du mois, puis le 1er des mois suivants). Chaque date est modifiable : elles figurent dans le contrat et déclenchent le rappel J-2 par e-mail.</div>
     <div class="cm-actions"><button class="btn-ghost" id="cm-cancel">Annuler</button><button class="btn-add" id="cm-go">📄 Envoyer le contrat</button></div>
@@ -1173,7 +1173,7 @@ function renderTrack(){
           <button class="tk-pill${t.s==='Call test'?' on':''}" data-group="show" data-val="Call test">Call test 🧪</button></div>
         <div class="tk-row"><span class="tk-lab">Résultat</span>
           ${RES_OPTS.filter(Boolean).map(o => `<button class="tk-pill${t.r===o?' on':''}" data-group="res" data-val="${esc(o)}">${o==='Vente'?'Vente 🎉':esc(o)}</button>`).join('')}</div>
-        <div class="tk-row tk-prix-row"${vente?'':' style="display:none"'}><span class="tk-lab">Prix (€)</span>${[5000,6000].map(n => `<button class="tk-pill tk-mini tk-prixq${t.prix===n?' on':''}" data-prix="${n}">${EUR(n)}</button>`).join('')}<input class="tk-prix" inputmode="numeric" placeholder="autre" value="${t.prix||''}"><span class="tk-lab" style="min-width:auto">payé en</span>${[1,2,3].map(n => `<button class="tk-pill tk-mini${t.np===n&&!t.ac?' on':''}" data-group="np" data-val="${n}">${n}x</button>`).join('')}<button class="tk-pill tk-mini${t.np===3&&t.ac?' on':''}" data-group="np" data-val="3" data-ac="${AC_DEFAUT}" title="3 paiements, mais le 1er tiers est réglé en 2 virements : ${EUR(AC_DEFAUT)} d'abord, puis le complément">3x · ${EUR(AC_DEFAUT)} d'abord</button></div>
+        <div class="tk-row tk-prix-row"${vente?'':' style="display:none"'}><span class="tk-lab">Prix (€)</span>${[5000,6000].map(n => `<button class="tk-pill tk-mini tk-prixq${t.prix===n?' on':''}" data-prix="${n}">${EUR(n)}</button>`).join('')}<input class="tk-prix" inputmode="numeric" placeholder="autre" value="${t.prix||''}"><span class="tk-lab" style="min-width:auto">payé en</span>${[1,2,3].map(n => `<button class="tk-pill tk-mini${t.np===n&&!t.ac?' on':''}" data-group="np" data-val="${n}">${n}x</button>`).join('')}${acPossible(c.n, t.ac) ? `<button class="tk-pill tk-mini${t.np===3&&t.ac?' on':''}" data-group="np" data-val="3" data-ac="${AC_DEFAUT}" title="3 paiements, mais le 1er tiers est réglé en 2 virements : ${EUR(AC_DEFAUT)} d'abord, puis le complément">3x · ${EUR(AC_DEFAUT)} d'abord</button>` : ''}</div>
         <div class="tk-row tk-dclose-row"${vente?'':' style="display:none"'}><span class="tk-lab">Date du close</span><input type="date" class="tk-dclose" value="${esc(t.dc ? frToIso(t.dc) : (quandUtc(c.utc).passe ? (c.utc||'').slice(0,10) : todayIso()))}"><span class="tk-hint">= date de signature sur la fiche cliente (par défaut le jour du call)</span></div>
         ${vente && t.prix && c.mail ? paieRow({n:c.n, mail:c.mail}, {prix:t.prix, np:t.np||1, ac:t.ac||0}, 'Virement reçu') : ''}
         <div class="tk-row"><span class="tk-lab">Qualifiée</span>${[1,2,3,4,5,6,7,8,9,10].map(n => `<button class="tk-pill tk-mini${t.q===n?' on':''}" data-group="qualif" data-val="${n}">${n}</button>`).join('')}<span style="font-size:12.5px;color:var(--muted)">/10</span></div>
@@ -1387,6 +1387,8 @@ function versements(prix, np, ac){
   return [ac, t[0] - ac].concat(t.slice(1));
 }
 const AC_DEFAUT = 1600;
+// acompte : cas particulier négocié avec Amandine (10/09/2026), pas proposé aux autres leads (sauf si un acompte est déjà enregistré)
+const acPossible = (nom, ac) => !!ac || /amandine/i.test(nom || '');
 function paiesDe(mail){
   // versements déjà dans le Sheet (notes « Versement k/n ») + overlay local en attente de la prochaine MAJ
   const set = {};
@@ -1585,7 +1587,8 @@ function cmSync(){
 let cmResolve = null;
 function openCtrModal(o){
   CM.type = o.type === 'Société' || o.type === 'societe' ? 'societe' : 'perso';
-  CM.np = Math.min(Math.max(o.np || 1, 1), 3); CM.ac = +o.ac || 0; CM.prix = o.prix || 0;
+  CM.np = Math.min(Math.max(o.np || 1, 1), 3); CM.ac = acPossible(o.nom, o.ac) ? (+o.ac || 0) : 0; CM.prix = o.prix || 0;
+  $('cm-ac').hidden = !acPossible(o.nom, o.ac);
   CM.dates = (o.dates || []).map(frToIso).filter(Boolean);
   if (CM.dates.length !== cmN()) CM.dates = proposeDates(CM.np, CM.dates[0], CM.ac);
   const S = o.soc || {};
