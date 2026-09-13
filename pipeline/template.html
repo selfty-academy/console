@@ -222,6 +222,13 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
   header img{height:36px}
   input,textarea,select{font-size:16px}
 }
+.coach-rep{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.coach-rep div{padding:10px 12px;background:#EEF3F9;border-radius:10px;white-space:pre-wrap;font-size:14px;color:var(--ink-soft)}
+.coach-rep b{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#4F79A8;margin-bottom:2px}
+.rev-0{background:#EEF3F9;color:#4F79A8}
+.rev-10{background:#D6E3F2;color:#1F3A5F}
+.rev-100{background:#1F3A5F;color:#fff}
+@media (max-width:760px){.coach-rep{grid-template-columns:1fr}}
 .prep-alex{grid-column:1/-1;background:#FFF7E6;border:1px solid #F3D9A4;border-radius:10px;padding:8px 10px;margin-top:6px;white-space:pre-wrap}
 .prep-alex b{display:block;color:#8a5a00;margin-bottom:2px}
 </style>
@@ -341,6 +348,15 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
   <div class="pills" id="f-leads"></div>
   <div style="margin:0 0 14px"><input type="search" id="q-leads" class="search" placeholder="Chercher un prénom, un mail, un numéro…"></div>
   <div class="liste" id="l-leads"></div>
+</section>
+
+<!-- ===================== CANDIDATURES COACHING INDIVIDUEL ===================== -->
+<section class="panel" id="p-coach">
+  <p class="intro">Les candidatures au coaching individuel avec Anaïs (pas l'Academy) arrivent ici toutes seules depuis le formulaire Tally bleu. Tu vois ses deux réponses et sa tranche de revenus d'un coup d'œil. Le bouton WhatsApp pré-écrit le message (réglable dans ⚙️), coche « Traitée » une fois la personne contactée.</p>
+  <div class="bandeau" id="bandeau-coach"></div>
+  <div class="kpis kpis-mini" id="coach-stats"></div>
+  <div class="pills" id="f-coach"></div>
+  <div class="liste" id="l-coach"></div>
 </section>
 
 <!-- ===================== CLIENTES ===================== -->
@@ -479,6 +495,14 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
     <div class="note">Variables : {prenom}</div>
   </div>
   <div class="champ">
+    <label for="s-tpl-coach">Candidature coaching individuel : premier contact</label>
+    <textarea id="s-tpl-coach"></textarea>
+    <div class="note">Variables : {prenom}</div>
+    <label for="s-tpl-coach-rel">Candidature coaching individuel : pas finie</label>
+    <textarea id="s-tpl-coach-rel"></textarea>
+    <div class="note">Variables : {prenom} {lien} (lien du formulaire)</div>
+  </div>
+  <div class="champ">
     <label for="s-tpl-eow">Ambre : bilan de la semaine pas fait</label>
     <textarea id="s-tpl-eow"></textarea>
     <div class="note">Variables : {prenom} {lien} (lien perso du bilan hebdo)</div>
@@ -595,6 +619,8 @@ const TPL_DEF = {
   call: "Hello {prenom}, c'est Alex de la Selfty Academy 🌸 Petit rappel pour notre appel {quand}. À tout à l'heure !",
   scholRel: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nJ'ai vu que tu avais commencé ta candidature pour la bourse mais qu'elle n'est pas allée au bout. Les candidatures ferment le 15 septembre : si tu veux ta chance, tu peux la finir ici :\n{lien}\n\nEt si tu bloques quelque part, dis-moi !",
   lead: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nJ'ai vu que tu avais commencé ta candidature pour l'Academy mais que tu n'as pas encore réservé ton appel avec Anaïs. C'est un échange de 45 minutes, sans engagement, pour voir si l'école est faite pour toi.\n\nTu peux choisir ton créneau ici :\n{iclosed}\n\nEt si tu as une question avant, dis-moi !",
+  coach: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault 🌸\n\nOn a bien reçu ta candidature pour le coaching individuel avec Anaïs, merci pour ta confiance. Anaïs l'a lue et aimerait échanger avec toi : quelles sont tes disponibilités cette semaine pour un premier appel ?",
+  coachRel: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault 🌸\n\nJ'ai vu que tu avais commencé ta candidature pour le coaching individuel avec Anaïs mais qu'elle n'est pas allée au bout. Il ne reste que deux minutes, tu peux la finir ici :\n{lien}\n\nEt si tu bloques quelque part, dis-moi !",
   scholOk: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nOn a bien reçu ta candidature pour la bourse, merci pour ta confiance. Anaïs lit tout personnellement : tu auras une réponse avant le 15 septembre.",
   eowRelance: "Hello {prenom}, c'est Ambre de la Selfty Academy 🌸\n\nJe n'ai pas encore vu ton bilan de la semaine. Cinq minutes pour prendre du recul sur ta semaine, et ça nous aide à t'accompagner au plus près. Voici ton lien perso :\n{lien}\n\nMerci, et belle journée !",
   ambreCheckin: "Hello {prenom}, c'est Ambre de la Selfty Academy 🌸\n\nJe prends de tes nouvelles : comment tu te sens en ce moment dans la formation ? Y a-t-il quelque chose qu'on peut faire pour mieux t'accompagner ? Je suis là si besoin.",
@@ -605,7 +631,7 @@ const store = {
   get: (k, d) => { try { const v = localStorage.getItem('sc-'+k); return v===null ? d : JSON.parse(v); } catch(e){ return k in MEM ? MEM[k] : d; } },
   set: (k, v) => { MEM[k] = v; try { localStorage.setItem('sc-'+k, JSON.stringify(v)); } catch(e){} }
 };
-let SET = Object.assign({tplWebi:TPL_DEF.webi, tplInvite:TPL_DEF.invite, tplWebiCoach:TPL_DEF.webiCoach, tplWebiEcole:TPL_DEF.webiEcole, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, tplReplay:TPL_DEF.replay, replay:REPLAY_DEF, tplScholRel:TPL_DEF.scholRel, tplScholOk:TPL_DEF.scholOk, tplLead:TPL_DEF.lead, tplEowRelance:TPL_DEF.eowRelance, tplAmbreCheckin:TPL_DEF.ambreCheckin, tplAmbreAbsente:TPL_DEF.ambreAbsente, groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
+let SET = Object.assign({tplWebi:TPL_DEF.webi, tplInvite:TPL_DEF.invite, tplWebiCoach:TPL_DEF.webiCoach, tplWebiEcole:TPL_DEF.webiEcole, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, tplReplay:TPL_DEF.replay, replay:REPLAY_DEF, tplScholRel:TPL_DEF.scholRel, tplScholOk:TPL_DEF.scholOk, tplCoach:TPL_DEF.coach, tplCoachRel:TPL_DEF.coachRel, tplLead:TPL_DEF.lead, tplEowRelance:TPL_DEF.eowRelance, tplAmbreCheckin:TPL_DEF.ambreCheckin, tplAmbreAbsente:TPL_DEF.ambreAbsente, groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
 if (!SET.tplInvite) SET.tplInvite = TPL_DEF.invite;
 if (!SET.tplReplay) SET.tplReplay = TPL_DEF.replay;
 if (!SET.replay) SET.replay = REPLAY_DEF;
@@ -619,6 +645,7 @@ const TABS = [
   {id:'track', lab:'Calls effectués à remplir'},
   {id:'calls', lab:'Prochains calls'},
   {id:'leads', lab:'Leads sans call'},
+  {id:'coach', lab:'Candidatures coaching'},
   {id:'clients', lab:'Clientes'},
   {id:'ambre', lab:'Ambre suivi client'},
   {id:'paie', lab:'Paiements'},
@@ -655,7 +682,9 @@ function renderTabs(){
   const done1 = store.get('rel1to2', {});
   const bLive1 = live1Seules().filter(i => i.tel && !done1[key(i)]).length;
   const bLeads = leadsList().filter(l => !l.statut).length;
-  const b = {live2:bLive2, live1:bLive1, webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, calls:bCalls, track:bTrack, leads:bLeads, clients:bCli, ambre:ambreManquants().length + eowNonAttribues().length, paie:bPaie, compta:null, data:null};
+  const cdone = store.get('coachdone', {});
+  const bCoach = ((DATA.coach && DATA.coach.subs) || []).filter(s => !cdone[s.id]).length;
+  const b = {live2:bLive2, live1:bLive1, webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, coach:bCoach, calls:bCalls, track:bTrack, leads:bLeads, clients:bCli, ambre:ambreManquants().length + eowNonAttribues().length, paie:bPaie, compta:null, data:null};
   TABS.filter(t => t.sub).forEach(t => { b[t.id] = t.sub.reduce((n, x) => n + (b[x.id] || 0), 0); });
   const g = groupOf(tabOn);
   $('tabs').innerHTML = TABS.map(t =>
@@ -1114,6 +1143,8 @@ document.addEventListener('change', e => {
   if (rp){ const m = store.get('icreplay', {}); e.target.checked ? m[rp]=1 : delete m[rp]; store.set('icreplay', m); renderAgenda(); }
   if (d){ const m = store.get('icdone', {}); e.target.checked ? m[d]=1 : delete m[d]; store.set('icdone', m); renderAgenda(); renderTabs(); }
   if (s){ const m = store.get('scholdone', {}); e.target.checked ? m[s]=1 : delete m[s]; store.set('scholdone', m); renderSchol(); renderTabs(); }
+  const cd = e.target.dataset.coachdone;
+  if (cd){ const m = store.get('coachdone', {}); e.target.checked ? m[cd]=1 : delete m[cd]; store.set('coachdone', m); renderCoach(); renderTabs(); }
 });
 
 document.addEventListener('click', async e => {
@@ -2388,6 +2419,53 @@ function renderSchol(){
   }).join('') : `<div class="vide">Personne ici pour l'instant.</div>`;
 }
 $('f-schol').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fSchol = p.dataset.f; renderSchol(); }});
+
+/* ---------- candidatures coaching individuel ---------- */
+let fCoach = 'a';
+function renderCoach(){
+  const S = DATA.coach || {ok:false, url:'', subs:[]};
+  $('bandeau-coach').innerHTML = (S.ok
+    ? `<strong>Connecté à Tally ✅</strong> Lien à partager :`
+    : `<strong>Tally injoignable à la dernière mise à jour.</strong> Les candidatures affichées peuvent dater ; relance une mise à jour avec ↻.`)
+    + ` <a href="${esc(S.url)}" target="_blank" rel="noopener">${esc(S.url.replace('https://',''))} ↗</a>`;
+  const done = store.get('coachdone', {});
+  const tous = S.subs;
+  const aTraiter = tous.filter(s => !done[s.id]);
+  const t100 = tous.filter(s => s.tranche === '100'), t10 = tous.filter(s => s.tranche === '10'), t0 = tous.filter(s => s.tranche === '0');
+  const partielles = tous.filter(s => !s.done);
+  $('coach-stats').innerHTML = [
+    [tous.length, 'candidatures'], [aTraiter.length, 'à traiter'],
+    [t0.length, '0 à 10 k€ / mois'], [t10.length, '10 à 100 k€ / mois'], [t100.length, '100 k€ / mois et +'],
+    [partielles.length, 'pas finies'],
+  ].map(([v,l]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div></div>`).join('');
+  $('f-coach').innerHTML = [
+    ['a', `À traiter <b>${aTraiter.length}</b>`], ['100', `100 k€ et + <b>${t100.length}</b>`], ['10', `10 à 100 k€ <b>${t10.length}</b>`],
+    ['0', `0 à 10 k€ <b>${t0.length}</b>`], ['p', `Pas finies <b>${partielles.length}</b>`], ['t', `Toutes <b>${tous.length}</b>`]
+  ].map(([v,l]) => `<button class="pill${fCoach===v?' on':''}" data-f="${v}">${l}</button>`).join('');
+  const liste = fCoach==='a' ? aTraiter : fCoach==='p' ? partielles : fCoach==='t' ? tous : tous.filter(s => s.tranche === fCoach);
+  const REV = {'0':'0 à 10 k€ / mois', '10':'10 à 100 k€ / mois', '100':'100 k€ / mois et +'};
+  $('l-coach').innerHTML = liste.length ? liste.map(s => {
+    const ok = !!done[s.id];
+    const msg = (s.done ? (SET.tplCoach || TPL_DEF.coach) : (SET.tplCoachRel || TPL_DEF.coachRel))
+      .replaceAll('{prenom}', s.prenom || s.n.split(' ')[0]).replaceAll('{lien}', S.url);
+    return `<div class="ligne${ok?' done':''}">
+      <div class="qui"><div class="nom">${esc(s.n)}</div>
+        <div class="sub">${s.insta ? `<a href="https://instagram.com/${encodeURIComponent(s.insta)}" target="_blank" rel="noopener">@${esc(s.insta)}</a>` : 'pas d\'Instagram'}</div>
+        <div style="margin-top:4px">${s.tranche ? `<span class="chip rev-${s.tranche}">${REV[s.tranche]}</span>` : ''}${s.done ? '' : ' <span class="chip src-webi">Pas finie</span>'}${s.src ? ` <span class="chip src-live">${esc(s.src)}</span>` : ''}</div></div>
+      <div class="meta"><b>${s.tel ? '+'+s.tel : 'Pas de numéro'}</b>${esc(s.date)}</div>
+      <div class="meta">${ok ? '<span class="tag-ok">Traitée</span>' : '<span class="tag-warn">À traiter</span>'}</div>
+      <div class="actions">
+        ${s.tel ? `<a class="btn-wa" href="${waUrl(s.tel, msg)}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}
+        <label class="chk"><input type="checkbox" data-coachdone="${esc(s.id)}" ${ok?'checked':''}> Traitée</label>
+      </div>
+      ${(s.ideal || s.frein) ? `<div class="coach-rep">
+        <div><b>Sa situation idéale</b>${esc(s.ideal || '(pas encore répondu)')}</div>
+        <div><b>Ce qui pourrait l'en empêcher</b>${esc(s.frein || '(pas encore répondu)')}</div>
+      </div>` : ''}
+    </div>`;
+  }).join('') : `<div class="vide">Personne ici pour l'instant.</div>`;
+}
+$('f-coach').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fCoach = p.dataset.f; renderCoach(); }});
 $('c-add').addEventListener('click', () => {
   const nom = $('c-nom').value.trim();
   if (!nom) return toast('Il manque le prénom');
@@ -2505,25 +2583,25 @@ function openSet(o){ $('voile').classList.toggle('on', o); $('panneau').classLis
 $('btn-set').addEventListener('click', () => {
   $('s-tpl-webi').value = SET.tplWebi; $('s-tpl-invite').value = SET.tplInvite; $('s-tpl-webi-coach').value = SET.tplWebiCoach; $('s-tpl-webi-ecole').value = SET.tplWebiEcole;
   $('s-tpl-cand').value = SET.tplCand; $('s-tpl-call').value = SET.tplCall; $('s-tpl-replay').value = SET.tplReplay; $('s-replay').value = SET.replay;
-  $('s-tpl-schol-rel').value = SET.tplScholRel; $('s-tpl-schol-ok').value = SET.tplScholOk; $('s-tpl-lead').value = SET.tplLead || TPL_DEF.lead;
+  $('s-tpl-schol-rel').value = SET.tplScholRel; $('s-tpl-schol-ok').value = SET.tplScholOk; $('s-tpl-coach').value = SET.tplCoach || TPL_DEF.coach; $('s-tpl-coach-rel').value = SET.tplCoachRel || TPL_DEF.coachRel; $('s-tpl-lead').value = SET.tplLead || TPL_DEF.lead;
   $('s-groupe').value = SET.groupe; $('s-iclosed').value = SET.iclosed;
   $('s-tpl-eow').value = SET.tplEowRelance; $('s-tpl-ambre').value = SET.tplAmbreCheckin; $('s-tpl-ambre-abs').value = SET.tplAmbreAbsente;
   openSet(true);
 });
 $('voile').addEventListener('click', () => openSet(false));
 $('s-save').addEventListener('click', () => {
-  SET = {tplWebi:$('s-tpl-webi').value, tplInvite:$('s-tpl-invite').value, tplWebiCoach:$('s-tpl-webi-coach').value, tplWebiEcole:$('s-tpl-webi-ecole').value, tplCand:$('s-tpl-cand').value, tplCall:$('s-tpl-call').value, tplReplay:$('s-tpl-replay').value, replay:($('s-replay').value.trim() || REPLAY_DEF), tplScholRel:$('s-tpl-schol-rel').value, tplScholOk:$('s-tpl-schol-ok').value, tplLead:$('s-tpl-lead').value, groupe:$('s-groupe').value.trim(), iclosed:$('s-iclosed').value.trim(), tplEowRelance:$('s-tpl-eow').value, tplAmbreCheckin:$('s-tpl-ambre').value, tplAmbreAbsente:$('s-tpl-ambre-abs').value};
-  store.set('reglages', SET); openSet(false); renderWebi(); renderLive1(); renderCand(); renderAgenda(); renderSchol(); renderAmbre(); renderLeads(); toast('Enregistré');
+  SET = {tplWebi:$('s-tpl-webi').value, tplInvite:$('s-tpl-invite').value, tplWebiCoach:$('s-tpl-webi-coach').value, tplWebiEcole:$('s-tpl-webi-ecole').value, tplCand:$('s-tpl-cand').value, tplCall:$('s-tpl-call').value, tplReplay:$('s-tpl-replay').value, replay:($('s-replay').value.trim() || REPLAY_DEF), tplScholRel:$('s-tpl-schol-rel').value, tplScholOk:$('s-tpl-schol-ok').value, tplCoach:$('s-tpl-coach').value, tplCoachRel:$('s-tpl-coach-rel').value, tplLead:$('s-tpl-lead').value, groupe:$('s-groupe').value.trim(), iclosed:$('s-iclosed').value.trim(), tplEowRelance:$('s-tpl-eow').value, tplAmbreCheckin:$('s-tpl-ambre').value, tplAmbreAbsente:$('s-tpl-ambre-abs').value};
+  store.set('reglages', SET); openSet(false); renderWebi(); renderLive1(); renderCand(); renderAgenda(); renderSchol(); renderCoach(); renderAmbre(); renderLeads(); toast('Enregistré');
 });
 $('s-reset').addEventListener('click', () => {
   $('s-tpl-webi').value = TPL_DEF.webi; $('s-tpl-invite').value = TPL_DEF.invite; $('s-tpl-webi-coach').value = TPL_DEF.webiCoach; $('s-tpl-webi-ecole').value = TPL_DEF.webiEcole;
   $('s-tpl-cand').value = TPL_DEF.cand; $('s-tpl-call').value = TPL_DEF.call; $('s-tpl-replay').value = TPL_DEF.replay; $('s-replay').value = REPLAY_DEF;
-  $('s-tpl-schol-rel').value = TPL_DEF.scholRel; $('s-tpl-schol-ok').value = TPL_DEF.scholOk;
+  $('s-tpl-schol-rel').value = TPL_DEF.scholRel; $('s-tpl-schol-ok').value = TPL_DEF.scholOk; $('s-tpl-coach').value = TPL_DEF.coach; $('s-tpl-coach-rel').value = TPL_DEF.coachRel;
   $('s-groupe').value = DATA.webi.groupe;
   $('s-tpl-eow').value = TPL_DEF.eowRelance; $('s-tpl-ambre').value = TPL_DEF.ambreCheckin; $('s-tpl-ambre-abs').value = TPL_DEF.ambreAbsente;
 });
 
-renderTabs(); renderWebi(); renderLive2(); renderLive1(); renderCand(); renderEcole(); renderSchol(); renderAgenda(); renderTrack(); renderLeads(); renderClients(); renderAmbre(); renderCompta(); renderData();
+renderTabs(); renderWebi(); renderLive2(); renderLive1(); renderCand(); renderEcole(); renderSchol(); renderCoach(); renderAgenda(); renderTrack(); renderLeads(); renderClients(); renderAmbre(); renderCompta(); renderData();
 refreshContrats();
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshContrats(); });
 

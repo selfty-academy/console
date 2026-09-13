@@ -624,6 +624,66 @@ if ty_key:
     except Exception as ex:
         print("Tally scholarship KO (on garde la console sans) :", ex)
 
+# ---- Candidatures coaching individuel d'Anaïs (form Tally WOLYdJ, même clé ; script tally-coaching-anais/build_form.py) ----
+COACH_FORM = "WOLYdJ"
+# lu par LIBELLÉ de question (changer ici si un titre change dans build_form.py)
+CQ_PRENOM, CQ_NOM, CQ_TEL, CQ_INSTA = "Ton prénom", "Ton nom", "Ton téléphone", "Ton compte Instagram"
+CQ_IDEAL, CQ_FREIN, CQ_REVENU = "Quelle est ta situation idéale", "Te connaissant", "Tes revenus"
+coach_subs, coach_ok, coach_stats = [], False, {}
+if ty_key:
+    try:
+        qlabels, raw_subs, page = {}, [], 1
+        while True:
+            req = urllib.request.Request(
+                f"https://api.tally.so/forms/{COACH_FORM}/submissions?filter=all&page={page}",
+                headers={"Authorization": "Bearer " + ty_key, "User-Agent": "curl/8.4.0"})
+            d = json.load(urllib.request.urlopen(req, timeout=30))
+            for q in d.get("questions") or []:
+                qlabels[q["id"]] = (str(q.get("title") or "").strip(), str(q.get("type") or ""))
+            raw_subs += d.get("submissions") or []
+            coach_stats = d.get("totalNumberOfSubmissionsPerFilter") or {}
+            if not d.get("hasMore"):
+                break
+            page += 1
+        for s in raw_subs:
+            v, hid = {}, {}
+            for r in s.get("responses") or []:
+                lab, qtype = qlabels.get(r.get("questionId"), ("", ""))
+                ans = r.get("answer")
+                if qtype == "HIDDEN_FIELDS" and isinstance(ans, dict):
+                    hid = ans
+                    continue
+                for pre in (CQ_PRENOM, CQ_NOM, CQ_TEL, CQ_INSTA, CQ_IDEAL, CQ_FREIN, CQ_REVENU):
+                    if lab.startswith(pre):
+                        v[pre] = ty_txt(ans)
+            src = str(hid.get("source") or "").strip()
+            if src == "test" and not SHOW_TEST:
+                continue
+            if not v.get(CQ_PRENOM) and not v.get(CQ_TEL):
+                continue
+            at = str(s.get("submittedAt") or s.get("createdAt") or "")
+            rev = v.get(CQ_REVENU, "")
+            coach_subs.append({
+                "id": s.get("id"),
+                "n": (v.get(CQ_PRENOM, "") + " " + v.get(CQ_NOM, "")).strip() or "?",
+                "prenom": v.get(CQ_PRENOM, ""),
+                "tel": norm_phone(v.get(CQ_TEL, "")),
+                "insta": v.get(CQ_INSTA, "").strip().lstrip("@").split("instagram.com/")[-1].strip("/ "),
+                "ideal": v.get(CQ_IDEAL, ""),
+                "frein": v.get(CQ_FREIN, ""),
+                "revenu": rev,
+                "tranche": "100" if rev.startswith("100") else "10" if "10 et 100" in rev else "0" if rev else "",
+                "at": at,
+                "date": iso_paris(at),
+                "done": bool(s.get("isCompleted")),
+                "src": src,
+            })
+        coach_subs.sort(key=lambda x: x["at"], reverse=True)
+        coach_ok = True
+        print(f"Coaching Tally : {len(coach_subs)} candidature(s)")
+    except Exception as ex:
+        print("Tally coaching KO (on garde la console sans) :", ex)
+
 # ---- Bilans hebdo des clientes (« EOW », form Tally 1AekPO « Mon bilan de la semaine », même clé) ----
 EOW_FORM = "1AekPO"
 ECOLE_DEBUT = "2026-10-10"
@@ -743,6 +803,7 @@ data = {
     },
     "schol": {"ok": schol_ok, "url": "https://tally.so/r/Np1Gy0",
               "stats": schol_stats, "subs": schol_subs},
+    "coach": {"ok": coach_ok, "url": f"https://tally.so/r/{COACH_FORM}", "subs": coach_subs},
     "compta": {
         "ok": compta_ok,
         "sheetUrl": "https://docs.google.com/spreadsheets/d/1CUiT962_dGEAWhydaboYmC23ir8gA-CtZyUXB4gErIc/edit",
