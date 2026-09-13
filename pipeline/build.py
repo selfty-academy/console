@@ -773,6 +773,293 @@ if ty_key:
         print("Tally bilans KO (on garde la console sans) :", ex)
 
 
+# ---- Objectif 8 : liste priorisée des personnes à rappeler pour booker un call avec Anaïs ----
+# Sources croisées : liste d'attente école, inscrites aux 2 lives, calls iClosed passés sans vente (ou annulés),
+# contacts iClosed sans call, candidatures coaching (Tally WOLYdJ) et bourse (Tally Np1Gy0).
+# Exclues : clientes (onglet Clients + ventes de Suivi Calls + contrats), tests, calls à venir déjà bookés,
+# + les exclusions / messages perso / prénoms du fichier LOCAL objectif8.json (secret GitHub OBJECTIF8 en CI :
+# aucune donnée perso ne vit dans le repo public). Coche partagée = onglet Sheet « Rappels objectif 8 » (pont rappel_set).
+import unicodedata
+ICLOSED_LINK = "https://app.iclosed.io/e/SelftyAcademy/clarity-call"
+OBJ8_DEBUT = "2026-09-13"   # lancement de l'objectif : les ventes comptent à partir de ce jour
+OBJ8_CIBLE = 8
+raw_o8 = os.environ.get("OBJECTIF8", "")
+if not raw_o8 and (HERE / "objectif8.json").exists():
+    raw_o8 = (HERE / "objectif8.json").read_text()
+if raw_o8.strip().startswith("gz:"):
+    import gzip
+    raw_o8 = gzip.decompress(base64.b64decode(raw_o8.strip()[3:])).decode()
+try:
+    o8cfg = json.loads(raw_o8) if raw_o8.strip() else {}
+except Exception as ex:
+    print("objectif8.json illisible :", ex)
+    o8cfg = {}
+o8_msgs = {str(k).lower(): v for k, v in (o8cfg.get("messages") or {}).items()}
+o8_notes = {str(k).lower(): v for k, v in (o8cfg.get("notes") or {}).items()}
+o8_prenoms = {str(k).lower(): v for k, v in (o8cfg.get("prenoms") or {}).items()}
+o8_alias = {str(k).lower(): str(v).lower() for k, v in (o8cfg.get("alias") or {}).items()}   # e-mail mal tapé -> e-mail de la même personne
+O8_SEG = OrderedDict([
+    ("cand", "Candidature coaching"), ("chaud", "École chaud / à rappeler"), ("call", "Call passé sans vente"),
+    ("bourse", "Candidature bourse"), ("ecole", "Liste d'attente non traitée"), ("webi2", "Aux 2 lives"),
+    ("webi1", "Un seul live"), ("lead", "iClosed sans call"), ("froid", "École déjà contactée"),
+])
+O8_LVL = {s: i + 1 for i, s in enumerate(O8_SEG)}
+# messages de repli par segment (les messages perso de objectif8.json priment) : pas d'emoji (le lien wa.me les casse), pas de tiret cadratin
+O8_TPL = {
+    "cand": "Hello {p},\n\nMerci pour ta candidature au coaching avec Anaïs. Elle l'a lue et veut échanger avec toi de vive voix : sa Selfty Academy ouvre le 10 octobre et un appel avec elle te dira vite si c'est fait pour toi.\n\nTon créneau ici : {link}\n\nAlex, l'associé de Anaïs Brault",
+    "chaud": "Hello {p},\n\nOn avait échangé sur l'école de coaching d'Anaïs : elle ouvre le 10 octobre et la première promo se remplit. Le plus simple pour savoir si c'est le bon moment pour toi, c'est un appel direct avec Anaïs.\n\nTon créneau ici : {link}\n\nAlex, l'associé de Anaïs Brault",
+    "call": "Hello {p},\n\nTon appel avec Anaïs remonte au {date} et l'école ouvre le 10 octobre. Si l'envie est toujours là, on te propose un second échange avec elle pour trancher : dis-moi 2 créneaux qui t'arrangent cette semaine et je te les bloque.\n\nAlex, l'associé de Anaïs Brault",
+    "bourse": "Hello {p},\n\nOn a bien reçu ta candidature pour la bourse : Anaïs lit tout elle-même et tu auras sa réponse d'ici le 15 septembre. En attendant elle veut t'entendre de vive voix, quelle que soit la décision sur la bourse : l'école ouvre le 10 octobre.\n\nTon créneau ici : {link}\n\nAlex, l'associé de Anaïs Brault",
+    "ecole": "Hello {p},\n\nTu avais répondu au questionnaire de l'école de coaching d'Anaïs : elle ouvre le 10 octobre et je reprends contact avec chaque personne de la liste d'attente. Le plus simple, c'est un appel avec Anaïs pour voir si c'est fait pour toi.\n\nTon créneau ici : {link}\n\nAlex, l'associé de Anaïs Brault",
+    "webi2": "Hello {p},\n\nTu as suivi les deux lives d'Anaïs (31 août et 9 septembre), donc le sujet te parle. Sa Selfty Academy ouvre le 10 octobre et la première promo se remplit : je te propose un appel avec Anaïs pour voir si c'est fait pour toi.\n\nTon créneau ici : {link}\n\nAlex, l'associé de Anaïs Brault",
+    "webi1": "Hello {p},\n\nTu avais pris ta place au live d'Anaïs du {live}. Sa Selfty Academy ouvre le 10 octobre et la première promo se remplit : si devenir coach (ou aller plus loin dans ta pratique) te parle, un appel avec Anaïs te dira vite si c'est fait pour toi.\n\nTon créneau ici : {link}\n\nAlex, l'associé de Anaïs Brault",
+    "lead": "Hello {p},\n\nJ'ai vu que tu avais commencé ta candidature pour la Selfty Academy sans réserver ton appel avec Anaïs. L'école ouvre le 10 octobre : c'est un échange de 45 minutes avec elle, sans engagement, pour voir si c'est fait pour toi.\n\nTon créneau ici : {link}\n\nAlex, l'associé de Anaïs Brault",
+    "froid": "Hello {p},\n\nOn avait échangé au sujet de l'école de coaching d'Anaïs. Elle ouvre le 10 octobre et la première promo se remplit : si c'est toujours d'actualité pour toi, un appel avec Anaïs te dira vite si c'est le bon moment.\n\nTon créneau ici : {link}\n\nAlex, l'associé de Anaïs Brault",
+}
+
+def o8_tel(v):
+    t = norm_phone(v)
+    if t.startswith("330") and len(t) == 12:
+        t = "33" + t[3:]   # « +33 06… » saisi avec le 0
+    return t
+
+def o8_nk(s):
+    s = unicodedata.normalize("NFKD", str(s or "")).encode("ascii", "ignore").decode().lower()
+    return frozenset(t for t in re.findall(r"[a-z]{2,}", s) if t not in ("ans", "an", "de", "la", "le", "du", "des", "et", "test"))
+
+def o8_clean_name(s):
+    s = str(s or "").split("\n")[0]
+    s = re.sub(r"[\s,\-]+\d{2,3}(\s*ans?)?\b.*$", "", s)   # « Bastien Demoy 28 ans », « Albert Neo 25 », « Zoé X 26ans » -> sans l'âge
+    s = re.sub(r"[^\w\s'’\-]", "", s, flags=re.UNICODE)  # emoji, etc.
+    return re.sub(r"\s+", " ", s).strip()
+
+def o8_dd(iso):
+    try:
+        d = datetime.datetime.fromisoformat(str(iso).replace("Z", "+00:00"))
+        if TZ_PARIS and d.tzinfo:
+            d = d.astimezone(TZ_PARIS)
+        return d.strftime("%d/%m")
+    except Exception:
+        return ""
+
+def o8_is_test(mail, nom):
+    m = (mail or "").lower(); n = (nom or "").lower()
+    return m in TEST_EMAILS or "+test" in m or m.startswith("test@") or (n.startswith("alex") and "test" in n)
+
+o8, o8_by_mail, o8_by_tel, o8_by_name = [], {}, {}, []
+def o8_find(mail, tel, nom):
+    if mail and mail in o8_by_mail:
+        return o8_by_mail[mail]
+    if tel and tel in o8_by_tel:
+        return o8_by_tel[tel]
+    nk = o8_nk(nom)
+    if len(nk) >= 2:
+        for k, p in o8_by_name:
+            if nk <= k or k <= nk:
+                return p
+    return None
+
+def o8_add(mail, tel, nom, prenom=""):
+    mail = str(mail or "").strip().lower()
+    if "@" not in mail:
+        mail = ""
+    mail = o8_alias.get(mail, mail)
+    tel = o8_tel(tel)
+    nom = o8_clean_name(nom)
+    p = o8_find(mail, tel, nom)
+    if not p:
+        p = {"names": [], "prenom": "", "mail": "", "tel": "", "sig": [], "info": [], "lives": set(),
+             "client": "", "excl": "", "non": "", "upcoming": ""}
+        o8.append(p)
+    if mail and not p["mail"]:
+        p["mail"] = mail
+    if tel and not p["tel"]:
+        p["tel"] = tel
+    if mail:
+        o8_by_mail[mail] = p
+    if tel:
+        o8_by_tel[tel] = p
+    nk = o8_nk(nom)
+    if len(nk) >= 2 and not any(p is q and k == nk for k, q in o8_by_name):
+        o8_by_name.append((nk, p))
+    if nom and nom not in p["names"]:
+        p["names"].append(nom)
+    if prenom and not p["prenom"]:
+        p["prenom"] = prenom.strip()
+    return p
+
+def o8_sig(p, seg, ts, why):
+    p["sig"].append({"seg": seg, "lvl": O8_LVL[seg], "ts": ts or "", "why": why})
+
+def o8_info(p, pairs):
+    seen = {a for a, _ in p["info"]}
+    for a, b in pairs:
+        if b and a not in seen:
+            p["info"].append([a, str(b).strip()[:600]])
+            seen.add(a)
+
+# 1) inscrites aux lives (candidature coaching live = Mode coaching)
+for i in inscrits:
+    p = o8_add(i["mail"], i["tel"], i["n"], i["n"])
+    p["lives"].add(i["live"])
+    if i.get("deja1"):
+        p["lives"].add("31aout")
+    o8_info(p, i["det"])
+    if i["coach"]:
+        accord = any(a == "Accord coaching en direct" for a, _ in i["det"])
+        o8_sig(p, "cand", i["ts"], f"Candidature au coaching live du {o8_dd(i['ts'])}" + (" (accord pour le coaching en direct)" if accord else ""))
+# 2) liste d'attente école (formulaire + page du live)
+for e in ecole:
+    if "doublon" in e["statut"].lower() and e["mail"] and e["mail"] in o8_by_mail:
+        o8_info(o8_by_mail[e["mail"]], e["detail"]); continue
+    p = o8_add(e["mail"], e["tel"], e["n"])
+    o8_info(p, e["detail"] + ([["Commentaire (Sheet)", e["comm"]]] if e["comm"] else []) + [[f"Notes d'appel · {t}", v] for t, v in e["notes"]])
+    ch, st = e["chaud"].strip(), e["statut"].strip()
+    qui = f", pris par {e['qui']}" if e["qui"] else ""
+    if re.match(r"^(chaud|a rappeler|à rappeler|tiède|tiede)", ch, re.I):
+        o8_sig(p, "chaud", e["ts"], f"Liste d'attente école : {ch}{qui}" + (f" · statut : {st[:80]}" if st else ""))
+    elif re.search(r"hors cible|ne veut pas|autre projet|pas dans la cible", ch + " " + st, re.I):
+        p["non"] = (st or ch)[:120]
+        o8_sig(p, "froid", e["ts"], f"École : {(st or ch)[:120]}")
+    elif not st and not ch:
+        o8_sig(p, "ecole", e["ts"], f"Questionnaire école du {o8_dd(e['ts'])} ({e['src']}), jamais traité")
+    else:
+        o8_sig(p, "froid", e["ts"], f"École{qui} : {st[:120]}")
+# 3) calls iClosed : passés sans vente ou annulés -> à rappeler ; à venir -> exclus (sauf déjà cochée) ; vente -> cliente
+_now_iso = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+for c in icalls:
+    if str(c["id"]).upper().startswith(("TEST", "DEMO")) or o8_is_test(c["mail"], c["n"]):
+        continue
+    p = o8_add(c["mail"], c["tel"], c["n"], c["n"].split(" ")[0])
+    o8_info(p, c["quest"])
+    t = c.get("trk") or {}
+    if str(t.get("r", "")).lower().startswith("vente"):
+        p["client"] = "vente enregistrée dans Suivi Calls"; continue
+    if c["cancel"]:
+        o8_sig(p, "call", c["utc"], f"Call iClosed du {o8_dd(c['utc'])} annulé" + (" (par elle)" if "CONTACT" in c["cancelWhy"].upper() else "") + ", à rebooker")
+    elif c["utc"] and c["utc"][:19] > _now_iso:
+        p["upcoming"] = c["utc"]
+    else:
+        res = t.get("r") or t.get("s") or "résultat pas encore renseigné dans Suivi Calls"
+        o8_sig(p, "call", c["utc"], f"Call iClosed du {o8_dd(c['utc'])} : {res}" + (f" · « {t['comment'][:90]} »" if t.get("comment") else ""))
+# ventes de Suivi Calls dont le call n'est plus dans iClosed
+for r in (track_rows or []):
+    if str(r.get("Résultat") or "").lower().startswith("vente") and not str(r.get("Call ID") or "").upper().startswith(("TEST", "DEMO")):
+        o8_add(r.get("E-mail"), r.get("Téléphone"), r.get("Nom"))["client"] = "vente enregistrée dans Suivi Calls"
+# 4) contacts iClosed sans call
+for l in leads:
+    p = o8_add(l["mail"], l["tel"], l["n"], l["n"].split(" ")[0])
+    o8_sig(p, "lead", l["cree"], f"Formulaire iClosed commencé le {o8_dd(l['cree'])}, pas de call réservé" + (f" · suivi : {l['statut']}" if l["statut"] else ""))
+# 5) bourse (Tally)
+for s in schol_subs:
+    p = o8_add(s["mail"], s["tel"], s["n"], s["n"].split(" ")[0])
+    o8_info(p, [[f"Bourse · {q[:60]}", a] for q, a in s["det"]])
+    sit = next((a for q, a in s["det"] if q.startswith("Aujourd")), "")
+    o8_sig(p, "bourse", s["at"], f"Candidature bourse du {o8_dd(s['at'])} ({'complète' if s['done'] else 'pas finie'})" + (f" · « {sit} »" if sit else "") + " · a dit ne pas pouvoir financer l'Academy")
+# 6) coaching individuel (Tally)
+for s in coach_subs:
+    p = o8_add("", s["tel"], s["n"], s["prenom"])
+    o8_info(p, [["Situation idéale", s["ideal"]], ["Ce qui pourrait l'en empêcher", s["frein"]], ["Revenus", s["revenu"]]])
+    o8_sig(p, "cand", s["at"], f"Candidature au coaching individuel du {o8_dd(s['at'])}" + ("" if s["done"] else " (pas finie)"))
+# 7) clientes (onglet Clients + contrats envoyés)
+for c in clientes:
+    o8_add(c["mail"], c["tel"], c["n"])["client"] = "fiche Clientes"
+for k, c in contrats.items():
+    o8_add(k, "", (c["prenom"] + " " + c["nom"]).strip())["client"] = f"contrat {c['statut'].lower()}"
+# 8) exclusions du fichier local / secret (anciennes clientes hors console, mineur, hors cible…)
+for x in (o8cfg.get("exclure") or []):
+    p = o8_find(str(x.get("mail") or "").lower(), o8_tel(x.get("tel")), o8_clean_name(x.get("nom")))
+    if p:
+        p["excl"] = str(x.get("pourquoi") or "exclue")
+# 9) coche partagée (onglet « Rappels objectif 8 », écrit par la console via rappel_set)
+rappel_rows = read_tab(ewb, "rappels objectif 8")
+rappels = {}
+for r in (rappel_rows or []):
+    rec = {"c": str(r.get("Contactée") or "").strip().lower() == "oui", "cd": dstr_(r.get("Contactée le")),
+           "b": str(r.get("Call booké") or "").strip().lower() == "oui", "bd": dstr_(r.get("Booké le")),
+           "note": str(r.get("Note") or "").strip(), "maj": dstr_(r.get("MAJ"))}
+    for k in (str(r.get("E-mail") or "").strip().lower(), o8_tel(r.get("Téléphone")), str(r.get("Clé") or "").strip().lower()):
+        if k:
+            rappels[k] = rec
+
+def o8_prenom(p):
+    for k in (p["mail"], p["tel"]):
+        if k and k in o8_prenoms:
+            return o8_prenoms[k]
+    pre = (p["prenom"] or (p["names"][0].split(" ")[0] if p["names"] else "") or "").strip()
+    if pre and (pre.isupper() or pre.islower()):
+        pre = "-".join(w.capitalize() for w in pre.split("-"))
+    return pre
+
+obj8_list, obj8_exclues = [], []
+for p in o8:
+    nom = max(p["names"], key=lambda s: (min(len(s.split()), 4), -p["names"].index(s))) if p["names"] else (p["mail"] or ("+" + p["tel"] if p["tel"] else "?"))
+    if o8_is_test(p["mail"], nom):
+        continue
+    rap = rappels.get(p["mail"]) or rappels.get(p["tel"]) or {}
+    if p["client"] or p["excl"]:
+        obj8_exclues.append({"n": nom, "pourquoi": p["excl"] or p["client"]}); continue
+    if p["upcoming"] and not rap:
+        obj8_exclues.append({"n": nom, "pourquoi": f"call déjà booké le {o8_dd(p['upcoming'])}"}); continue
+    if len(p["lives"]) >= 2:
+        o8_sig(p, "webi2", "", "A pris sa place aux 2 lives (31 août + 9 septembre)")
+    elif len(p["lives"]) == 1:
+        o8_sig(p, "webi1", "", "A pris sa place au live du " + ("9 septembre" if "9sept" in p["lives"] else "31 août"))
+    if not p["sig"]:
+        continue
+    if p["non"] and min(s["lvl"] for s in p["sig"]) > O8_LVL["bourse"]:
+        for s in p["sig"]:
+            s["lvl"] = O8_LVL["froid"]   # a dit non / hors cible, sans signal fort depuis : tout en bas
+    sigs = sorted(p["sig"], key=lambda s: (s["lvl"], s["ts"] == "", s["ts"]))
+    best = sigs[0]
+    seg = "froid" if best["lvl"] >= O8_LVL["froid"] else best["seg"]
+    last = max((s["ts"] for s in p["sig"] if s["ts"]), default="")
+    pre = o8_prenom(p)
+    toks = [("-".join(w.capitalize() for w in t.split("-")) if (t.isupper() or t.islower()) and len(t) > 2 else t) for t in nom.split()]
+    if pre and toks and toks[0].lower() != pre.lower() and pre.lower() in [t.lower() for t in toks]:
+        toks = [pre] + [t for t in toks if t.lower() != pre.lower()]
+    nom = " ".join(toks)
+    why = list(OrderedDict.fromkeys(s["why"] for s in sigs))
+    live = "9 septembre" if p["lives"] == {"9sept"} else "31 août"
+    date_call = next((o8_dd(s["ts"]) for s in sigs if s["seg"] == "call"), "")
+    msg = o8_msgs.get(p["mail"]) or o8_msgs.get(p["tel"]) or O8_TPL[seg]
+    msg = msg.replace("{p}", pre or "toi").replace("{link}", ICLOSED_LINK).replace("{live}", live).replace("{date}", date_call or "quelques jours")
+    obj8_list.append({
+        "k": p["mail"] or p["tel"], "n": nom, "prenom": pre, "mail": p["mail"], "tel": p["tel"],
+        "lvl": O8_LVL[seg], "seg": seg, "segLab": O8_SEG[seg],
+        "why": why, "note": o8_notes.get(p["mail"]) or o8_notes.get(p["tel"]) or "",
+        "last": last, "lastLab": o8_dd(last) if last else "",
+        "msg": msg, "perso": bool(o8_msgs.get(p["mail"]) or o8_msgs.get(p["tel"])), "info": p["info"][:14],
+        "c": bool(rap.get("c")), "cd": rap.get("cd", ""),
+        "b": bool(rap.get("b")) or bool(p["upcoming"]), "bd": rap.get("bd", "") or (f"iClosed, call le {o8_dd(p['upcoming'])}" if p["upcoming"] else ""),
+        "rnote": rap.get("note", ""), "maj": rap.get("maj", ""),
+    })
+# du plus chaud au plus froid ; à niveau égal, la plus récente d'abord
+obj8_list.sort(key=lambda x: x["last"], reverse=True)
+obj8_list.sort(key=lambda x: x["lvl"])
+# ventes du mois (Suivi Calls, Résultat = Vente, date close sinon date du call), tests exclus
+def o8_vente_date(r):
+    dc = r.get("Date close")
+    if isinstance(dc, datetime.datetime):
+        return dc.strftime("%Y-%m-%d")
+    m = re.match(r"^(\d{2})/(\d{2})/(\d{4})", str(dc or "").strip())
+    if m:
+        return f"{m.group(3)}-{m.group(2)}-{m.group(1)}"
+    return str(r.get("Date call") or "")[:10]
+ventes_mois, ventes_depuis = 0, 0
+_mois = datetime.date.today().strftime("%Y-%m")
+for r in (track_rows or []):
+    cid = str(r.get("Call ID") or "").strip().upper()
+    if not str(r.get("Résultat") or "").lower().startswith("vente") or cid.startswith(("TEST", "DEMO")) or o8_is_test(str(r.get("E-mail") or ""), str(r.get("Nom") or "")):
+        continue
+    d = o8_vente_date(r)
+    ventes_mois += d.startswith(_mois)
+    ventes_depuis += d >= OBJ8_DEBUT
+obj8 = {"ok": True, "debut": OBJ8_DEBUT, "cible": OBJ8_CIBLE, "link": ICLOSED_LINK, "rappelsOk": rappel_rows is not None,
+        "ventesMois": ventes_mois, "ventesDepuis": ventes_depuis, "segments": list(O8_SEG.items()),
+        "list": obj8_list, "exclues": len(obj8_exclues), "persoMsgs": len(o8_msgs)}
+print(f"Objectif 8 : {len(obj8_list)} personnes à rappeler ({len(obj8_exclues)} exclues), {ventes_depuis} vente(s) depuis le {OBJ8_DEBUT}, {ventes_mois} sur le mois")
+
 data = {
     "maj": datetime.datetime.now().strftime("%d/%m/%Y %H:%M"),
     "ecoleDebut": ECOLE_DEBUT,
@@ -804,6 +1091,7 @@ data = {
     "schol": {"ok": schol_ok, "url": "https://tally.so/r/Np1Gy0",
               "stats": schol_stats, "subs": schol_subs},
     "coach": {"ok": coach_ok, "url": f"https://tally.so/r/{COACH_FORM}", "subs": coach_subs},
+    "obj8": obj8,
     "compta": {
         "ok": compta_ok,
         "sheetUrl": "https://docs.google.com/spreadsheets/d/1CUiT962_dGEAWhydaboYmC23ir8gA-CtZyUXB4gErIc/edit",
@@ -857,3 +1145,26 @@ out = (tpl.replace("__DATA__", json.dumps(data, ensure_ascii=False)).replace("__
        .replace("__DRIVE_CONTRATS__", DRIVE_CONTRATS).replace("__DRIVE_FACTURES__", DRIVE_FACTURES))
 (HERE / "console.html").write_text(out)
 print(f"console.html : {len(inscrits)} inscrits, {len(cands)} candidatures live, {len(ecole)} lignes école ({ecole_uniques} personnes), {len(visites)} visites")
+
+# ---- Objectif 8 : liste complète pour Alex, fichier LOCAL seulement (jamais en CI, jamais dans le repo) ----
+if (HERE / "objectif8.json").exists() and not os.environ.get("CI"):
+    md = [f"# Objectif 8 : qui rappeler, dans l'ordre ({datetime.datetime.now().strftime('%d/%m/%Y %H:%M')})", "",
+          f"{len(obj8_list)} personnes à rappeler, du plus chaud au plus froid. Une seule proposition par message : un appel avec Anaïs ({ICLOSED_LINK}).",
+          f"Ventes depuis le {OBJ8_DEBUT} : {ventes_depuis} / {OBJ8_CIBLE} (dont {ventes_mois} sur le mois). Coches partagées : onglet « Rappels objectif 8 » du Sheet École.", ""]
+    for seg, lab in O8_SEG.items():
+        grp = [x for x in obj8_list if x["seg"] == seg]
+        if not grp:
+            continue
+        md += [f"## {O8_LVL[seg]}. {lab} ({len(grp)})", ""]
+        for x in grp:
+            etat = " · CONTACTÉE" if x["c"] else ""
+            etat += " · CALL BOOKÉ" if x["b"] else ""
+            md += [f"### {x['n']}{etat}", f"- Téléphone : {'+' + x['tel'] if x['tel'] else 'pas de numéro'} · {x['mail'] or 'pas d’e-mail'} · dernier signe : {x['lastLab'] or '?'}"]
+            md += [f"- Pourquoi : {w}" for w in x["why"]]
+            if x["note"]:
+                md.append(f"- Note : {x['note']}")
+            md += ["- Message" + (" (perso)" if x["perso"] else " (modèle)") + " :", "", "```", x["msg"], "```", ""]
+    if obj8_exclues:
+        md += ["## Exclues (pas à rappeler)", ""] + [f"- {x['n']} : {x['pourquoi']}" for x in obj8_exclues] + [""]
+    (HERE / "objectif-8.md").write_text("\n".join(md))
+    print(f"objectif-8.md : {len(obj8_list)} personnes")

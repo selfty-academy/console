@@ -231,6 +231,19 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 @media (max-width:760px){.coach-rep{grid-template-columns:1fr}}
 .prep-alex{grid-column:1/-1;background:#FFF7E6;border:1px solid #F3D9A4;border-radius:10px;padding:8px 10px;margin-top:6px;white-space:pre-wrap}
 .prep-alex b{display:block;color:#8a5a00;margin-bottom:2px}
+/* onglet Objectif 8 */
+.o8-cand{background:#1F3A5F;color:#fff}.o8-chaud{background:var(--danger);color:#fff}.o8-call{background:var(--warn);color:#fff}
+.o8-bourse{background:#6E4A6E;color:#fff}.o8-ecole{background:#EAD9EA;color:#6E4A6E}.o8-webi2,.o8-webi1{background:var(--rose);color:var(--mauve-deep)}
+.o8-lead{background:#EEF3F9;color:#4F79A8}.o8-froid{border:1px solid var(--border);color:var(--muted);background:transparent}
+.o8-why{margin-top:4px;font-size:12.5px;color:var(--ink-soft);line-height:1.4}
+.o8-why span{display:block}
+.o8-note-perso{margin-top:4px;font-size:12.5px;color:#8a5a00;background:#FFF7E6;border-radius:8px;padding:5px 8px}
+.o8-row{grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:4px;padding-top:9px;border-top:1px dashed var(--border)}
+.o8-row .chk input:checked+span{font-weight:600;color:var(--ok)}
+.o8-note{flex:1;min-width:180px;border:1px solid var(--border);border-radius:999px;padding:7px 12px;font:14px "Jost",sans-serif;background:var(--surface);color:var(--ink)}
+.o8-msg{white-space:pre-wrap;font-size:14px}
+.o8-obj .val{color:var(--ok)}
+.o8-rang{display:inline-block;min-width:26px;text-align:center;background:var(--ink);color:#FFFDFB;border-radius:999px;font-size:12px;font-weight:600;padding:1px 7px;margin-right:6px;vertical-align:middle}
 </style>
 
 <div class="wrap">
@@ -248,6 +261,16 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 
 <nav class="tabs" id="tabs"></nav>
 <div class="pills subtabs" id="subtabs" hidden></div>
+
+<!-- ===================== OBJECTIF 8 : rappels pour booker un call avec Anaïs ===================== -->
+<section class="panel" id="p-obj8">
+  <p class="intro">Objectif : <strong>8 clientes de plus ce mois-ci</strong>. Tout le monde est là, du plus chaud au plus froid : candidatures coaching, liste d'attente école, calls passés sans vente, candidatures bourse, inscrites aux lives, leads iClosed. Un message perso par personne avec une seule proposition : un appel avec Anaïs. Les coches « Contactée » et « Call booké » sont <strong>partagées</strong> (onglet « Rappels objectif 8 » du Sheet École) : Alex et Anaïs voient la même chose sur tous les appareils. La liste se recalcule à chaque mise à jour (clientes, calls bookés et tests sortent tout seuls).</p>
+  <div class="kpis kpis-mini" id="o8-kpis"></div>
+  <div class="pills" id="f-o8-seg"></div>
+  <div class="pills" id="f-o8"></div>
+  <div style="margin:0 0 14px"><input type="search" id="q-o8" class="search" placeholder="Chercher un prénom, un mail, un numéro…"></div>
+  <div class="liste" id="l-o8"></div>
+</section>
 
 <!-- ===================== LIVE 9 SEPT ===================== -->
 <section class="panel" id="p-live2">
@@ -644,6 +667,7 @@ const WA_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10
 
 /* ---------- onglets ---------- */
 const TABS = [
+  {id:'obj8', lab:'📞 Objectif 8'},
   {id:'track', lab:'Calls effectués à remplir'},
   {id:'calls', lab:'Prochains calls'},
   {id:'leads', lab:'Leads sans call'},
@@ -664,8 +688,8 @@ const TABS = [
 ];
 const LEAVES = TABS.flatMap(t => t.sub ? t.sub : [t]);           // onglets « feuilles » = panneaux
 const groupOf = id => (TABS.find(t => t.sub && t.sub.some(x => x.id === id)) || {}).id || null;
-let tabOn = store.get('tab','track');
-if (!LEAVES.some(t => t.id === tabOn)) tabOn = 'track';
+let tabOn = store.get('tab','obj8');
+if (!LEAVES.some(t => t.id === tabOn)) tabOn = 'obj8';
 function renderTabs(){
   const done = store.get('relwebi', {});
   const doneC = store.get('relcand', {});
@@ -686,7 +710,8 @@ function renderTabs(){
   const bLeads = leadsList().filter(l => !l.statut).length;
   const cdone = store.get('coachdone', {});
   const bCoach = ((DATA.coach && DATA.coach.subs) || []).filter(s => !cdone[s.id]).length;
-  const b = {live2:bLive2, live1:bLive1, webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, coach:bCoach, calls:bCalls, track:bTrack, leads:bLeads, clients:bCli, ambre:ambreManquants().length + eowNonAttribues().length, paie:bPaie, compta:null, data:null};
+  const bO8 = o8List().filter(p => !p.c && !p.b).length;
+  const b = {obj8:bO8, live2:bLive2, live1:bLive1, webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, coach:bCoach, calls:bCalls, track:bTrack, leads:bLeads, clients:bCli, ambre:ambreManquants().length + eowNonAttribues().length, paie:bPaie, compta:null, data:null};
   TABS.filter(t => t.sub).forEach(t => { b[t.id] = t.sub.reduce((n, x) => n + (b[x.id] || 0), 0); });
   const g = groupOf(tabOn);
   $('tabs').innerHTML = TABS.map(t =>
@@ -2422,6 +2447,112 @@ function renderSchol(){
 }
 $('f-schol').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fSchol = p.dataset.f; renderSchol(); }});
 
+/* ---------- objectif 8 : rappels pour booker un call avec Anaïs (coche partagée via le pont, onglet « Rappels objectif 8 ») ---------- */
+const O8 = DATA.obj8 || {ok:false, list:[], segments:[], cible:8, ventesMois:0, ventesDepuis:0, debut:''};
+const O8_SEG = Object.fromEntries(O8.segments || []);
+function effO8(p){
+  const F = store.get('rappelfix', {}); const f = F[p.k];
+  if (!f) return p;
+  const caught = (f.c===undefined || !!p.c===f.c) && (f.b===undefined || !!p.b===f.b);
+  if (caught || Date.now()-(f.when||0) > 3*86400000){ delete F[p.k]; store.set('rappelfix', F); return p; }
+  const o = Object.assign({}, p);
+  if (f.c!==undefined){ o.c = f.c; o.cd = f.c ? (p.c ? p.cd : "à l'instant") : ''; }
+  if (f.b!==undefined){ o.b = f.b; o.bd = f.b ? (p.b ? p.bd : "à l'instant") : ''; }
+  if (f.note) o.rnote = (p.rnote ? p.rnote + '\n' : '') + f.note;
+  return o;
+}
+const o8List = () => (O8.list || []).map(effO8);
+let fO8 = 'a', segO8 = 't', qO8 = '';
+function renderObj8(){
+  if (!$('l-o8')) return;
+  const tous = o8List();
+  const aFaire = tous.filter(p => !p.c && !p.b), contactees = tous.filter(p => p.c && !p.b), bookees = tous.filter(p => p.b);
+  $('o8-kpis').innerHTML = [
+    [aFaire.length, 'à rappeler', ''],
+    [contactees.length, 'contactées, en attente', ''],
+    [bookees.length, 'calls bookés', ''],
+    [`${O8.ventesDepuis} / ${O8.cible}`, 'objectif 8 ventes', `${O8.ventesMois} vente${O8.ventesMois>1?'s':''} en septembre au total`, 'o8-obj'],
+    [tous.filter(p => !p.tel).length, 'sans numéro', ''],
+  ].map(([v,l,plus,cls]) => `<div class="kpi ${cls||''}"><div class="val">${v}</div><div class="lab">${l}</div>${plus?`<div class="plus">${plus}</div>`:''}</div>`).join('');
+  $('f-o8-seg').innerHTML = [['t', `Tous les segments <b>${tous.length}</b>`]].concat((O8.segments||[]).map(([id, lab]) => [id, `${lab} <b>${tous.filter(p => p.seg===id).length}</b>`]))
+    .filter(([id]) => id==='t' || tous.some(p => p.seg===id))
+    .map(([v,l]) => `<button class="pill${segO8===v?' on':''}" data-f="${v}">${l}</button>`).join('');
+  const seg = segO8==='t' ? tous : tous.filter(p => p.seg===segO8);
+  const segA = seg.filter(p => !p.c && !p.b), segC = seg.filter(p => p.c && !p.b), segB = seg.filter(p => p.b);
+  $('f-o8').innerHTML = [
+    ['a', `À faire <b>${segA.length}</b>`], ['c', `Contactées <b>${segC.length}</b>`], ['b', `Call booké <b>${segB.length}</b>`], ['t', `Toutes <b>${seg.length}</b>`]
+  ].map(([v,l]) => `<button class="pill${fO8===v?' on':''}" data-f="${v}">${l}</button>`).join('');
+  let liste = fO8==='a' ? segA : fO8==='c' ? segC : fO8==='b' ? segB : seg;
+  if (qO8) liste = liste.filter(p => (p.n+' '+p.mail+' '+p.tel+' '+p.segLab).toLowerCase().includes(qO8));
+  if (!O8.ok){ $('l-o8').innerHTML = `<div class="vide">La liste n'a pas pu être calculée à la dernière mise à jour : relance avec ↻.</div>`; return; }
+  $('l-o8').innerHTML = liste.length ? liste.map(p => {
+    const rang = tous.indexOf(tous.find(x => x.k === p.k)) + 1;
+    const etat = p.b ? `<span class="tag-ok">Call booké${p.bd ? ' · ' + esc(p.bd) : ''}</span>`
+      : p.c ? `<span class="tag-ok" style="color:var(--warn)">Contactée${p.cd ? (/\d/.test(p.cd) ? ' le ' + esc(p.cd.split(' ')[0]) : ' ' + esc(p.cd)) : ''}</span>`
+      : '<span class="tag-warn">À rappeler</span>';
+    const fiche = (p.info||[]).map(([q,a]) => `<div class="rep"><b>${esc(q)}</b>${esc(a)}</div>`).join('');
+    return `<div class="ligne${p.b||p.c?' done':''}">
+      <div class="qui"><div class="nom"><span class="o8-rang">${rang}</span>${esc(p.n)} <span class="chip o8-${p.seg}">${esc(p.segLab)}</span></div>
+        <div class="sub">${esc(p.mail || 'pas d\'e-mail')}</div>
+        <div class="o8-why">${(p.why||[]).map(w => `<span>${esc(w)}</span>`).join('')}</div>
+        ${p.note ? `<div class="o8-note-perso">${esc(p.note)}</div>` : ''}</div>
+      <div class="meta"><b>${p.tel ? '+'+p.tel : 'Pas de numéro'}</b>${p.lastLab ? 'dernier signe le '+esc(p.lastLab) : ''}${p.rnote ? `<span class="sub" style="display:block;color:var(--muted);font-size:12.5px;white-space:pre-wrap">${esc(p.rnote)}</span>` : ''}</div>
+      <div class="meta">${etat}</div>
+      <div class="actions">
+        ${p.tel ? `<a class="btn-wa" href="${waUrl(p.tel, p.msg)}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}
+        <button class="btn-ghost o8-copy" data-k="${esc(p.k)}">Copier le message</button>
+      </div>
+      <details class="sujet"><summary>Voir le message${fiche ? ' et sa fiche' : ''}</summary>
+        <div class="rep o8-msg"><b>Message${p.perso ? ' perso' : ' (modèle du segment)'}</b>${esc(p.msg)}</div>${fiche}</details>
+      <div class="o8-row" data-k="${esc(p.k)}">
+        <label class="chk"><input type="checkbox" data-o8c="${esc(p.k)}" ${p.c?'checked':''}><span>Contactée</span></label>
+        <label class="chk"><input type="checkbox" data-o8b="${esc(p.k)}" ${p.b?'checked':''}><span>Call booké</span></label>
+        <input class="o8-note" placeholder="Note (ajoutée dans le Sheet, visible par Alex et Anaïs)">
+        <button class="btn-ghost o8-save">Enregistrer la note</button>
+      </div>
+    </div>`;
+  }).join('') : `<div class="vide">Personne ici.</div>`;
+}
+$('f-o8-seg').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ segO8 = p.dataset.f; renderObj8(); }});
+$('f-o8').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fO8 = p.dataset.f; renderObj8(); }});
+$('q-o8').addEventListener('input', e => { qO8 = e.target.value.trim().toLowerCase(); renderObj8(); });
+async function o8Send(p, extra){
+  if (!PONT.url || PONT.url.startsWith('__')) throw new Error('pont non configuré');
+  const r = await fetch(PONT.url, { method:'POST', body: JSON.stringify(Object.assign({ what:'rappel_set', key:PONT.key, email:p.mail, tel:p.tel, nom:p.n, segment:p.segLab }, extra)) });
+  const j = await r.json(); if (!j.ok) throw new Error(j.error || 'refus du pont');
+  return j;
+}
+document.addEventListener('change', async e => {
+  const kc = e.target.dataset.o8c, kb = e.target.dataset.o8b; if (!kc && !kb) return;
+  const k = kc || kb, on = e.target.checked;
+  const p = o8List().find(x => x.k === k); if (!p) return;
+  const F = store.get('rappelfix', {}); const prev = F[k] ? Object.assign({}, F[k]) : null;
+  F[k] = Object.assign(F[k] || {}, kc ? {c:on} : {b:on}, {when: Date.now()}); store.set('rappelfix', F);
+  renderObj8(); renderTabs();
+  try {
+    await o8Send(p, kc ? {contactee:on} : {booke:on});
+    toast(kc ? (on ? 'Contactée ✅ (partagé avec Anaïs)' : 'Décochée') : (on ? 'Call booké 🎉 (partagé)' : 'Décoché'));
+  } catch(err){
+    const G = store.get('rappelfix', {}); if (prev) G[k] = prev; else delete G[k]; store.set('rappelfix', G);
+    renderObj8(); renderTabs(); toast('Échec : ' + err.message);
+  }
+});
+document.addEventListener('click', async e => {
+  const cp = e.target.closest('.o8-copy');
+  if (cp){ const p = o8List().find(x => x.k === cp.dataset.k); if (!p) return;
+    try { await navigator.clipboard.writeText(p.msg); toast('Message copié'); } catch(err){ prompt('Message :', p.msg); } return; }
+  const sv = e.target.closest('.o8-save'); if (!sv) return;
+  const row = sv.closest('.o8-row'); const note = row.querySelector('.o8-note').value.trim();
+  if (!note) return toast('Écris une note d\'abord');
+  const p = o8List().find(x => x.k === row.dataset.k); if (!p) return;
+  sv.disabled = true; sv.textContent = 'Envoi…';
+  try {
+    await o8Send(p, {note});
+    const F = store.get('rappelfix', {}); F[p.k] = Object.assign(F[p.k] || {}, {note: (F[p.k] && F[p.k].note ? F[p.k].note + '\n' : '') + note, when: Date.now()}); store.set('rappelfix', F);
+    toast('Note enregistrée dans le Sheet ✅'); renderObj8();
+  } catch(err){ toast('Échec : ' + err.message); sv.disabled = false; sv.textContent = 'Enregistrer la note'; }
+});
+
 /* ---------- candidatures coaching individuel ---------- */
 let fCoach = 'a';
 function renderCoach(){
@@ -2603,7 +2734,7 @@ $('s-reset').addEventListener('click', () => {
   $('s-tpl-eow').value = TPL_DEF.eowRelance; $('s-tpl-ambre').value = TPL_DEF.ambreCheckin; $('s-tpl-ambre-abs').value = TPL_DEF.ambreAbsente;
 });
 
-renderTabs(); renderWebi(); renderLive2(); renderLive1(); renderCand(); renderEcole(); renderSchol(); renderCoach(); renderAgenda(); renderTrack(); renderLeads(); renderClients(); renderAmbre(); renderCompta(); renderData();
+renderTabs(); renderObj8(); renderWebi(); renderLive2(); renderLive1(); renderCand(); renderEcole(); renderSchol(); renderCoach(); renderAgenda(); renderTrack(); renderLeads(); renderClients(); renderAmbre(); renderCompta(); renderData();
 refreshContrats();
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshContrats(); });
 
