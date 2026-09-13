@@ -2,3 +2,5 @@ pipeline/*.xlsx
 pipeline/console.html
 pipeline/icalls.json
 pipeline/test-calls.json
+pipeline/objectif8.json
+pipeline/objectif-8.md
