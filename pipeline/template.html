@@ -1036,7 +1036,7 @@ function renderLive3(){
   const ads = tous.filter(i => i.srcp === 'ads');
   const coach = tous.filter(i => i.coach);
   const V = DATA.live3.visites || {}, VS = DATA.live3.visitesSrc || {};
-  const visAds = Object.entries(V).filter(([k]) => /^l3-/.test(k)).reduce((n, [, v]) => n + v, 0);
+  const visAds = Object.entries(V).filter(([k]) => /^(l3-|boost-)/.test(k)).reduce((n, [, v]) => n + v, 0);
   $('k-live3').innerHTML = [
     ['Inscrites', tous.length],
     ['Via les ads', ads.length],
