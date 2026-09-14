@@ -491,6 +491,7 @@ body.raf-on .wrap{padding-bottom:210px}
 <section class="panel" id="p-clients">
   <p class="intro">Le suivi des clientes signées. Une vente marquée dans « Calls effectués » crée la fiche toute seule ; tu peux aussi en ajouter une à la main. Statut et notes s'écrivent dans l'onglet « Clients » du Sheet ; l'encaissé vient de l'onglet « Paiements » de la Compta : coche chaque versement reçu directement sur la fiche. « Envoyer le contrat » envoie par e-mail le contrat à signer en ligne (signature au doigt, PDF automatique pour elle et pour toi) ; le statut suit ici.</p>
   <div class="kpis kpis-mini" id="clients-kpis"></div>
+  <div class="carte" id="cli-manq" hidden></div>
   <div class="liste" id="l-cli"></div>
   <div class="carte">
     <h3>Ajouter une cliente à la main</h3>
@@ -874,7 +875,7 @@ function renderTabs(){
   const schd = store.get('scholdone', {});
   const bSchol = DATA.schol.subs.filter(s => !schd[s.id]).length;
   const bTrack = trackList().filter(c => { const t = effTrk(c); return !t.s && !t.r; }).length;
-  const bCli = clientes().filter(c => { const k = effCtr(c); return !k || k.statut !== 'Signé'; }).length;
+  const bCli = clientes().length;
   const bPaie = echeancesToutes().filter(x => !x.paye && x.diff !== null && x.diff <= 2).length;
   const bLive2 = DATA.inscrits.filter(i => i.live==='9sept' && i.tel && !done[key(i)]).length;
   const done1 = store.get('rel1to2', {});
@@ -2298,6 +2299,18 @@ function renderClients(){
     [EUR(encaisse), 'encaissé'],
     [EUR(Math.max(0, contracte-encaisse)), 'reste à encaisser'],
   ].map(([v,l]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div></div>`).join('');
+  // contrats manquants : pas envoyé d'abord, puis envoyé mais pas signé
+  const manq = tous.map(c => ({c, k:effCtr(c)})).filter(x => !x.k || x.k.statut !== 'Signé')
+    .sort((x, y) => (x.k ? 1 : 0) - (y.k ? 1 : 0));
+  const nPas = manq.filter(x => !x.k).length, nAtt = manq.length - nPas;
+  $('cli-manq').hidden = !manq.length;
+  $('cli-manq').innerHTML = manq.length ? `<h3>📄 Contrats manquants : ${manq.length} sur ${tous.length}</h3>
+    <p class="sub" style="margin:0 0 10px">${nPas} pas encore envoyé${nPas>1?'s':''} · ${nAtt} envoyé${nAtt>1?'s':''}, en attente de signature</p>
+    ${manq.map(({c, k}) => `<div class="ligne">
+      <div class="qui"><div class="nom">${esc(c.n)}</div><div class="sub">${esc(c.mail||'pas d\'e-mail : impossible d\'envoyer le contrat')}</div>
+        <div style="margin-top:4px">${ctrChip(k)}</div></div>
+      <div class="actions">${c.tel ? `<a class="btn-wa" href="https://wa.me/${c.tel}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}${ctrActions(c, k)}</div>
+    </div>`).join('')}` : '';
   $('l-cli').innerHTML = tous.length ? tous.map(c => {
     const k = effCtr(c);
     const total = Math.max(c.total||0, c.prix||0, (k && k.prix) || 0);
