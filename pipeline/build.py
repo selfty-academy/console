@@ -1199,7 +1199,7 @@ for r in (track_rows or []):
         sd_excl.add(str(r.get("E-mail") or "").strip().lower())
 for x in (o8cfg.get("exclure") or []):
     m = str(x.get("mail") or "").strip().lower()
-    if m:
+    if m and not x.get("seulement_objectif8"):   # « seulement_objectif8 » : retirée des relances, garde le mail du sondage
         sd_excl.add(m)
 sd_dest, sd_src = OrderedDict(), Counter()
 def sd_add(mail, prenom, src, nom=""):
