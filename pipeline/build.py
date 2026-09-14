@@ -875,6 +875,10 @@ if ty_key:
                 "seances": next((v for l, v in det if l.startswith("Est-ce que tu donnes déjà des séances")), ""),
                 "note": scores.get("Ta note globale de la semaine"),
                 "presence": pres,
+                # croisement avec les engagements : champs cachés posés par le mail du vendredi / le portail
+                "serie": str(hid.get("serie") or "").strip(), "jours": str(hid.get("jours") or "").strip(),
+                "hebdoLien": str(hid.get("hebdo") or "").strip(),
+                "hebdoDecl": next((v for l, v in det if l.startswith("Ton action hebdo")), ""),
                 "det": det,
             })
         eow_subs.sort(key=lambda x: x["at"], reverse=True)
@@ -1233,6 +1237,74 @@ for m, d in sd_dest.items():
 sd_dest = [d for d in sd_dest.values() if d["email"] not in sd_excl]
 print(f"Mail sondage : {len(sd_dest)} destinataires ({dict(sd_src)}), {len(sd_excl)} e-mails exclus")
 
+# ---- Pointage automatique des présences aux calls de groupe via l'API Zoom (inactif tant que les secrets manquent) ----
+# Secrets GitHub à créer quand Anaïs a créé l'app Zoom « Server-to-Server OAuth » (scope report:read:admin ou meeting:read:past_participant) :
+# ZOOM_ACCOUNT_ID, ZOOM_CLIENT_ID, ZOOM_CLIENT_SECRET, ZOOM_MEETING_ID (id de la réunion récurrente des Selfty Calls).
+# Pour chaque occurrence passée depuis le début de l'école qui n'a encore AUCUN pointage : chaque cliente active = Présente si son
+# e-mail ou son nom apparaît dans les participants Zoom, sinon Absente -> pont principal presence_set (source zoom). Un pointage
+# manuel existant n'est jamais écrasé. Test local : SHOW_TEST=1 + test-zoom.json ({"instances":[{"start_time","participants":[…]}]}).
+def zoom_instances():
+    zk = {k: os.environ.get("ZOOM_" + k, "") for k in ("ACCOUNT_ID", "CLIENT_ID", "CLIENT_SECRET", "MEETING_ID")}
+    if SHOW_TEST and (HERE / "test-zoom.json").exists():
+        return json.loads((HERE / "test-zoom.json").read_text()).get("instances", [])
+    if not all(zk.values()):
+        return None
+    auth = base64.b64encode(f"{zk['CLIENT_ID']}:{zk['CLIENT_SECRET']}".encode()).decode()
+    req = urllib.request.Request(f"https://zoom.us/oauth/token?grant_type=account_credentials&account_id={zk['ACCOUNT_ID']}",
+                                 data=b"", headers={"Authorization": "Basic " + auth})
+    token = json.load(urllib.request.urlopen(req, timeout=30))["access_token"]
+    H = {"Authorization": "Bearer " + token}
+    api = lambda path: json.load(urllib.request.urlopen(urllib.request.Request("https://api.zoom.us/v2" + path, headers=H), timeout=30))
+    out = []
+    for m in api(f"/past_meetings/{zk['MEETING_ID']}/instances").get("meetings") or []:
+        uid = m["uuid"]
+        uid = urllib.parse.quote(urllib.parse.quote(uid, safe=""), safe="") if uid.startswith("/") or "//" in uid else urllib.parse.quote(uid, safe="")
+        parts, tok = [], ""
+        while True:
+            d = api(f"/past_meetings/{uid}/participants?page_size=300" + (f"&next_page_token={tok}" if tok else ""))
+            parts += d.get("participants") or []
+            tok = d.get("next_page_token") or ""
+            if not tok:
+                break
+        out.append({"start_time": m.get("start_time"), "participants": parts})
+    return out
+
+
+import urllib.parse
+zoom_pointes = 0
+try:
+    zi = zoom_instances()
+    if zi is not None:
+        pont_z = {"url": os.environ.get("PONT_URL", ""), "key": os.environ.get("PONT_KEY", "")}
+        if (HERE / "pont.json").exists() and not pont_z["url"]:
+            pont_z.update(json.loads((HERE / "pont.json").read_text()))
+        deja_dates = {p_["date"] for p_ in presences}
+        actives_z = [c for c in clientes if c["mail"] and c["statut"] not in ("Terminée", "En pause")]
+        norm_z = lambda t: re.sub(r"[^a-z]", "", unicodedata.normalize("NFD", str(t or "").lower()))
+        for inst in zi:
+            st = str(inst.get("start_time") or "")
+            try:
+                dt = datetime.datetime.fromisoformat(st.replace("Z", "+00:00")).astimezone(ZoneInfo("Europe/Paris"))
+            except ValueError:
+                continue
+            if dt.strftime("%Y-%m-%d") < ECOLE_DEBUT or dt.strftime("%d/%m/%Y") in deja_dates:
+                continue
+            date_fr = dt.strftime("%d/%m/%Y")
+            mails_z = {str(x.get("user_email") or "").strip().lower() for x in inst["participants"]}
+            noms_z = [norm_z(x.get("name")) for x in inst["participants"]]
+            for c in actives_z:
+                nk = norm_z(c["n"])
+                present = c["mail"].lower() in mails_z or (len(nk) >= 5 and any(nk in n_ or (n_ and len(n_) >= 5 and n_ in nk) for n_ in noms_z))
+                if not SHOW_TEST and pont_z["url"]:
+                    body = json.dumps({"what": "presence_set", "key": pont_z["key"], "date": date_fr, "email": c["mail"], "nom": c["n"], "present": present, "source": "zoom"}).encode()
+                    urllib.request.urlopen(urllib.request.Request(pont_z["url"], data=body, headers={"Content-Type": "text/plain"}), timeout=60)
+                presences.append({"date": date_fr, "mail": c["mail"].lower(), "nom": c["n"], "present": present, "src": "zoom"})
+                zoom_pointes += 1
+            deja_dates.add(date_fr)
+        print(f"Zoom : {len(zi)} occurrence(s), {zoom_pointes} pointage(s) ajouté(s)")
+except Exception as ex:
+    print("Zoom : pointage impossible", ex)
+
 # ---- Exercices rendus (pont « Exercices Selfty ») + Engagements des élèves (pont « Engagements Selfty ») ----
 # Les 2 Sheets sont privés (Drive de selfty.academy) : on passe par les ponts Apps Script. Échec = onglet vide + bandeau.
 # Clés : env EXOS_KEY / ENG_KEY / ENG_CKEY (secrets CI) ou fichiers locaux exos-key.txt / ../selfty-engagements/pont/pont-key.txt / eng-console-key.txt
@@ -1281,7 +1353,8 @@ if eng_key and eng_ckey:
         j = pont_post(ENG_URL, {"key": eng_key, "ckey": eng_ckey, "what": "console"})
         if j.get("ok"):
             keep = lambda m: SHOW_TEST or str(m or "").lower() not in TEST_EMAILS
-            eng = {"ok": True, "today": j.get("today", ""), "semaine": j.get("semaine"),
+            eng = {"ok": True, "today": j.get("today", ""), "semaine": j.get("semaine"), "promo": j.get("promo"), "intakeForm": j.get("intake_form", ""),
+           "semaineIso": j.get("semaineIso", ""), "semainePrecIso": j.get("semainePrecIso", ""),
                    "eleves": [e for e in j.get("eleves") or [] if keep(e.get("email"))],
                    "rappels": [r for r in j.get("rappels") or [] if keep(r.get("email"))]}
         else:

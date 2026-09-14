@@ -514,6 +514,7 @@ body.raf-on .wrap{padding-bottom:210px}
   <div class="carte" id="eng-carte" style="margin-top:18px">
     <h3>Engagements des élèves</h3>
     <p class="bm-note" style="margin:0 0 10px">Ce que chaque élève a déclaré sur <a href="https://selfty-academy.github.io/engagements/" target="_blank" rel="noopener">sa page Engagements</a> : action, série en cours, taux sur 4 semaines, 14 derniers jours (vert fait, rose manqué, beige pas aujourd'hui, bleu pause). À 2 jours de silence le système prépare une relance WhatsApp, à 5 jours une proposition d'appel : le bouton rouge l'ouvre, puis « Traité » pour la retirer (écrit dans l'onglet Rappels du Sheet Engagements).</p>
+    <p class="bm-note" style="margin:0 0 10px">Page perso de chaque élève (vision, « Fait », série sur 27 semaines, binôme, bilan) : bouton « Lien de sa page ». Binôme : choisis-la ici, les deux fiches sont liées, sa binôme reçoit un mail à 2 jours de silence. <a href="https://selfty-academy.github.io/engagements/promo/" target="_blank" rel="noopener">📺 Écran de la promo</a> (à projeter au Selfty Call du lundi).</p>
     <div class="kpis kpis-mini" id="eng-kpis"></div>
     <div id="eng-liste"></div>
   </div>
@@ -2627,6 +2628,11 @@ function engRappels(){
   if (ch) store.set('engtraite', F);
   return (DATA.eng.rappels||[]).map(r => F[r.row + '|' + r.id] ? Object.assign({}, r, { traite:'ok' }) : r);
 }
+function engPurgeBin(){
+  const B = store.get('engbinfix', {}); let ch = false;
+  Object.keys(B).forEach(m => { const el = (DATA.eng.eleves||[]).find(o => (o.email||'').toLowerCase() === m); if (el && (el.binome||'') === B[m]){ delete B[m]; ch = true; } });
+  if (ch) store.set('engbinfix', B);
+}
 function engATraiter(){
   // une seule relance à traiter par engagement : la plus récente (appel prime sur relance)
   const par = {};
@@ -2652,21 +2658,24 @@ function renderEng(){
   if (!$('eng-liste')) return;
   const E = DATA.eng;
   if (!E.ok){ $('eng-kpis').innerHTML = ''; $('eng-liste').innerHTML = '<div class="bm-note">Pont Engagements injoignable à la dernière mise à jour : les données reviendront au prochain passage.</div>'; return; }
+  engPurgeBin();
   const aTraiter = engATraiter();
   const els = (E.eleves||[]).map(el => {
     const act = el.engagements.filter(e => e.statut === 'actif' || e.statut === 'pause');
     const cli = clientes().find(c => (c.mail||'').toLowerCase() === (el.email||'').toLowerCase());
     const rel = aTraiter.filter(r => (r.email||'').toLowerCase() === (el.email||'').toLowerCase());
     return { el, act, cli, rel, tel: el.whatsapp || (cli && cli.tel) || telDeMail(el.email), manques: Math.max(0, ...act.map(e => e.manques||0)) };
-  }).filter(x => x.act.length || x.rel.length)
+  }).filter(x => x.act.length || x.rel.length || x.el.intake_le || x.el.vision || x.el.binome || x.cli)
     .sort((a, b) => b.rel.length - a.rel.length || b.manques - a.manques || (a.cli ? a.cli.n : a.el.prenom).localeCompare(b.cli ? b.cli.n : b.el.prenom));
   const actifs = els.flatMap(x => x.act);
+  const P = E.promo || {};
   const taux = actifs.filter(e => e.taux !== null && e.taux !== undefined);
   $('eng-kpis').innerHTML = [
     [aTraiter.length, 'à relancer aujourd\'hui'],
     [actifs.filter(e => (e.serie||0) > 0).length, 'séries en cours'],
     [taux.length ? Math.round(taux.reduce((s, e) => s + e.taux, 0) / taux.length) + ' %' : '·', 'moyenne 4 semaines'],
-    [els.length, 'élève' + (els.length > 1 ? 's' : '') + ' engagée' + (els.length > 1 ? 's' : '')],
+    [els.length, 'élève' + (els.length > 1 ? 's' : '') + ' suivie' + (els.length > 1 ? 's' : '')],
+    [P.score === null || P.score === undefined ? '·' : P.score + ' %', `promo cette semaine (objectif ${P.objectif || 85} %)`],
   ].map(([v,l]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div></div>`).join('');
   $('eng-liste').innerHTML = els.length ? els.map(x => {
     const nom = x.cli ? x.cli.n : x.el.prenom;
@@ -2675,12 +2684,44 @@ function renderEng(){
         🔥 <b>${e.serie||0}</b> ${e.frequence === 'hebdo' ? 'sem.' : 'j'} · record ${e.record||0} · <b>${e.taux === null || e.taux === undefined ? '·' : e.taux + ' %'}</b> sur 4 sem. (${e.done28||0}/${e.total28||0})${e.manques ? ` · <b style="color:#B04A4A">${e.manques} manqué${e.manques>1?'s':''} d'affilée</b>` : ''}
         <span class="eng-dots" title="14 derniers jours">${(e.pastilles||[]).map(p => `<i title="${esc(p.d)} · ${esc(p.s)}" style="background:${ENG_COL[p.s]||'#eee'};${p.s==='attente'?'outline:1.5px solid var(--mauve);outline-offset:-1.5px':p.s==='hors'?'outline:1px dashed var(--border);outline-offset:-1px':''}"></i>`).join('')}</span>
         ${e.pourquoi ? `<div class="m">Pourquoi : ${esc(e.pourquoi)}</div>` : ''}</div>`).join('')}
+      ${engFicheHtml(x)}
       ${x.rel.map(r => { const w = engWaLien(r, x.tel); return `<div class="eng-rel${r.type === 'appel' ? ' appel' : ''}"><b>${r.type === 'appel' ? '📞 5 jours sans « Fait » : proposer un appel' : '⚠️ 2 jours sans « Fait » : relance'}</b> · « ${esc(r.action)} » · préparée le ${esc(frDate(r.date))}
         <div style="white-space:pre-wrap;margin:6px 0;color:var(--ink-soft)">${esc(w.msg)}</div>
         <div class="row" style="display:flex;gap:8px;flex-wrap:wrap">${w.num ? `<a class="btn-wa alerte" href="${w.url}" target="_blank" rel="noopener">${WA_SVG} ${r.type === 'appel' ? 'Proposer l\'appel' : 'Relancer sur WhatsApp'}</a>` : '<span class="chip src-webi">pas de numéro : à envoyer à la main</span>'}
         <button class="btn-ghost eng-ok" data-row="${esc(r.row)}" data-id="${esc(r.id)}">✓ Traité</button></div></div>`; }).join('')}
     </div>`;
   }).join('') : '<div class="bm-note">Aucun engagement actif pour l\'instant. Les élèves déclarent le leur sur la page Engagements (lien dans le mail de bienvenue et le module 00).</div>';
+}
+// fiche accountability d'une élève : portail, vision, binôme, intake, bilan du vendredi croisé avec ses « Fait »
+function engFicheHtml(x){
+  const el = x.el, mail = (el.email||'').toLowerCase();
+  const autres = (DATA.eng.eleves||[]).filter(o => (o.email||'').toLowerCase() !== mail);
+  const bin = el.binome ? (DATA.eng.eleves||[]).find(o => (o.email||'').toLowerCase() === el.binome) : null;
+  const B = store.get('engbinfix', {}); const binEff = B[mail] !== undefined ? B[mail] : (el.binome || '');
+  const bil = (el.bilans||[]).find(b => b.semaine === DATA.eng.semainePrecIso) || (el.bilans||[])[0] || null;
+  const sp = el.semainePrecJours;
+  let ecart = '';
+  if (bil && el.hebdoPrecFait !== undefined){
+    if (el.hebdoPrecFait && /^non/i.test(bil.hebdo||'')) ecart = 'Action hebdo cochée « Fait » mais déclarée « non » dans le bilan';
+    else if (!el.hebdoPrecFait && /^oui/i.test(bil.hebdo||'')) ecart = 'Action hebdo déclarée faite dans le bilan mais jamais cochée « Fait »';
+  }
+  if (!ecart && bil && sp && sp.y && sp.x / sp.y >= 0.8 && Number(bil.note) > 0 && Number(bil.note) <= 3) ecart = `${sp.x}/${sp.y} jours cochés mais une semaine notée ${bil.note}/10`;
+  const intake = el.intake_le ? `<details class="sujet"><summary>📋 Questionnaire d'entrée (rempli le ${esc(frDate(el.intake_le))})</summary>
+      ${[['Heures par semaine', el.heures], ['Moment le plus disponible', el.moment], ['Jour le plus calme', el.jour_calme], ['Chiffre de fin', el.q9], ['Peur numéro 1', el.q11], ['Ce qui l\'a fait abandonner la dernière fois (cité dans le mail de série cassée)', el.q12], ['Engagement déclaré', el.q19]].filter(([, v]) => v).map(([t, v]) => `<div class="rep"><b>${esc(t)}</b>${esc(v)}</div>`).join('')}
+      ${el.intake ? `<details class="sujet"><summary>Toutes ses réponses</summary>${Object.entries(el.intake).filter(([k]) => !['email','prenom','E-mail','Prénom'].includes(k)).map(([k, v]) => `<div class="rep"><b>${esc(k)}</b>${esc(v)}</div>`).join('')}</details>` : ''}</details>`
+    : `<span class="chip src-webi" style="margin-top:6px">questionnaire d'entrée pas rempli</span> <button class="btn-ghost eng-copy" data-lien="${esc((DATA.eng.intakeForm||'https://tally.so/r/81X5kk') + '?email=' + encodeURIComponent(mail) + '&prenom=' + encodeURIComponent(el.prenom||''))}">🔗 Lien du questionnaire</button>`;
+  return `<div style="margin-top:8px">
+    ${el.vision ? `<div class="m" style="font-style:italic;color:var(--ink-soft)">Vision : « ${esc(el.vision.length > 220 ? el.vision.slice(0, 220) + '…' : el.vision)} »</div>` : ''}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px">
+      ${el.portail ? `<button class="btn-ghost eng-copy" data-lien="${esc(el.portail)}" title="Page perso : vision, Fait, série, binôme, bilan">🔗 Lien de sa page</button>` : ''}
+      <label style="font-size:13.5px;color:var(--ink-soft)">Binôme <select class="eng-bin" data-mail="${esc(mail)}" style="border:1px solid var(--border);border-radius:999px;padding:5px 10px;font:14px Jost,sans-serif;background:var(--surface);color:var(--ink)"><option value="">Aucune</option>${autres.map(o => `<option value="${esc((o.email||'').toLowerCase())}"${(o.email||'').toLowerCase() === binEff ? ' selected' : ''}>${esc(o.prenom || o.email)}</option>`).join('')}</select></label>
+      ${bin && B[mail] === undefined ? `<span class="m">série de ${esc(bin.prenom)} : ${Math.max(0, ...(bin.engagements||[]).filter(e => e.statut !== 'terminé' && e.frequence !== 'hebdo').map(e => e.serie||0))}</span>` : ''}
+      ${el.public ? '<span class="chip src-live">visible dans la promo</span>' : ''}
+    </div>
+    ${bil ? `<div class="rep" style="margin-top:8px"><b>Bilan du vendredi (${esc(bil.semaine)})</b>${sp && sp.y ? `Ses « Fait » : ${sp.x}/${sp.y} jours` : 'Pas d\'action quotidienne comptée'}${el.hebdoPrecFait !== undefined ? ` · hebdo ${el.hebdoPrecFait ? 'cochée' : 'pas cochée'}` : ''} · son bilan : hebdo « ${esc(bil.hebdo || '·')} »${bil.note ? ' · semaine ' + esc(bil.note) + '/10' : ''}${bil.pourquoi ? `<br>Jours manqués : ${esc(bil.pourquoi)}` : ''}${bil.engagement ? `<br>Engagement de la semaine : « ${esc(bil.engagement)} »` : ''}${ecart ? `<br><b style="color:#B04A4A">⚠️ Écart à aborder en call : ${esc(ecart)}</b>` : ''}</div>`
+      : (DATA.eng.semaine >= 1 ? `<div class="m" style="margin-top:6px">Pas de bilan du vendredi reçu pour ${esc(DATA.eng.semainePrecIso||'la semaine dernière')}.</div>` : '')}
+    ${intake}
+  </div>`;
 }
 function frDate(iso){ const m = String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}/${m[2]}` : String(iso||''); }
 function telDeMail(mail){
@@ -2690,6 +2731,7 @@ function telDeMail(mail){
   const el = engDe(mail); return el && el.whatsapp ? el.whatsapp : '';
 }
 document.addEventListener('click', async e => {
+  const cp = e.target.closest('.eng-copy'); if (cp){ try { await navigator.clipboard.writeText(cp.dataset.lien); toast('Lien copié 🔗'); } catch(err){ prompt('Lien :', cp.dataset.lien); } return; }
   const b = e.target.closest('.eng-ok'); if (!b) return;
   b.disabled = true;
   try {
@@ -2698,6 +2740,17 @@ document.addEventListener('click', async e => {
     const F = store.get('engtraite', {}); F[b.dataset.row + '|' + b.dataset.id] = Date.now(); store.set('engtraite', F);
     toast('Relance marquée traitée ✅'); renderAmbre(); renderTabs();
   } catch(err){ toast('Échec : ' + err.message); b.disabled = false; }
+});
+
+document.addEventListener('change', async e => {
+  const s = e.target.closest('.eng-bin'); if (!s) return;
+  s.disabled = true;
+  try {
+    const r = await fetch(ENG.url, { method:'POST', body: JSON.stringify({ what:'binome_set', key:ENG.key, ckey:ENG.ckey, email:s.dataset.mail, binome:s.value }) });
+    const j = await r.json(); if (!j.ok) throw new Error(j.error || 'refus du pont');
+    const B = store.get('engbinfix', {}); B[s.dataset.mail] = s.value; if (s.value) B[s.value] = s.dataset.mail; store.set('engbinfix', B);
+    toast(s.value ? 'Binôme enregistrée ✅' : 'Binôme retirée'); renderAmbre();
+  } catch(err){ toast('Échec : ' + err.message); s.disabled = false; }
 });
 
 /* ---------- exercices rendus ---------- */
