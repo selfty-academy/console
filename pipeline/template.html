@@ -123,6 +123,27 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 .kpi .val{font:600 32px/1.1 "Playfair Display",Georgia,serif;font-variant-numeric:tabular-nums;color:var(--mauve-deep)}
 .kpi .lab{font-size:13px;color:var(--ink-soft);margin-top:4px}
 .kpi .plus{font-size:12.5px;color:var(--muted);margin-top:2px}
+.exo{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow)}
+.exo + .exo{margin-top:10px}
+.exo .h{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline}
+.exo .h .nom{font:600 16px "Jost",sans-serif}
+.exo .h .ou{color:var(--muted);font-size:13.5px}
+.exo .txt{white-space:pre-wrap;margin:10px 0 8px;font-size:15px;line-height:1.55;background:var(--paper);border-radius:10px;padding:10px 12px}
+.exo .q{white-space:pre-wrap;font-size:14px;color:var(--ink-soft);margin:0 0 8px}
+.exo .q b{color:var(--mauve-deep)}
+.exo textarea{min-height:64px;width:100%;margin:6px 0}
+.exo .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.eng-el{border-top:1px solid var(--border);padding:12px 0}
+.eng-el:first-of-type{border-top:0}
+.eng-el .h{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;justify-content:space-between}
+.eng-e{margin:8px 0 0;font-size:14px}
+.eng-e .a{font-weight:600}
+.eng-e .m{color:var(--muted);font-size:13px}
+.eng-dots{display:inline-flex;gap:3px;vertical-align:middle;margin-left:6px}
+.eng-dots i{display:block;width:12px;height:12px;border-radius:3px}
+.eng-rel{background:#FBEAEA;border:1px solid #E7BDBD;border-radius:10px;padding:8px 10px;margin-top:8px;font-size:13.5px}
+.eng-rel.appel{background:#F7E3D3;border-color:#E6C2A5}
+.btn-wa.alerte{background:#B04A4A}
 .carte{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);margin-bottom:18px}
 .carte h3{font:600 16px "Playfair Display",Georgia,serif;margin:0 0 12px}
 .chart-scroll{overflow-x:auto}
@@ -302,6 +323,15 @@ body.raf-on .wrap{padding-bottom:210px}
 </section>
 
 <!-- ===================== LIVE 9 SEPT ===================== -->
+<section class="panel" id="p-live3">
+  <p class="intro">Les inscrites au live du lundi 21 septembre à 18h (<a href="https://selfty-academy.github.io/live-21-septembre/" target="_blank" rel="noopener">page d'inscription</a>), au fur et à mesure, et d'où elles viennent : chaque ad a son lien (<code>?source=ads&amp;utm_content=nom-de-l-ad</code>), le tableau compte les visites et les inscrites par ad pour couper les moins bonnes à 48 h. Mention « déjà venue » = inscrite à un live précédent.</p>
+  <div class="kpis" id="k-live3"></div>
+  <div class="carte" id="c-live3-ads" style="margin-top:14px"><h3>Par ad et par source</h3><div id="t-live3" style="overflow-x:auto"></div></div>
+  <div class="pills" id="f-live3"></div>
+  <div style="margin:0 0 14px"><input type="search" id="q-live3" class="search" placeholder="Chercher un prénom, un mail…"></div>
+  <div class="liste" id="l-live3"></div>
+</section>
+
 <section class="panel" id="p-live2">
   <p class="intro">Toutes les inscrites au live du mercredi 9 septembre, au fur et à mesure. La mention « aussi au live 1 » signale celles qui étaient déjà inscrites au live du 31 août. Le bouton WhatsApp pré-écrit le message de relance, la coche « Relancée » se garde sur ce navigateur.</p>
   <div class="kpis" id="k-live2"></div>
@@ -454,6 +484,12 @@ body.raf-on .wrap{padding-bottom:210px}
   <div class="kpis kpis-mini" id="am-kpis"></div>
   <div class="pills" id="f-ambre"></div>
   <div class="liste" id="l-ambre"></div>
+  <div class="carte" id="eng-carte" style="margin-top:18px">
+    <h3>Engagements des élèves</h3>
+    <p class="bm-note" style="margin:0 0 10px">Ce que chaque élève a déclaré sur <a href="https://selfty-academy.github.io/engagements/" target="_blank" rel="noopener">sa page Engagements</a> : action, série en cours, taux sur 4 semaines, 14 derniers jours (vert fait, rose manqué, beige pas aujourd'hui, bleu pause). À 2 jours de silence le système prépare une relance WhatsApp, à 5 jours une proposition d'appel : le bouton rouge l'ouvre, puis « Traité » pour la retirer (écrit dans l'onglet Rappels du Sheet Engagements).</p>
+    <div class="kpis kpis-mini" id="eng-kpis"></div>
+    <div id="eng-liste"></div>
+  </div>
   <div class="carte" id="am-na-carte">
     <h3>Bilans non attribués <span class="bdg" id="am-na-n" style="background:var(--rose);color:var(--mauve-deep);border-radius:999px;padding:0 8px;font-size:13px"></span></h3>
     <p class="bm-note" style="margin:0 0 10px">Tous les bilans Tally arrivent ici s'ils ne sont rattachés à aucune cliente (lien ouvert sans son lien perso, e-mail différent, ou cliente pas encore dans « Clientes »). Choisis la cliente puis « Attribuer » : c'est mémorisé dans le Sheet et le bilan rejoint sa fiche.</p>
@@ -465,6 +501,16 @@ body.raf-on .wrap{padding-bottom:210px}
     <div class="am-sess" id="am-sess"></div>
     <div id="am-pres-liste"></div>
   </div>
+</section>
+
+<!-- ===================== EXERCICES RENDUS ===================== -->
+<section class="panel" id="p-exos">
+  <p class="intro">Les exercices rendus par les élèves sous les leçons (formulaire « Je rends mon exercice »). Chaque exercice arrive ici dans l'heure, avec sa question et ses pièces jointes. Écris ton retour, clique « Corrigé » : le statut et le commentaire s'écrivent dans le Sheet « Exercices Selfty ». Le bouton WhatsApp ouvre le message prérempli avec ton commentaire (modifiable dans ⚙️). <a href="https://docs.google.com/spreadsheets/d/1lb7WpgYw5YDQXaurQZ9nk_hMZ35sXpwDcS7us428uYg/edit" target="_blank" rel="noopener">📄 Ouvrir le Sheet</a></p>
+  <div id="bandeau-exos"></div>
+  <div class="kpis kpis-mini" id="exo-kpis"></div>
+  <div class="pills" id="f-exos"></div>
+  <div class="pills" id="f-exos-mod"></div>
+  <div id="l-exos"></div>
 </section>
 
 <!-- ===================== PAIEMENTS ===================== -->
@@ -594,6 +640,11 @@ body.raf-on .wrap{padding-bottom:210px}
     <div class="note">Variables : {prenom} {date} (date du call)</div>
   </div>
   <div class="champ">
+    <label for="s-tpl-exo">Exercice corrigé (WhatsApp à l'élève)</label>
+    <textarea id="s-tpl-exo"></textarea>
+    <div class="note">Variables : {prenom} {lecon} {commentaire}</div>
+  </div>
+  <div class="champ">
     <label for="s-groupe">Lien du groupe WhatsApp</label>
     <input type="text" id="s-groupe">
   </div>
@@ -711,6 +762,7 @@ const TPL_DEF = {
   scholOk: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nOn a bien reçu ta candidature pour la bourse, merci pour ta confiance. Anaïs lit tout personnellement : tu auras une réponse avant le 15 septembre.",
   eowRelance: "Hello {prenom}, c'est Ambre de la Selfty Academy 🌸\n\nJe n'ai pas encore vu ton bilan de la semaine. Cinq minutes pour prendre du recul sur ta semaine, et ça nous aide à t'accompagner au plus près. Voici ton lien perso :\n{lien}\n\nMerci, et belle journée !",
   ambreCheckin: "Hello {prenom}, c'est Ambre de la Selfty Academy 🌸\n\nJe prends de tes nouvelles : comment tu te sens en ce moment dans la formation ? Y a-t-il quelque chose qu'on peut faire pour mieux t'accompagner ? Je suis là si besoin.",
+  exo: "Hello {prenom}, c'est Anaïs 🌸\n\nJ'ai lu ton exercice « {lecon} ».\n\n{commentaire}\n\nOn en reparle au prochain call de groupe si tu veux creuser.",
   ambreAbsente: "Hello {prenom}, c'est Ambre de la Selfty Academy 🌸\n\nOn ne t'a pas vue au call de groupe du {date}. Tout va bien de ton côté ? Le replay est disponible, et si tu as une question dessus je suis là."
 };
 const MEM = {};
@@ -718,12 +770,13 @@ const store = {
   get: (k, d) => { try { const v = localStorage.getItem('sc-'+k); return v===null ? d : JSON.parse(v); } catch(e){ return k in MEM ? MEM[k] : d; } },
   set: (k, v) => { MEM[k] = v; try { localStorage.setItem('sc-'+k, JSON.stringify(v)); } catch(e){} }
 };
-let SET = Object.assign({tplWebi:TPL_DEF.webi, tplInvite:TPL_DEF.invite, tplWebiCoach:TPL_DEF.webiCoach, tplWebiEcole:TPL_DEF.webiEcole, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, tplReplay:TPL_DEF.replay, replay:REPLAY_DEF, tplScholRel:TPL_DEF.scholRel, tplScholOk:TPL_DEF.scholOk, tplCoach:TPL_DEF.coach, tplCoachRel:TPL_DEF.coachRel, tplSond:TPL_DEF.sond, tplLead:TPL_DEF.lead, tplEowRelance:TPL_DEF.eowRelance, tplAmbreCheckin:TPL_DEF.ambreCheckin, tplAmbreAbsente:TPL_DEF.ambreAbsente, groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
+let SET = Object.assign({tplWebi:TPL_DEF.webi, tplInvite:TPL_DEF.invite, tplWebiCoach:TPL_DEF.webiCoach, tplWebiEcole:TPL_DEF.webiEcole, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, tplReplay:TPL_DEF.replay, replay:REPLAY_DEF, tplScholRel:TPL_DEF.scholRel, tplScholOk:TPL_DEF.scholOk, tplCoach:TPL_DEF.coach, tplCoachRel:TPL_DEF.coachRel, tplSond:TPL_DEF.sond, tplLead:TPL_DEF.lead, tplEowRelance:TPL_DEF.eowRelance, tplAmbreCheckin:TPL_DEF.ambreCheckin, tplAmbreAbsente:TPL_DEF.ambreAbsente, tplExo:TPL_DEF.exo, groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
 if (!SET.tplInvite) SET.tplInvite = TPL_DEF.invite;
 if (!SET.tplReplay) SET.tplReplay = TPL_DEF.replay;
 // ancien rappel « notre appel » enregistré dans ⚙️ : c'est Anaïs qui prend l'appel, pas Alex
 if (!SET.tplCall || SET.tplCall === "Hello {prenom}, c'est Alex de la Selfty Academy 🌸 Petit rappel pour notre appel {quand}. À tout à l'heure !") SET.tplCall = TPL_DEF.call;
 if (!SET.replay) SET.replay = REPLAY_DEF;
+if (!SET.tplExo) SET.tplExo = TPL_DEF.exo;
 
 function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),2200); }
 function waUrl(tel, msg){ return 'https://wa.me/'+tel+'?text='+encodeURIComponent(msg); }
@@ -738,9 +791,11 @@ const TABS = [
   {id:'coach', lab:'Candidatures coaching'},
   {id:'clients', lab:'Clientes'},
   {id:'ambre', lab:'Ambre suivi client'},
+  {id:'exos', lab:'📝 Exercices rendus'},
   {id:'paie', lab:'Paiements'},
   {id:'ecole', lab:"Liste d'attente école"},
   {id:'webis', lab:'Webinaires', sub:[
+    {id:'live3', lab:'Live 21 sept'},
     {id:'live2', lab:'Live 9 sept'},
     {id:'live1', lab:'À inviter au live 2'},
     {id:'webi',  lab:'Relances webi'},
@@ -777,7 +832,7 @@ function renderTabs(){
   const bCoach = ((DATA.coach && DATA.coach.subs) || []).filter(s => !cdone[s.id]).length;
   const bO8 = o8List().filter(p => !p.c && !p.b).length;
   const bSond = ((DATA.sondage && DATA.sondage.subs) || []).length;
-  const b = {obj8:bO8, sondage:bSond||null, live2:bLive2, live1:bLive1, webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, coach:bCoach, calls:bCalls, track:bTrack, leads:bLeads, clients:bCli, ambre:ambreManquants().length + eowNonAttribues().length, paie:bPaie, compta:null, data:null};
+  const b = {live3:null, obj8:bO8, sondage:bSond||null, live2:bLive2, live1:bLive1, webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, coach:bCoach, calls:bCalls, track:bTrack, leads:bLeads, clients:bCli, ambre:ambreManquants().length + eowNonAttribues().length + engATraiter().length, exos:exosList().filter(x => x.statut !== 'Corrigé').length, paie:bPaie, compta:null, data:null};
   TABS.filter(t => t.sub).forEach(t => { b[t.id] = t.sub.reduce((n, x) => n + (b[x.id] || 0), 0); });
   const g = groupOf(tabOn);
   $('tabs').innerHTML = TABS.map(t =>
@@ -798,7 +853,7 @@ document.addEventListener('click', e => {
 
 /* ---------- bandeau webi ---------- */
 $('maj').textContent = DATA.maj;
-$('bandeau-webi').innerHTML = `<strong>${esc(DATA.webi.label)}</strong>
+$('bandeau-webi').innerHTML = `<strong>Prochain : ${esc(DATA.live3.label)}</strong> <a href="${esc(DATA.live3.lp)}" target="_blank" rel="noopener">Page d'inscription du 21/09</a> · <span style="color:var(--muted)">Précédent :</span> <strong>${esc(DATA.webi.label)}</strong>
   <a href="${esc(DATA.webi.meet)}" target="_blank" rel="noopener">Lien visio du live</a>
   <a href="${esc(SET.groupe)}" target="_blank" rel="noopener">Groupe WhatsApp</a>
   <a href="${esc(DATA.webi.lp)}" target="_blank" rel="noopener">Page d'inscription</a>`;
@@ -818,10 +873,11 @@ function renderWebi(){
   const tousLives = DATA.inscrits;
   $('f-webi-live').innerHTML = [
     ['9sept', `Live du 9 sept <b>${tousLives.filter(i => i.live==='9sept').length}</b>`],
-    ['31aout', `Live du 31 août <b>${tousLives.filter(i => i.live!=='9sept').length}</b>`],
-    ['t', `Les 2 <b>${tousLives.length}</b>`]
+    ['31aout', `Live du 31 août <b>${tousLives.filter(i => i.live==='31aout').length}</b>`],
+    ['21sept', `Live du 21 sept <b>${tousLives.filter(i => i.live==='21sept').length}</b>`],
+    ['t', `Tous <b>${tousLives.length}</b>`]
   ].map(([v,l]) => `<button class="pill${liveWebi===v?' on':''}" data-f="${v}">${l}</button>`).join('');
-  let tous = liveWebi==='t' ? tousLives : tousLives.filter(i => (i.live==='9sept') === (liveWebi==='9sept'));
+  let tous = liveWebi==='t' ? tousLives : tousLives.filter(i => i.live === liveWebi);
   $('f-webi-seg').innerHTML = [
     ['t', `Tout le monde <b>${tous.length}</b>`],
     ['l', `Live seul <b>${tous.filter(i => segOf(i)==='l').length}</b>`],
@@ -909,6 +965,48 @@ function renderLive2(){
 $('f-live2').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fLive2 = p.dataset.f; renderLive2(); }});
 $('q-live2').addEventListener('input', e => { qLive2 = e.target.value.trim().toLowerCase(); renderLive2(); });
 
+/* ---------- live 3 : lundi 21 septembre ---------- */
+let fLive3 = 't', qLive3 = '';
+function renderLive3(){
+  const tous = DATA.inscrits.filter(i => i.live === '21sept');
+  const deja = tous.filter(i => i.deja1 || i.deja2);
+  const ads = tous.filter(i => i.srcp === 'ads');
+  const coach = tous.filter(i => i.coach);
+  const V = DATA.live3.visites || {}, VS = DATA.live3.visitesSrc || {};
+  const visAds = Object.entries(V).filter(([k]) => /^l3-/.test(k)).reduce((n, [, v]) => n + v, 0);
+  $('k-live3').innerHTML = [
+    ['Inscrites', tous.length],
+    ['Via les ads', ads.length],
+    ['Déjà venues à un live', deja.length],
+    ['Candidatures coaching', coach.length],
+    ['Visites de la page', Object.values(V).reduce((n, v) => n + v, 0)],
+    ['Conversion ads', visAds ? Math.round(100 * ads.length / visAds) + ' %' : '·']
+  ].map(([l,v]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div></div>`).join('');
+  const insAd = {}; tous.forEach(i => { const k = i.ad || '(sans utm_content)'; insAd[k] = (insAd[k] || 0) + 1; });
+  const keys = [...new Set(Object.keys(V).concat(Object.keys(insAd)))].sort((a, b) => (insAd[b]||0) - (insAd[a]||0) || a.localeCompare(b));
+  const insSrc = {}; tous.forEach(i => { const k = i.srcp || 'direct'; insSrc[k] = (insSrc[k] || 0) + 1; });
+  const srcKeys = [...new Set(Object.keys(VS).concat(Object.keys(insSrc)))];
+  const th = 'style="text-align:right;padding:4px 8px"', td = 'style="text-align:right;padding:5px 8px"';
+  const table = (rows, lab) => `<table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:12px"><thead><tr><th style="text-align:left;padding:4px 8px">${lab}</th><th ${th}>Visites</th><th ${th}>Inscrites</th><th ${th}>Conversion</th></tr></thead><tbody>${rows.map(([k, v, n]) => `<tr style="border-top:1px solid var(--border)"><td style="padding:5px 8px">${esc(k)}</td><td ${td}>${v||0}</td><td ${td}><b>${n||0}</b></td><td ${td}>${v ? Math.round(100*(n||0)/v) + ' %' : '·'}</td></tr>`).join('')}</tbody></table>`;
+  $('t-live3').innerHTML = (keys.length ? table(keys.map(k => [k, V[k], insAd[k]]), 'Ad (utm_content)') : '<div class="bm-note">Pas encore de visite ni d\'inscrite.</div>')
+    + (srcKeys.length ? table(srcKeys.map(k => [k, VS[k], insSrc[k]]), 'Source') : '')
+    + '<div class="bm-note">Coût par inscrite = dépense de l\'ad dans le Gestionnaire de publicités ÷ inscrites de sa ligne. Cible : moins de 6 €.</div>';
+  $('f-live3').innerHTML = [['t', `Toutes <b>${tous.length}</b>`], ['a', `Via les ads <b>${ads.length}</b>`], ['d', `Déjà venues <b>${deja.length}</b>`], ['c', `Candidatures coaching <b>${coach.length}</b>`], ['s', `Sans numéro <b>${tous.filter(i => !i.tel).length}</b>`]]
+    .map(([v,l]) => `<button class="pill${fLive3===v?' on':''}" data-f="${v}">${l}</button>`).join('');
+  let liste = fLive3==='a' ? ads : fLive3==='d' ? deja : fLive3==='c' ? coach : fLive3==='s' ? tous.filter(i => !i.tel) : tous;
+  if (qLive3) liste = liste.filter(i => (i.n+' '+i.mail).toLowerCase().includes(qLive3));
+  $('l-live3').innerHTML = liste.length ? liste.map(i => `<div class="ligne">
+      <div class="qui"><div class="nom">${esc(i.n)} ${i.coach ? '<span class="tagmode coach">candidature coaching</span>' : ''}${(i.deja1 || i.deja2) ? ' <span class="tagmode" style="background:#FFE7D2;color:#7A4A2A">déjà venue</span>' : ' <span class="tagmode" style="background:#E3EFE6;color:#2F6B45">nouvelle</span>'}</div>
+        <div class="sub">${esc(i.mail)}</div></div>
+      <div class="meta"><b>${i.tel ? '+'+i.tel : 'Pas de numéro'}</b>${esc(i.statut || '')}</div>
+      <div class="meta"><b>${esc(i.date)}</b>${esc(i.src)}${i.ad ? ' · ' + esc(i.ad) : ''}</div>
+      <div class="actions"></div>
+      ${i.det && i.det.length ? `<details class="sujet"><summary>Voir ses réponses</summary>${i.det.map(([t,v]) => `<div class="rep"><b>${esc(t)}</b>${esc(v)}</div>`).join('')}</details>` : ''}
+    </div>`).join('') : `<div class="vide">Aucune inscrite pour l'instant. Elles arrivent ici à chaque mise à jour (toutes les 30 min).</div>`;
+}
+$('f-live3').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fLive3 = p.dataset.f; renderLive3(); }});
+$('q-live3').addEventListener('input', e => { qLive3 = e.target.value.trim().toLowerCase(); renderLive3(); });
+
 /* ---------- inscrites du live 1 pas inscrites au live 2 (à inviter) ---------- */
 // une réinscription au live 2 est fusionnée par le webhook (Source « 9-sept » + « déjà inscrite au live 1 »),
 // on exclut en plus par e-mail et par numéro au cas où elle se serait réinscrite avec une autre adresse
@@ -916,7 +1014,7 @@ function live1Seules(){
   const l2 = DATA.inscrits.filter(i => i.live === '9sept');
   const mails = new Set(l2.map(i => (i.mail||'').toLowerCase()).filter(Boolean));
   const tels = new Set(l2.map(i => i.tel).filter(Boolean));
-  return DATA.inscrits.filter(i => i.live !== '9sept' && !(i.mail && mails.has(i.mail.toLowerCase())) && !(i.tel && tels.has(i.tel)));
+  return DATA.inscrits.filter(i => i.live === '31aout' && !(i.mail && mails.has(i.mail.toLowerCase())) && !(i.tel && tels.has(i.tel)));
 }
 const inviteMsg = i => SET.tplInvite.replaceAll('{prenom}', i.n).replaceAll('{live}', DATA.webi.meet)
   .replaceAll('{groupe}', SET.groupe).replaceAll('{lp}', DATA.webi.lp);
@@ -924,7 +1022,7 @@ let fLive1 = 'a', qLive1 = '';
 function renderLive1(){
   const done = store.get('rel1to2', {});
   const tous = live1Seules();
-  const insc1 = DATA.inscrits.filter(i => i.live !== '9sept' || i.deja1);
+  const insc1 = DATA.inscrits.filter(i => i.live === '31aout' || i.deja1);
   const sansTel = tous.filter(i => !i.tel);
   const aFaire = tous.filter(i => i.tel && !done[key(i)]);
   const faits = tous.filter(i => i.tel && done[key(i)]);
@@ -2388,6 +2486,7 @@ function renderAmbre(){
       <div class="qui"><div class="nom">${esc(c.n)}</div><div class="sub">${esc(c.mail)}${c.tel ? ' · +' + c.tel : ''}</div>
         <div style="margin-top:4px"><span class="chip src-live">${esc(c.statut||'Signée')}</span>${ctrChip(k)}${bvChip(c)}
         ${ecoleCommencee() ? (f.bilanSemaine ? ' <span class="chip src-live" style="background:#E3EFE7;color:#4C7A5E">✅ bilan sem. ' + esc(f.sb.key.replace(/^\d+-W/, '')) + ' reçu</span>' : cliActive(c) ? ' <span class="chip src-webi" style="background:#F7E3D3;color:#A65A2A">⚠️ bilan sem. ' + esc(f.sb.key.replace(/^\d+-W/, '')) + ' pas fait</span>' : '') : ''}
+        ${engChip(c.mail)}
         ${f.derniere && !f.derniere.present ? ' <span class="chip src-webi">absente au call du ' + esc(f.derniere.date.slice(0,5)) + '</span>' : ''}</div></div>
       <div class="meta"><b>${c.date ? 'Signée le ' + esc(c.date) : ''}</b>${cc ? `Closing ${esc(quandUtc(cc.c.utc).txt)}${cc.t.q ? ' · qualif ' + cc.t.q + '/10' : ''}` : 'Pas de call iClosed rattaché'}</div>
       <div class="meta"><b>${ecoleCommencee() ? 'Semaine ' + f.semaine + ' / ' + ECOLE_SEMAINES : 'Démarre le 10/10'}</b><div class="am-prog"><i style="width:${Math.round(100*f.semaine/ECOLE_SEMAINES)}%"></i></div>${f.bilans.length} bilan${f.bilans.length>1?'s':''}${dern ? ' · dernier le ' + esc(dern.date.split(' ')[0]) : ''} · ${nbPres}/${f.pres.length || sess.length || 0} call${(f.pres.length||sess.length)>1?'s':''}</div>
@@ -2409,6 +2508,7 @@ function renderAmbre(){
         </div></details>`}
     </div>`;
   }).join('') : `<div class="vide">${tous.length ? 'Personne dans ce filtre.' : 'Pas encore de cliente. Dès qu\'une vente est enregistrée (ou une cliente ajoutée à la main dans « Clientes »), sa fiche de suivi arrive ici.'}</div>`;
+  renderEng();
   // bilans non attribués : attribution à une cliente (select) ou ignorer
   const na = eowNonAttribues();
   $('am-na-n').textContent = na.length;
@@ -2464,6 +2564,170 @@ document.addEventListener('click', async e => {
     const F = store.get('presfix', {}); F[b.dataset.date + '|' + b.dataset.mail.toLowerCase()] = { p:present, when:Date.now() }; store.set('presfix', F);
     toast(`${present ? 'Présente' : 'Absente'} au call du ${b.dataset.date} ✅`);
     renderAmbre(); renderTabs();
+  } catch(err){ toast('Échec : ' + err.message); b.disabled = false; }
+});
+
+/* ---------- engagements des élèves (carte de l'onglet Ambre) ---------- */
+const ENG = { url:'__ENG_URL__', key:'__ENG_KEY__', ckey:'__ENG_CKEY__' };
+const ENG_COL = { fait:'#4C7A5E', rate:'#D9B4B4', passe:'#E7D9C3', pause:'#B9C8DE', attente:'#FFFDFB', avenir:'#F6EEEE', hors:'#F6EEEE' };
+const ENG_JOURS = ['', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+function engFreq(e){
+  const j = String(e.jours||'').split(',').map(Number).filter(n => n>=1 && n<=7);
+  if (e.frequence === 'quotidien' || j.length === 7) return 'tous les jours';
+  if (e.frequence === 'hebdo') return 'chaque semaine, au plus tard le ' + ENG_JOURS[j[0]||7];
+  return 'les ' + j.map(n => ENG_JOURS[n]).join(', ');
+}
+function engRappels(){
+  const F = store.get('engtraite', {}); let ch = false;
+  (DATA.eng.rappels||[]).forEach(r => { const k = r.row + '|' + r.id; if (F[k] && (r.traite || Date.now() - F[k] > 3*864e5)){ delete F[k]; ch = true; } });
+  if (ch) store.set('engtraite', F);
+  return (DATA.eng.rappels||[]).map(r => F[r.row + '|' + r.id] ? Object.assign({}, r, { traite:'ok' }) : r);
+}
+function engATraiter(){
+  // une seule relance à traiter par engagement : la plus récente (appel prime sur relance)
+  const par = {};
+  engRappels().filter(r => !r.traite).forEach(r => { const o = par[r.id]; if (!o || r.date > o.date || (r.date === o.date && r.type === 'appel')) par[r.id] = r; });
+  return Object.values(par);
+}
+function engDe(mail){ mail = (mail||'').toLowerCase(); return (DATA.eng.eleves||[]).find(x => (x.email||'').toLowerCase() === mail) || null; }
+function engChip(mail){
+  const el = engDe(mail); if (!el) return '';
+  const act = el.engagements.filter(e => e.statut === 'actif' || e.statut === 'pause'); if (!act.length) return '';
+  const best = act.reduce((a, b) => (b.manques||0) > (a.manques||0) ? b : a, act[0]);
+  return best.manques >= 2 ? ` <span class="chip src-webi" style="background:#FBEAEA;color:#B04A4A">⏸ ${best.manques} j sans « Fait »</span>`
+    : ` <span class="chip src-live" style="background:#E3EFE7;color:#4C7A5E">🔥 série ${act.reduce((m, e) => Math.max(m, e.serie||0), 0)}</span>`;
+}
+function engWaLien(r, tel){
+  // le lien du pont contient le message ; si l'élève n'a pas donné son WhatsApp, on met le numéro de sa fiche
+  const m = String(r.lien||'').match(/[?&]text=([^&]*)/);
+  const msg = m ? decodeURIComponent(m[1]) : '';
+  const num = (String(r.lien||'').match(/wa\.me\/(\d+)/) || [])[1] || tel || '';
+  return { url: 'https://wa.me/' + num + '?text=' + encodeURIComponent(msg), msg, num };
+}
+function renderEng(){
+  if (!$('eng-liste')) return;
+  const E = DATA.eng;
+  if (!E.ok){ $('eng-kpis').innerHTML = ''; $('eng-liste').innerHTML = '<div class="bm-note">Pont Engagements injoignable à la dernière mise à jour : les données reviendront au prochain passage.</div>'; return; }
+  const aTraiter = engATraiter();
+  const els = (E.eleves||[]).map(el => {
+    const act = el.engagements.filter(e => e.statut === 'actif' || e.statut === 'pause');
+    const cli = clientes().find(c => (c.mail||'').toLowerCase() === (el.email||'').toLowerCase());
+    const rel = aTraiter.filter(r => (r.email||'').toLowerCase() === (el.email||'').toLowerCase());
+    return { el, act, cli, rel, tel: el.whatsapp || (cli && cli.tel) || telDeMail(el.email), manques: Math.max(0, ...act.map(e => e.manques||0)) };
+  }).filter(x => x.act.length || x.rel.length)
+    .sort((a, b) => b.rel.length - a.rel.length || b.manques - a.manques || (a.cli ? a.cli.n : a.el.prenom).localeCompare(b.cli ? b.cli.n : b.el.prenom));
+  const actifs = els.flatMap(x => x.act);
+  const taux = actifs.filter(e => e.taux !== null && e.taux !== undefined);
+  $('eng-kpis').innerHTML = [
+    [aTraiter.length, 'à relancer aujourd\'hui'],
+    [actifs.filter(e => (e.serie||0) > 0).length, 'séries en cours'],
+    [taux.length ? Math.round(taux.reduce((s, e) => s + e.taux, 0) / taux.length) + ' %' : '·', 'moyenne 4 semaines'],
+    [els.length, 'élève' + (els.length > 1 ? 's' : '') + ' engagée' + (els.length > 1 ? 's' : '')],
+  ].map(([v,l]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div></div>`).join('');
+  $('eng-liste').innerHTML = els.length ? els.map(x => {
+    const nom = x.cli ? x.cli.n : x.el.prenom;
+    return `<div class="eng-el"><div class="h"><div><b>${esc(nom)}</b> <span class="sub" style="color:var(--muted);font-size:13px">${esc(x.el.email)}${x.cli ? '' : ' · pas dans Clientes'}</span></div>${x.tel ? '' : '<span class="chip src-webi">pas de numéro</span>'}</div>
+      ${x.act.map(e => `<div class="eng-e"><span class="a">${esc(e.action)}</span> <span class="m">· ${esc(engFreq(e))} · rappel ${esc(String(e.heure||'').replace(':00','h'))}${e.statut === 'pause' ? ' · en pause jusqu\'au ' + esc(frDate(e.pause_jusqu)) : ''}</span><br>
+        🔥 <b>${e.serie||0}</b> ${e.frequence === 'hebdo' ? 'sem.' : 'j'} · record ${e.record||0} · <b>${e.taux === null || e.taux === undefined ? '·' : e.taux + ' %'}</b> sur 4 sem. (${e.done28||0}/${e.total28||0})${e.manques ? ` · <b style="color:#B04A4A">${e.manques} manqué${e.manques>1?'s':''} d'affilée</b>` : ''}
+        <span class="eng-dots" title="14 derniers jours">${(e.pastilles||[]).map(p => `<i title="${esc(p.d)} · ${esc(p.s)}" style="background:${ENG_COL[p.s]||'#eee'};${p.s==='attente'?'outline:1.5px solid var(--mauve);outline-offset:-1.5px':p.s==='hors'?'outline:1px dashed var(--border);outline-offset:-1px':''}"></i>`).join('')}</span>
+        ${e.pourquoi ? `<div class="m">Pourquoi : ${esc(e.pourquoi)}</div>` : ''}</div>`).join('')}
+      ${x.rel.map(r => { const w = engWaLien(r, x.tel); return `<div class="eng-rel${r.type === 'appel' ? ' appel' : ''}"><b>${r.type === 'appel' ? '📞 5 jours sans « Fait » : proposer un appel' : '⚠️ 2 jours sans « Fait » : relance'}</b> · « ${esc(r.action)} » · préparée le ${esc(frDate(r.date))}
+        <div style="white-space:pre-wrap;margin:6px 0;color:var(--ink-soft)">${esc(w.msg)}</div>
+        <div class="row" style="display:flex;gap:8px;flex-wrap:wrap">${w.num ? `<a class="btn-wa alerte" href="${w.url}" target="_blank" rel="noopener">${WA_SVG} ${r.type === 'appel' ? 'Proposer l\'appel' : 'Relancer sur WhatsApp'}</a>` : '<span class="chip src-webi">pas de numéro : à envoyer à la main</span>'}
+        <button class="btn-ghost eng-ok" data-row="${esc(r.row)}" data-id="${esc(r.id)}">✓ Traité</button></div></div>`; }).join('')}
+    </div>`;
+  }).join('') : '<div class="bm-note">Aucun engagement actif pour l\'instant. Les élèves déclarent le leur sur la page Engagements (lien dans le mail de bienvenue et le module 00).</div>';
+}
+function frDate(iso){ const m = String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}/${m[2]}` : String(iso||''); }
+function telDeMail(mail){
+  mail = (mail||'').toLowerCase(); if (!mail) return '';
+  const srcs = [clientes(), DATA.inscrits, DATA.icalls.calls, (DATA.leads && DATA.leads.list) || []];
+  for (const L of srcs){ const x = (L||[]).find(y => (y.mail||'').toLowerCase() === mail && y.tel); if (x) return x.tel; }
+  const el = engDe(mail); return el && el.whatsapp ? el.whatsapp : '';
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('.eng-ok'); if (!b) return;
+  b.disabled = true;
+  try {
+    const r = await fetch(ENG.url, { method:'POST', body: JSON.stringify({ what:'rappel_traite', key:ENG.key, ckey:ENG.ckey, row:b.dataset.row, id:b.dataset.id }) });
+    const j = await r.json(); if (!j.ok) throw new Error(j.error || 'refus du pont');
+    const F = store.get('engtraite', {}); F[b.dataset.row + '|' + b.dataset.id] = Date.now(); store.set('engtraite', F);
+    toast('Relance marquée traitée ✅'); renderAmbre(); renderTabs();
+  } catch(err){ toast('Échec : ' + err.message); b.disabled = false; }
+});
+
+/* ---------- exercices rendus ---------- */
+const EXOS = { url:'__EXOS_URL__', key:'__EXOS_KEY__' };
+let fExo = store.get('exof', 'a'), mExo = store.get('exom', '');
+function exosList(){
+  const F = store.get('exofix', {}); let ch = false;
+  (DATA.exos.list||[]).forEach(x => { const f = F[x.id]; if (f && ((f.statut === x.statut && (f.commentaire === undefined || f.commentaire === x.commentaire)) || Date.now() - f.when > 3*864e5)){ delete F[x.id]; ch = true; } });
+  if (ch) store.set('exofix', F);
+  return (DATA.exos.list||[]).map(x => { const f = F[x.id]; return f ? Object.assign({}, x, { statut:f.statut, commentaire: f.commentaire !== undefined ? f.commentaire : x.commentaire }) : x; });
+}
+const exoTs = d => { const m = String(d||'').match(/(\d{2})\/(\d{2})\/(\d{4})\s*(\d{2})?:?(\d{2})?/); return m ? `${m[3]}-${m[2]}-${m[1]}T${m[4]||'00'}:${m[5]||'00'}` : String(d||''); };
+const exoOu = x => [x.module, x.lecon].filter(Boolean).join(' · ') || 'leçon non précisée';
+function exoMsg(x, com){
+  const prenom = (x.prenom || '').split(' ')[0] || '';
+  return SET.tplExo.replaceAll('{prenom}', prenom).replaceAll('{lecon}', x.lecon || x.module || 'de la leçon').replaceAll('{commentaire}', com || '');
+}
+function renderExos(){
+  if (!$('l-exos')) return;
+  $('bandeau-exos').innerHTML = DATA.exos.ok ? '' : '<div class="bm-note" style="margin-bottom:12px">⚠️ Pont Exercices injoignable à la dernière mise à jour : la liste reviendra au prochain passage.</div>';
+  const all = exosList().sort((a, b) => exoTs(b.date).localeCompare(exoTs(a.date)));
+  const aC = all.filter(x => x.statut !== 'Corrigé'), ok = all.filter(x => x.statut === 'Corrigé');
+  const plusVieux = aC.length ? aC.map(x => exoTs(x.date)).sort()[0] : '';
+  const jours = plusVieux ? Math.max(0, Math.floor((Date.now() - new Date(plusVieux)) / 864e5)) : null;
+  $('exo-kpis').innerHTML = [
+    [aC.length, 'à corriger'],
+    [ok.length, 'corrigé' + (ok.length > 1 ? 's' : '')],
+    [new Set(all.map(x => (x.email||'').toLowerCase())).size, 'élèves'],
+    [jours === null ? '·' : jours + ' j', 'attente du plus ancien'],
+  ].map(([v,l]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div></div>`).join('');
+  $('f-exos').innerHTML = [['a', `À corriger <b>${aC.length}</b>`], ['c', `Corrigés <b>${ok.length}</b>`], ['t', `Tous <b>${all.length}</b>`]]
+    .map(([v,l]) => `<button class="pill${fExo===v?' on':''}" data-f="${v}">${l}</button>`).join('');
+  const mods = [...new Set(all.map(x => x.module || 'Sans module'))].sort((a, b) => a.localeCompare(b, 'fr', { numeric:true }));
+  if (mExo && !mods.includes(mExo)) mExo = '';
+  $('f-exos-mod').innerHTML = mods.length > 1 ? [['', 'Tous les modules']].concat(mods.map(m => [m, `${m} <b>${all.filter(x => (x.module || 'Sans module') === m).length}</b>`]))
+    .map(([v,l]) => `<button class="pill${mExo===v?' on':''}" data-m="${esc(v)}">${l}</button>`).join('') : '';
+  let liste = fExo === 'a' ? aC : fExo === 'c' ? ok : all;
+  if (mExo) liste = liste.filter(x => (x.module || 'Sans module') === mExo);
+  $('l-exos').innerHTML = liste.length ? liste.map(x => {
+    const tel = telDeMail(x.email);
+    const files = String(x.fichiers||'').split('\n').filter(Boolean).map(l => { const i = l.lastIndexOf(' : '); const n = i > 0 ? l.slice(0, i) : 'fichier'; const u = i > 0 ? l.slice(i + 3) : l; return `<a href="${esc(u)}" target="_blank" rel="noopener">📎 ${esc(n)}</a>`; });
+    const fait = x.statut === 'Corrigé';
+    return `<div class="exo" data-id="${esc(x.id)}">
+      <div class="h"><span class="nom">${esc(x.prenom || 'Élève')}</span><span class="ou">${esc(exoOu(x))}</span>
+        <span class="chip ${fait ? 'src-live' : 'src-webi'}" style="${fait ? 'background:#E3EFE7;color:#4C7A5E' : 'background:#F7E3D3;color:#A65A2A'}">${fait ? '✅ Corrigé' : '✏️ À corriger'}</span>
+        <span class="ou" style="margin-left:auto">rendu le ${esc(x.date)} · ${esc(x.email)}</span></div>
+      <div class="txt">${esc(x.exercice)}</div>
+      ${x.question ? `<div class="q"><b>Sa question :</b> ${esc(x.question)}</div>` : ''}
+      ${files.length ? `<div class="q">${files.join(' · ')}</div>` : ''}
+      <textarea class="exo-com" placeholder="Ton retour pour ${esc((x.prenom||'elle').split(' ')[0])}…">${esc(x.commentaire)}</textarea>
+      <div class="row">
+        ${fait ? `<button class="btn-ghost exo-set" data-s="À corriger">↺ Rouvrir</button><button class="btn-ghost exo-set" data-s="Corrigé">Enregistrer le commentaire</button>` : `<button class="btn-add exo-set" data-s="Corrigé">✓ Corrigé</button><button class="btn-ghost exo-set" data-s="À corriger">Enregistrer sans corriger</button>`}
+        ${tel ? `<button class="btn-wa exo-wa" data-tel="${esc(tel)}">${WA_SVG} WhatsApp à ${esc((x.prenom||'l\'élève').split(' ')[0])}</button>` : `<a class="btn-ghost exo-mail" href="#" data-mail="${esc(x.email)}" title="Pas de numéro trouvé pour cet e-mail">✉️ Répondre par mail</a>`}
+        ${x.lien ? `<a class="btn-ghost" href="${esc(x.lien)}" target="_blank" rel="noopener">Tally</a>` : ''}
+      </div></div>`;
+  }).join('') : `<div class="vide">${all.length ? 'Rien dans ce filtre.' : 'Aucun exercice rendu pour l\'instant. Ils arrivent ici dès qu\'une élève envoie le formulaire sous une leçon.'}</div>`;
+}
+$('f-exos').addEventListener('click', e => { const p = e.target.closest('.pill'); if (p){ fExo = p.dataset.f; store.set('exof', fExo); renderExos(); } });
+$('f-exos-mod').addEventListener('click', e => { const p = e.target.closest('.pill'); if (p){ mExo = p.dataset.m; store.set('exom', mExo); renderExos(); } });
+document.addEventListener('click', async e => {
+  const card = e.target.closest('.exo'); if (!card) return;
+  const x = exosList().find(y => y.id === card.dataset.id); if (!x) return;
+  const com = card.querySelector('.exo-com').value.trim();
+  const wa = e.target.closest('.exo-wa');
+  if (wa){ window.open(waUrl(wa.dataset.tel, exoMsg(x, com)), '_blank', 'noopener'); return; }
+  const ml = e.target.closest('.exo-mail');
+  if (ml){ e.preventDefault(); location.href = 'mailto:' + encodeURIComponent(x.email) + '?subject=' + encodeURIComponent('Ton exercice · ' + exoOu(x)) + '&body=' + encodeURIComponent(exoMsg(x, com)); return; }
+  const b = e.target.closest('.exo-set'); if (!b) return;
+  b.disabled = true;
+  try {
+    const r = await fetch(EXOS.url, { method:'POST', body: JSON.stringify({ what:'statut_set', key:EXOS.key, id:x.id, statut:b.dataset.s, commentaire:com }) });
+    const j = await r.json(); if (!j.ok) throw new Error(j.error || 'refus du pont');
+    const F = store.get('exofix', {}); F[x.id] = { statut:b.dataset.s, commentaire:com, when:Date.now() }; store.set('exofix', F);
+    toast(b.dataset.s === 'Corrigé' ? `Exercice de ${x.prenom || 'l\'élève'} corrigé ✅` : 'Enregistré'); renderExos(); renderTabs();
   } catch(err){ toast('Échec : ' + err.message); b.disabled = false; }
 });
 
@@ -2853,20 +3117,20 @@ $('btn-set').addEventListener('click', () => {
   $('s-tpl-cand').value = SET.tplCand; $('s-tpl-call').value = SET.tplCall; $('s-tpl-replay').value = SET.tplReplay; $('s-replay').value = SET.replay;
   $('s-tpl-schol-rel').value = SET.tplScholRel; $('s-tpl-schol-ok').value = SET.tplScholOk; $('s-tpl-coach').value = SET.tplCoach || TPL_DEF.coach; $('s-tpl-coach-rel').value = SET.tplCoachRel || TPL_DEF.coachRel; $('s-tpl-sond').value = SET.tplSond || TPL_DEF.sond; $('s-tpl-lead').value = SET.tplLead || TPL_DEF.lead;
   $('s-groupe').value = SET.groupe; $('s-iclosed').value = SET.iclosed;
-  $('s-tpl-eow').value = SET.tplEowRelance; $('s-tpl-ambre').value = SET.tplAmbreCheckin; $('s-tpl-ambre-abs').value = SET.tplAmbreAbsente;
+  $('s-tpl-eow').value = SET.tplEowRelance; $('s-tpl-ambre').value = SET.tplAmbreCheckin; $('s-tpl-ambre-abs').value = SET.tplAmbreAbsente; $('s-tpl-exo').value = SET.tplExo;
   openSet(true);
 });
 $('voile').addEventListener('click', () => openSet(false));
 $('s-save').addEventListener('click', () => {
-  SET = {tplWebi:$('s-tpl-webi').value, tplInvite:$('s-tpl-invite').value, tplWebiCoach:$('s-tpl-webi-coach').value, tplWebiEcole:$('s-tpl-webi-ecole').value, tplCand:$('s-tpl-cand').value, tplCall:$('s-tpl-call').value, tplReplay:$('s-tpl-replay').value, replay:($('s-replay').value.trim() || REPLAY_DEF), tplScholRel:$('s-tpl-schol-rel').value, tplScholOk:$('s-tpl-schol-ok').value, tplCoach:$('s-tpl-coach').value, tplCoachRel:$('s-tpl-coach-rel').value, tplSond:$('s-tpl-sond').value, tplLead:$('s-tpl-lead').value, groupe:$('s-groupe').value.trim(), iclosed:$('s-iclosed').value.trim(), tplEowRelance:$('s-tpl-eow').value, tplAmbreCheckin:$('s-tpl-ambre').value, tplAmbreAbsente:$('s-tpl-ambre-abs').value};
-  store.set('reglages', SET); openSet(false); renderWebi(); renderLive1(); renderCand(); renderAgenda(); renderSchol(); renderCoach(); renderSondage(); renderAmbre(); renderLeads(); toast('Enregistré');
+  SET = {tplWebi:$('s-tpl-webi').value, tplInvite:$('s-tpl-invite').value, tplWebiCoach:$('s-tpl-webi-coach').value, tplWebiEcole:$('s-tpl-webi-ecole').value, tplCand:$('s-tpl-cand').value, tplCall:$('s-tpl-call').value, tplReplay:$('s-tpl-replay').value, replay:($('s-replay').value.trim() || REPLAY_DEF), tplScholRel:$('s-tpl-schol-rel').value, tplScholOk:$('s-tpl-schol-ok').value, tplCoach:$('s-tpl-coach').value, tplCoachRel:$('s-tpl-coach-rel').value, tplSond:$('s-tpl-sond').value, tplLead:$('s-tpl-lead').value, groupe:$('s-groupe').value.trim(), iclosed:$('s-iclosed').value.trim(), tplEowRelance:$('s-tpl-eow').value, tplAmbreCheckin:$('s-tpl-ambre').value, tplAmbreAbsente:$('s-tpl-ambre-abs').value, tplExo:$('s-tpl-exo').value};
+  store.set('reglages', SET); openSet(false); renderWebi(); renderLive1(); renderCand(); renderAgenda(); renderSchol(); renderCoach(); renderSondage(); renderAmbre(); renderExos(); renderLeads(); toast('Enregistré');
 });
 $('s-reset').addEventListener('click', () => {
   $('s-tpl-webi').value = TPL_DEF.webi; $('s-tpl-invite').value = TPL_DEF.invite; $('s-tpl-webi-coach').value = TPL_DEF.webiCoach; $('s-tpl-webi-ecole').value = TPL_DEF.webiEcole;
   $('s-tpl-cand').value = TPL_DEF.cand; $('s-tpl-call').value = TPL_DEF.call; $('s-tpl-replay').value = TPL_DEF.replay; $('s-replay').value = REPLAY_DEF;
   $('s-tpl-schol-rel').value = TPL_DEF.scholRel; $('s-tpl-schol-ok').value = TPL_DEF.scholOk; $('s-tpl-coach').value = TPL_DEF.coach; $('s-tpl-coach-rel').value = TPL_DEF.coachRel; $('s-tpl-sond').value = TPL_DEF.sond;
   $('s-groupe').value = DATA.webi.groupe;
-  $('s-tpl-eow').value = TPL_DEF.eowRelance; $('s-tpl-ambre').value = TPL_DEF.ambreCheckin; $('s-tpl-ambre-abs').value = TPL_DEF.ambreAbsente;
+  $('s-tpl-eow').value = TPL_DEF.eowRelance; $('s-tpl-ambre').value = TPL_DEF.ambreCheckin; $('s-tpl-ambre-abs').value = TPL_DEF.ambreAbsente; $('s-tpl-exo').value = TPL_DEF.exo;
 });
 
 /* ---------- mail du sondage à toute la liste (script Contrats, depuis selfty.academy@gmail.com) ---------- */
@@ -3050,7 +3314,7 @@ setTimeout(() => {
   }
 }, 300);
 
-renderTabs(); renderObj8(); renderWebi(); renderLive2(); renderLive1(); renderCand(); renderEcole(); renderSchol(); renderCoach(); renderSondage(); renderAgenda(); renderTrack(); renderLeads(); renderClients(); renderAmbre(); renderCompta(); renderData();
+renderTabs(); renderObj8(); renderWebi(); renderLive3(); renderLive2(); renderLive1(); renderCand(); renderEcole(); renderSchol(); renderCoach(); renderSondage(); renderAgenda(); renderTrack(); renderLeads(); renderClients(); renderAmbre(); renderExos(); renderCompta(); renderData();
 mlMaybe();   // onglet Sondage ouvert au chargement : état du mail à la liste
 refreshContrats();
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshContrats(); });

@@ -47,7 +47,9 @@ def fmt_date(dt):
 
 def src_label(s):
     s = (s or "").lower()
-    if "utm_source=email" in s or "utm_medium=email" in s:
+    if "source=ads" in s or "utm_source=fb" in s or "utm_source=meta" in s:
+        return "Ads Meta"
+    if "utm_source=email" in s or "utm_medium=email" in s or "source=mail" in s:
         return "E-mail"
     if "link_in_bio" in s:
         return "Bio Insta"
@@ -76,9 +78,14 @@ for r in real:
         "date": fmt_date(r.get("Date")),
         "ts": r.get("Date").isoformat() if isinstance(r.get("Date"), datetime.datetime) else "",
         "src": src_label(r.get("Source")),
-        "live": "9sept" if "9-sept" in str(r.get("Source") or "") else "31aout",
-        # déjà inscrite au live 1 : trace écrite par le webhook dans la Source lors de la réinscription
+        "live": "21sept" if "21-sept" in str(r.get("Source") or "") else "9sept" if "9-sept" in str(r.get("Source") or "") else "31aout",
+        # déjà inscrite au live 1 / 2 : trace écrite par le webhook dans la Source lors de la réinscription
+        # (« · déjà inscrite au live 1 », « au live 2 », « au live 1 et 2 »)
         "deja1": "déjà inscrite au live 1" in str(r.get("Source") or ""),
+        "deja2": bool(re.search(r"déjà inscrite au live (2|1 et 2)", str(r.get("Source") or ""))),
+        # LP du live 3 : « lp-webi-21-sept-v1 · source=ads utm_content=l3-img1 »
+        "srcp": (re.search(r"(?:^|\s)source=(\S+)", str(r.get("Source") or "")) or [None, ""])[1],
+        "ad": (re.search(r"utm_content=(\S+)", str(r.get("Source") or "")) or [None, ""])[1],
         "statut": str(r.get("Statut ") or "").strip(),
         "etape": r.get("Dernière étape") or "",
     }
@@ -399,6 +406,21 @@ for c in clientes:
 vws = wb["Visites"]
 visites = [[c.value for c in r] for r in vws.iter_rows(min_row=2) if any(c.value for c in r)]
 v_mobile = sum(1 for v in visites if str(v[1]).strip().lower() == "mobile")
+
+# Live 3 (lundi 21/09) : visites de la LP par source / ad (colonne « Campagne (UTM) » = « lp=21-sept source=ads utm_content=l3-img1 »)
+LIVE3_TEST_VISITES = {"2026-09-15T00:22"}   # 2 captures d'écran de test à la mise en ligne
+live3_vis = Counter()
+live3_vis_src = Counter()
+for v in visites:
+    camp = str(v[3] or "") if len(v) > 3 else ""
+    if "lp=21-sept" not in camp:
+        continue
+    if isinstance(v[0], datetime.datetime) and v[0].strftime("%Y-%m-%dT%H:%M") in LIVE3_TEST_VISITES:
+        continue
+    ad = (re.search(r"utm_content=(\S+)", camp) or [None, ""])[1]
+    sp = (re.search(r"(?:^|\s)source=(\S+)", camp) or [None, ""])[1]
+    live3_vis[ad or "(sans utm_content)"] += 1
+    live3_vis_src[sp or "direct"] += 1
 
 # Campagne mail
 mws = wb["Mail a contacter webi "]
@@ -993,6 +1015,8 @@ for i in inscrits:
     p["lives"].add(i["live"])
     if i.get("deja1"):
         p["lives"].add("31aout")
+    if i.get("deja2"):
+        p["lives"].add("9sept")
     o8_info(p, i["det"])
     if i["coach"]:
         accord = any(a == "Accord coaching en direct" for a, _ in i["det"])
@@ -1090,10 +1114,11 @@ for p in o8:
         obj8_exclues.append({"n": nom, "pourquoi": p["excl"] or p["client"]}); continue
     if p["upcoming"] and not rap:
         obj8_exclues.append({"n": nom, "pourquoi": f"call déjà booké le {o8_dd(p['upcoming'])}"}); continue
+    LIVE_NOMS = {"31aout": "31 août", "9sept": "9 septembre", "21sept": "21 septembre"}
     if len(p["lives"]) >= 2:
-        o8_sig(p, "webi2", "", "A pris sa place aux 2 lives (31 août + 9 septembre)")
+        o8_sig(p, "webi2", "", f"A pris sa place à {len(p['lives'])} lives (" + " + ".join(LIVE_NOMS[x] for x in ("31aout", "9sept", "21sept") if x in p["lives"]) + ")")
     elif len(p["lives"]) == 1:
-        o8_sig(p, "webi1", "", "A pris sa place au live du " + ("9 septembre" if "9sept" in p["lives"] else "31 août"))
+        o8_sig(p, "webi1", "", "A pris sa place au live du " + LIVE_NOMS.get(next(iter(p["lives"])), "31 août"))
     if not p["sig"]:
         continue
     if p["non"] and min(s["lvl"] for s in p["sig"]) > O8_LVL["bourse"]:
@@ -1109,7 +1134,7 @@ for p in o8:
         toks = [pre] + [t for t in toks if t.lower() != pre.lower()]
     nom = " ".join(toks)
     why = list(OrderedDict.fromkeys(s["why"] for s in sigs))
-    live = "9 septembre" if p["lives"] == {"9sept"} else "31 août"
+    live = "21 septembre" if "21sept" in p["lives"] else "9 septembre" if "9sept" in p["lives"] else "31 août"
     date_call = next((o8_dd(s["ts"]) for s in sigs if s["seg"] == "call"), "")
     msg = o8_msgs.get(p["mail"]) or o8_msgs.get(p["tel"]) or O8_TPL[seg]
     msg = msg.replace("{p}", pre or "toi").replace("{link}", ICLOSED_LINK).replace("{live}", live).replace("{date}", date_call or "quelques jours")
@@ -1178,7 +1203,7 @@ def sd_add(mail, prenom, src, nom=""):
 for i in inscrits:
     if sd_desinscrite(i["statut"], i["etape"]):
         sd_excl.add(i["mail"].lower()); continue
-    sd_add(i["mail"], i["n"], "live1" if i["live"] == "31aout" else "live2", i["n"])
+    sd_add(i["mail"], i["n"], {"31aout": "live1", "9sept": "live2"}.get(i["live"], "live3"), i["n"])
 for e in ecole:
     if sd_desinscrite(e["statut"], e["chaud"]):
         sd_excl.add(e["mail"]); continue
@@ -1200,11 +1225,75 @@ for m, d in sd_dest.items():
 sd_dest = [d for d in sd_dest.values() if d["email"] not in sd_excl]
 print(f"Mail sondage : {len(sd_dest)} destinataires ({dict(sd_src)}), {len(sd_excl)} e-mails exclus")
 
+# ---- Exercices rendus (pont « Exercices Selfty ») + Engagements des élèves (pont « Engagements Selfty ») ----
+# Les 2 Sheets sont privés (Drive de selfty.academy) : on passe par les ponts Apps Script. Échec = onglet vide + bandeau.
+# Clés : env EXOS_KEY / ENG_KEY / ENG_CKEY (secrets CI) ou fichiers locaux exos-key.txt / ../selfty-engagements/pont/pont-key.txt / eng-console-key.txt
+EXOS_URL = "https://script.google.com/macros/s/AKfycbyh4K7PfXc9r8v9GCqMzTlPdKzJ-AYlxchLhUOEJl4tXJuaxBJ424Nc5vwh0L9nh-cc/exec"
+ENG_URL = "https://script.google.com/macros/s/AKfycbwROj9t1ce54CnwjVJ7piRzVhqug2eKzyjy8y3BhvpJcKDrXHEIF_YmZQ169cgw1zc/exec"
+
+
+def _local_key(rel):
+    f = HERE / rel
+    return f.read_text().strip() if f.exists() else ""
+
+
+def pont_post(url, payload, timeout=90):
+    req = urllib.request.Request(url, data=json.dumps(payload).encode(), headers={"Content-Type": "text/plain"})
+    with urllib.request.urlopen(req, timeout=timeout) as resp:   # 302 -> GET suivi par urllib, comme curl -L
+        return json.load(resp)
+
+
+exos_key = os.environ.get("EXOS_KEY") or _local_key("exos-key.txt")
+exos_ok, exos = False, []
+if exos_key:
+    try:
+        j = pont_post(EXOS_URL, {"key": exos_key, "what": "exercices"})
+        if j.get("ok"):
+            exos_ok = True
+            for x in j.get("exercices") or []:
+                mail = str(x.get("email") or "").strip().lower()
+                if mail in TEST_EMAILS and not SHOW_TEST:
+                    continue
+                exos.append({k: ("" if x.get(k) is None else str(x.get(k))) for k in
+                             ("date", "prenom", "email", "module", "lecon", "exercice", "question", "fichiers", "statut", "commentaire", "id", "lien")})
+        else:
+            print("Exercices : refus du pont", j.get("error"))
+    except Exception as ex:
+        print("Exercices : pont injoignable", ex)
+if SHOW_TEST and (HERE / "test-exos.json").exists():
+    exos_ok = True
+    exos += json.loads((HERE / "test-exos.json").read_text())
+print(f"Exercices : {len(exos)} ({sum(1 for x in exos if x['statut'] != 'Corrigé')} à corriger)")
+
+eng_key = os.environ.get("ENG_KEY") or _local_key("../selfty-engagements/pont/pont-key.txt")
+eng_ckey = os.environ.get("ENG_CKEY") or _local_key("eng-console-key.txt")
+eng = {"ok": False, "eleves": [], "rappels": [], "today": ""}
+if eng_key and eng_ckey:
+    try:
+        j = pont_post(ENG_URL, {"key": eng_key, "ckey": eng_ckey, "what": "console"})
+        if j.get("ok"):
+            keep = lambda m: SHOW_TEST or str(m or "").lower() not in TEST_EMAILS
+            eng = {"ok": True, "today": j.get("today", ""), "semaine": j.get("semaine"),
+                   "eleves": [e for e in j.get("eleves") or [] if keep(e.get("email"))],
+                   "rappels": [r for r in j.get("rappels") or [] if keep(r.get("email"))]}
+        else:
+            print("Engagements : refus du pont", j.get("error"))
+    except Exception as ex:
+        print("Engagements : pont injoignable", ex)
+if SHOW_TEST and (HERE / "test-engagements.json").exists():
+    t = json.loads((HERE / "test-engagements.json").read_text())
+    eng["ok"] = True
+    eng["eleves"] += t.get("eleves", [])
+    eng["rappels"] += t.get("rappels", [])
+print(f"Engagements : {len(eng['eleves'])} élèves, {sum(1 for r in eng['rappels'] if not r.get('traite'))} relances à traiter")
+
 data = {
     "maj": datetime.datetime.now().strftime("%d/%m/%Y %H:%M"),
     "ecoleDebut": ECOLE_DEBUT,
     "eow": {"ok": eow_ok, "url": f"https://tally.so/r/{EOW_FORM}", "subs": eow_subs},
     "presences": presences,
+    "exos": {"ok": exos_ok, "list": exos, "form": "https://tally.so/r/dWOQbz", "sheet": "https://docs.google.com/spreadsheets/d/1lb7WpgYw5YDQXaurQZ9nk_hMZ35sXpwDcS7us428uYg/edit"},
+    "eng": eng,
     "webi": {
         "label": "Live du mercredi 9 septembre, 18h",
         "meet": "https://us06web.zoom.us/j/88555750551?pwd=LjHAbfU8giQRrlGs6a6LRTggG3Sd8K.1&jst=2",
@@ -1213,6 +1302,8 @@ data = {
         "lp": "https://selfty-academy.github.io/live-9-septembre/",
         "lpPrec": "https://selfty-academy.github.io/live-31-aout/",
     },
+    "live3": {"label": "Live du lundi 21 septembre, 18h", "lp": "https://selfty-academy.github.io/live-21-septembre/",
+              "visites": dict(live3_vis), "visitesSrc": dict(live3_vis_src)},
     "inscrits": sorted(inscrits, key=lambda x: x["ts"], reverse=True),
     "cands": sorted(cands, key=lambda c: (c["accord"] != "oui", c["ts"])),
     "la": la,
@@ -1285,6 +1376,8 @@ tpl = (HERE / "template.html").read_text()
 out = (tpl.replace("__DATA__", json.dumps(data, ensure_ascii=False)).replace("__LOGO__", logo)
        .replace("__PONT_URL__", pont["url"]).replace("__PONT_KEY__", pont["key"])
        .replace("__TG_TOKEN__", tg["token"]).replace("__TG_CHAT__", tg["chat_id"])
+       .replace("__EXOS_URL__", EXOS_URL).replace("__EXOS_KEY__", exos_key)
+       .replace("__ENG_URL__", ENG_URL).replace("__ENG_KEY__", eng_key).replace("__ENG_CKEY__", eng_ckey)
        .replace("__DRIVE_CONTRATS__", DRIVE_CONTRATS).replace("__DRIVE_FACTURES__", DRIVE_FACTURES))
 (HERE / "console.html").write_text(out)
 print(f"console.html : {len(inscrits)} inscrits, {len(cands)} candidatures live, {len(ecole)} lignes école ({ecole_uniques} personnes), {len(visites)} visites")
