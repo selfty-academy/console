@@ -684,6 +684,94 @@ if ty_key:
     except Exception as ex:
         print("Tally coaching KO (on garde la console sans) :", ex)
 
+# ---- Sondage « Le prochain live, c'est toi qui choisis » (form Tally VLKopa, même clé ; script selfty-marketing-sept/sondage_form.py) ----
+SOND_FORM = "VLKopa"
+# lu par LIBELLÉ de question (changer ici si un titre change dans sondage_form.py)
+SQ_MASTER, SQ_MASTER_SUJET, SQ_MASTER_LIBRE = "Une masterclass d", "Si oui, sur quel sujet", "Un autre sujet"
+SQ_SOMA, SQ_SUJET, SQ_PRENOM = "Une expérience somatique", "Le sujet que tu veux", "Ton prénom"
+# sujets de masterclass proposés -> libellé court pour le graphique (préfixe du choix)
+SOND_SUJETS = [("Ta première cliente", "Première cliente payante"), ("Annoncer ton prix", "Annoncer son prix, rapport à l'argent"),
+               ("La structure d", "Structure d'une séance (5 niveaux)"), ("Te montrer", "Visibilité, se montrer"), ("Un autre sujet", "Autre sujet")]
+SOND_SOURCES = ["mail", "whatsapp", "story", "ecole"]
+sond_subs, sond_ok, sond_stats = [], False, {}
+
+
+def sond_court(lab):
+    for pre, court in SOND_SUJETS:
+        if lab.startswith(pre):
+            return court
+    return lab[:40] if lab else ""
+
+
+def sond_oui(v):
+    v = v.strip().lower()
+    return None if not v else v.startswith("oui")
+
+
+if ty_key:
+    try:
+        qlabels, raw_subs, page = {}, [], 1
+        while True:
+            req = urllib.request.Request(
+                f"https://api.tally.so/forms/{SOND_FORM}/submissions?filter=all&page={page}",
+                headers={"Authorization": "Bearer " + ty_key, "User-Agent": "curl/8.4.0"})
+            d = json.load(urllib.request.urlopen(req, timeout=30))
+            for q in d.get("questions") or []:
+                qlabels[q["id"]] = (str(q.get("title") or "").strip(), str(q.get("type") or ""))
+            raw_subs += d.get("submissions") or []
+            sond_stats = d.get("totalNumberOfSubmissionsPerFilter") or {}
+            if not d.get("hasMore"):
+                break
+            page += 1
+        # numéro / nom retrouvés par e-mail dans les inscrites, la liste d'attente, les calls et les contacts iClosed
+        sond_who = {}
+        for lst in (leads, icalls, ecole, inscrits):
+            for x in lst:
+                m = str(x.get("mail") or "").strip().lower()
+                if m and (m not in sond_who or (x.get("tel") and not sond_who[m]["tel"])):
+                    sond_who[m] = {"tel": x.get("tel") or "", "n": str(x.get("n") or "").strip()}
+        for s in raw_subs:
+            v, hid = {}, {}
+            for r in s.get("responses") or []:
+                lab, qtype = qlabels.get(r.get("questionId"), ("", ""))
+                ans = r.get("answer")
+                if qtype == "HIDDEN_FIELDS" and isinstance(ans, dict):
+                    hid = ans
+                    continue
+                for pre in (SQ_MASTER, SQ_MASTER_SUJET, SQ_MASTER_LIBRE, SQ_SOMA, SQ_SUJET, SQ_PRENOM):
+                    if lab.startswith(pre):
+                        v[pre] = ty_txt(ans)
+            src = str(hid.get("source") or "").strip().lower()
+            mail = str(hid.get("email") or "").strip().lower()
+            if (src == "test" or mail in TEST_EMAILS) and not SHOW_TEST:
+                continue
+            if not v.get(SQ_SUJET) and not v.get(SQ_MASTER) and not v.get(SQ_SOMA):
+                continue  # rien de répondu
+            who = sond_who.get(mail, {})
+            prenom = (v.get(SQ_PRENOM) or str(hid.get("prenom") or "")).strip()
+            at = str(s.get("submittedAt") or s.get("createdAt") or "")
+            sond_subs.append({
+                "id": s.get("id"),
+                "prenom": prenom or (who.get("n") or "").split(" ")[0],
+                "mail": mail,
+                "tel": who.get("tel") or "",
+                "src": src if src in SOND_SOURCES else ("autre" if src else ""),
+                "master": sond_oui(v.get(SQ_MASTER, "")),
+                "sujet": v.get(SQ_MASTER_SUJET, ""),
+                "sujetCourt": sond_court(v.get(SQ_MASTER_SUJET, "")),
+                "sujetLibre": v.get(SQ_MASTER_LIBRE, ""),
+                "soma": sond_oui(v.get(SQ_SOMA, "")),
+                "texte": v.get(SQ_SUJET, ""),
+                "at": at,
+                "date": iso_paris(at),
+                "done": bool(s.get("isCompleted")),
+            })
+        sond_subs.sort(key=lambda x: x["at"], reverse=True)
+        sond_ok = True
+        print(f"Sondage Tally : {len(sond_subs)} réponse(s)")
+    except Exception as ex:
+        print("Tally sondage KO (on garde la console sans) :", ex)
+
 # ---- Bilans hebdo des clientes (« EOW », form Tally 1AekPO « Mon bilan de la semaine », même clé) ----
 EOW_FORM = "1AekPO"
 ECOLE_DEBUT = "2026-10-10"
@@ -1091,6 +1179,8 @@ data = {
     "schol": {"ok": schol_ok, "url": "https://tally.so/r/Np1Gy0",
               "stats": schol_stats, "subs": schol_subs},
     "coach": {"ok": coach_ok, "url": f"https://tally.so/r/{COACH_FORM}", "subs": coach_subs},
+    "sondage": {"ok": sond_ok, "url": f"https://tally.so/r/{SOND_FORM}", "sujets": [c for _, c in SOND_SUJETS],
+                "sources": SOND_SOURCES, "subs": sond_subs},
     "obj8": obj8,
     "compta": {
         "ok": compta_ok,

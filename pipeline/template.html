@@ -229,6 +229,11 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 .rev-10{background:#D6E3F2;color:#1F3A5F}
 .rev-100{background:#1F3A5F;color:#fff}
 @media (max-width:760px){.coach-rep{grid-template-columns:1fr}}
+.sd-texte{grid-column:1/-1;padding:10px 12px;background:#FAEEEE;border-radius:10px;white-space:pre-wrap;font-size:14.5px;color:var(--ink)}
+.sd-texte b{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mauve);margin-bottom:2px}
+.sd-oui{background:#DDEBE2;color:#2F5C40}.sd-non{background:#F4DDDD;color:#7E5252}
+.src-mail{background:#EAD9EA;color:#6E4A6E}.src-whatsapp{background:#DDEBE2;color:#2F5C40}.src-story{background:#F7E3CC;color:#8A5A1E}.src-ecole{background:#D6E3F2;color:#1F3A5F}.src-autre{border:1px solid var(--border);color:var(--muted);background:transparent;font-weight:500}
+#sd-chart svg{max-width:100%;height:auto}
 .prep-alex{grid-column:1/-1;background:#FFF7E6;border:1px solid #F3D9A4;border-radius:10px;padding:8px 10px;margin-top:6px;white-space:pre-wrap}
 .prep-alex b{display:block;color:#8a5a00;margin-bottom:2px}
 /* onglet Objectif 8 */
@@ -382,6 +387,16 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
   <div class="liste" id="l-coach"></div>
 </section>
 
+<!-- ===================== SONDAGE PROCHAIN LIVE ===================== -->
+<section class="panel" id="p-sondage">
+  <p class="intro">Les réponses au sondage « Le prochain live, c'est toi qui choisis » arrivent ici toutes seules depuis Tally : masterclass ou pas, quel sujet, envie de vivre l'expérience somatique, et le sujet qu'elle veut qu'Anaïs aborde. Filtre par canal d'envoi (mail, WhatsApp, story, école). Quand la personne est retrouvée dans les inscrites (même e-mail), le bouton WhatsApp est prêt avec son prénom et son sujet.</p>
+  <div class="bandeau" id="bandeau-sondage"></div>
+  <div class="kpis kpis-mini" id="sd-kpis"></div>
+  <div class="pills" id="f-sondage"></div>
+  <div class="carte" id="sd-chart-carte"><h3 style="margin:0 0 10px">Sujet de masterclass préféré</h3><div id="sd-chart"></div></div>
+  <div class="liste" id="l-sondage"></div>
+</section>
+
 <!-- ===================== CLIENTES ===================== -->
 <section class="panel" id="p-clients">
   <p class="intro">Le suivi des clientes signées. Une vente marquée dans « Calls effectués » crée la fiche toute seule ; tu peux aussi en ajouter une à la main. Statut et notes s'écrivent dans l'onglet « Clients » du Sheet ; l'encaissé vient de l'onglet « Paiements » de la Compta : coche chaque versement reçu directement sur la fiche. « Envoyer le contrat » envoie par e-mail le contrat à signer en ligne (signature au doigt, PDF automatique pour elle et pour toi) ; le statut suit ici.</p>
@@ -526,6 +541,11 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
     <div class="note">Variables : {prenom} {lien} (lien du formulaire)</div>
   </div>
   <div class="champ">
+    <label for="s-tpl-sond">Sondage prochain live : merci pour ta réponse</label>
+    <textarea id="s-tpl-sond"></textarea>
+    <div class="note">Variables : {prenom} {sujet} (ce qu'elle a écrit) {iclosed}</div>
+  </div>
+  <div class="champ">
     <label for="s-tpl-eow">Ambre : bilan de la semaine pas fait</label>
     <textarea id="s-tpl-eow"></textarea>
     <div class="note">Variables : {prenom} {lien} (lien perso du bilan hebdo)</div>
@@ -643,6 +663,7 @@ const TPL_DEF = {
   scholRel: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nJ'ai vu que tu avais commencé ta candidature pour la bourse mais qu'elle n'est pas allée au bout. Les candidatures ferment le 15 septembre : si tu veux ta chance, tu peux la finir ici :\n{lien}\n\nEt si tu bloques quelque part, dis-moi !",
   lead: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nJ'ai vu que tu avais commencé ta candidature pour l'Academy mais que tu n'as pas encore réservé ton appel avec Anaïs. C'est un échange de 45 minutes, sans engagement, pour voir si l'école est faite pour toi.\n\nTu peux choisir ton créneau ici :\n{iclosed}\n\nEt si tu as une question avant, dis-moi !",
   coach: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault 🌸\n\nOn a bien reçu ta candidature pour le coaching individuel avec Anaïs, merci pour ta confiance. Anaïs l'a lue et aimerait échanger avec toi : quelles sont tes disponibilités cette semaine pour un premier appel ?",
+  sond: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault 🌸\n\nMerci pour ta réponse au sondage sur le prochain live, Anaïs l'a lue. Tu lui proposes : « {sujet} ». Je te préviens dès que la date et le thème sont fixés.\n\nEt si tu veux en parler directement avec elle avant le live, tu peux réserver ton appel ici :\n{iclosed}",
   coachRel: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault 🌸\n\nJ'ai vu que tu avais commencé ta candidature pour le coaching individuel avec Anaïs mais qu'elle n'est pas allée au bout. Il ne reste que deux minutes, tu peux la finir ici :\n{lien}\n\nEt si tu bloques quelque part, dis-moi !",
   scholOk: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nOn a bien reçu ta candidature pour la bourse, merci pour ta confiance. Anaïs lit tout personnellement : tu auras une réponse avant le 15 septembre.",
   eowRelance: "Hello {prenom}, c'est Ambre de la Selfty Academy 🌸\n\nJe n'ai pas encore vu ton bilan de la semaine. Cinq minutes pour prendre du recul sur ta semaine, et ça nous aide à t'accompagner au plus près. Voici ton lien perso :\n{lien}\n\nMerci, et belle journée !",
@@ -654,7 +675,7 @@ const store = {
   get: (k, d) => { try { const v = localStorage.getItem('sc-'+k); return v===null ? d : JSON.parse(v); } catch(e){ return k in MEM ? MEM[k] : d; } },
   set: (k, v) => { MEM[k] = v; try { localStorage.setItem('sc-'+k, JSON.stringify(v)); } catch(e){} }
 };
-let SET = Object.assign({tplWebi:TPL_DEF.webi, tplInvite:TPL_DEF.invite, tplWebiCoach:TPL_DEF.webiCoach, tplWebiEcole:TPL_DEF.webiEcole, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, tplReplay:TPL_DEF.replay, replay:REPLAY_DEF, tplScholRel:TPL_DEF.scholRel, tplScholOk:TPL_DEF.scholOk, tplCoach:TPL_DEF.coach, tplCoachRel:TPL_DEF.coachRel, tplLead:TPL_DEF.lead, tplEowRelance:TPL_DEF.eowRelance, tplAmbreCheckin:TPL_DEF.ambreCheckin, tplAmbreAbsente:TPL_DEF.ambreAbsente, groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
+let SET = Object.assign({tplWebi:TPL_DEF.webi, tplInvite:TPL_DEF.invite, tplWebiCoach:TPL_DEF.webiCoach, tplWebiEcole:TPL_DEF.webiEcole, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, tplReplay:TPL_DEF.replay, replay:REPLAY_DEF, tplScholRel:TPL_DEF.scholRel, tplScholOk:TPL_DEF.scholOk, tplCoach:TPL_DEF.coach, tplCoachRel:TPL_DEF.coachRel, tplSond:TPL_DEF.sond, tplLead:TPL_DEF.lead, tplEowRelance:TPL_DEF.eowRelance, tplAmbreCheckin:TPL_DEF.ambreCheckin, tplAmbreAbsente:TPL_DEF.ambreAbsente, groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
 if (!SET.tplInvite) SET.tplInvite = TPL_DEF.invite;
 if (!SET.tplReplay) SET.tplReplay = TPL_DEF.replay;
 // ancien rappel « notre appel » enregistré dans ⚙️ : c'est Anaïs qui prend l'appel, pas Alex
@@ -682,6 +703,7 @@ const TABS = [
     {id:'webi',  lab:'Relances webi'},
     {id:'cand',  lab:'Candidatures live'}
   ]},
+  {id:'sondage', lab:'🗳️ Sondage'},
   {id:'schol', lab:'Scholarship'},
   {id:'compta', lab:'Compta'},
   {id:'data',  lab:'Datas'}
@@ -711,7 +733,8 @@ function renderTabs(){
   const cdone = store.get('coachdone', {});
   const bCoach = ((DATA.coach && DATA.coach.subs) || []).filter(s => !cdone[s.id]).length;
   const bO8 = o8List().filter(p => !p.c && !p.b).length;
-  const b = {obj8:bO8, live2:bLive2, live1:bLive1, webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, coach:bCoach, calls:bCalls, track:bTrack, leads:bLeads, clients:bCli, ambre:ambreManquants().length + eowNonAttribues().length, paie:bPaie, compta:null, data:null};
+  const bSond = ((DATA.sondage && DATA.sondage.subs) || []).length;
+  const b = {obj8:bO8, sondage:bSond||null, live2:bLive2, live1:bLive1, webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, coach:bCoach, calls:bCalls, track:bTrack, leads:bLeads, clients:bCli, ambre:ambreManquants().length + eowNonAttribues().length, paie:bPaie, compta:null, data:null};
   TABS.filter(t => t.sub).forEach(t => { b[t.id] = t.sub.reduce((n, x) => n + (b[x.id] || 0), 0); });
   const g = groupOf(tabOn);
   $('tabs').innerHTML = TABS.map(t =>
@@ -2599,6 +2622,68 @@ function renderCoach(){
   }).join('') : `<div class="vide">Personne ici pour l'instant.</div>`;
 }
 $('f-coach').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fCoach = p.dataset.f; renderCoach(); }});
+
+/* ---------- sondage prochain live (Tally VLKopa) ---------- */
+let fSond = 't';
+const SD_SRC = {mail:'Mail', whatsapp:'WhatsApp', story:'Story', ecole:'École', autre:'Autre'};
+function renderSondage(){
+  const S = DATA.sondage || {ok:false, url:'', sujets:[], sources:[], subs:[]};
+  $('bandeau-sondage').innerHTML = (S.ok
+    ? `<strong>Connecté à Tally ✅</strong> Lien du sondage :`
+    : `<strong>Tally injoignable à la dernière mise à jour.</strong> Les réponses affichées peuvent dater ; relance une mise à jour avec ↻.`)
+    + ` <a href="${esc(S.url)}" target="_blank" rel="noopener">${esc(S.url.replace('https://',''))} ↗</a> <span class="tk-hint">(ajoute ?source=mail, whatsapp, story ou ecole au lien selon le canal d'envoi)</span>`;
+  const tous = S.subs || [];
+  const cnt = k => tous.filter(x => (x.src || 'autre') === k).length;
+  const srcs = (S.sources || []).concat(tous.some(x => !x.src || x.src === 'autre') ? ['autre'] : []);
+  $('f-sondage').innerHTML = [['t', `Toutes <b>${tous.length}</b>`]].concat(srcs.map(k => [k, `${SD_SRC[k] || k} <b>${cnt(k)}</b>`]))
+    .map(([v,l]) => `<button class="pill${fSond===v?' on':''}" data-f="${v}">${l}</button>`).join('');
+  const liste = fSond === 't' ? tous : tous.filter(x => (x.src || 'autre') === fSond);
+  const pct = (n, d) => d ? Math.round(100*n/d) + ' %' : '·';
+  const mOui = liste.filter(x => x.master === true).length, mRep = liste.filter(x => x.master !== null).length;
+  const sOui = liste.filter(x => x.soma === true).length, sRep = liste.filter(x => x.soma !== null).length;
+  $('sd-kpis').innerHTML = [
+    [liste.length, fSond === 't' ? 'réponses' : `réponses via ${SD_SRC[fSond] || fSond}`],
+    [pct(mOui, mRep), `veulent une masterclass (${mOui}/${mRep})`],
+    [pct(sOui, sRep), `veulent vivre l'expérience somatique (${sOui}/${sRep})`],
+    [liste.filter(x => x.tel).length, 'joignables sur WhatsApp'],
+  ].map(([v,l]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div></div>`).join('');
+  // graphique : barres horizontales par sujet de masterclass (SVG simple)
+  const sujets = (S.sujets || []).slice();
+  liste.forEach(x => { if (x.sujetCourt && !sujets.includes(x.sujetCourt)) sujets.push(x.sujetCourt); });
+  const votes = sujets.map(su => [su, liste.filter(x => x.sujetCourt === su).length]);
+  const total = votes.reduce((n, v) => n + v[1], 0);
+  if (!total){ $('sd-chart-carte').style.display = 'none'; }
+  else {
+    $('sd-chart-carte').style.display = '';
+    const max = Math.max(1, ...votes.map(v => v[1]));
+    const W = 640, L = 250, rowH = 34, H = votes.length*rowH + 8;
+    $('sd-chart').innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Sujets de masterclass">` + votes.map(([su, n], i) => {
+      const y = 4 + i*rowH, w = Math.max(n ? 6 : 0, n/max*(W-L-70));
+      return `<text x="${L-10}" y="${y+19}" text-anchor="end" font-size="12.5" fill="#3A2A2A">${esc(su)}</text>
+        <rect x="${L}" y="${y+4}" width="${W-L-70}" height="22" fill="#F4DDDD" rx="6"></rect>
+        <rect x="${L}" y="${y+4}" width="${w}" height="22" fill="${i === votes.findIndex(v => v[1] === max) ? '#966868' : '#C9A3A3'}" rx="6"></rect>
+        <text x="${L+w+8}" y="${y+19}" font-size="12.5" font-weight="600" fill="#3A2A2A">${n}${n ? ` · ${Math.round(100*n/total)} %` : ''}</text>`;
+    }).join('') + '</svg>';
+  }
+  const link = SET.iclosed || 'https://app.iclosed.io/e/SelftyAcademy/clarity-call';
+  $('l-sondage').innerHTML = liste.length ? liste.map(x => {
+    const prenom = x.prenom || 'Anonyme';
+    const sujet = x.texte || x.sujetLibre || x.sujet || '';
+    const msg = (SET.tplSond || TPL_DEF.sond).replaceAll('{prenom}', x.prenom || '').replaceAll('{sujet}', sujet).replaceAll('{iclosed}', link).replace('Hello ,', 'Hello,');
+    const oui = v => v === null ? '' : `<span class="chip ${v ? 'sd-oui' : 'sd-non'}">`;
+    return `<div class="ligne">
+      <div class="qui"><div class="nom">${esc(prenom)}</div>
+        <div class="sub">${x.mail ? esc(x.mail) : 'pas d\'e-mail (lien sans hidden field)'}</div>
+        <div style="margin-top:4px"><span class="chip src-${esc(x.src || 'autre')}">${SD_SRC[x.src || 'autre']}</span>${x.done ? '' : ' <span class="chip src-webi">Pas finie</span>'}</div></div>
+      <div class="meta">${x.master === null ? '' : `${oui(x.master)}Masterclass : ${x.master ? 'oui' : 'non'}</span> `}${x.soma === null ? '' : `${oui(x.soma)}Somatique : ${x.soma ? 'oui' : 'non'}</span>`}${x.sujetCourt ? `<div style="margin-top:4px">Sujet : <b>${esc(x.sujetCourt)}</b></div>` : ''}</div>
+      <div class="meta"><b>${x.tel ? '+'+x.tel : 'Numéro pas retrouvé'}</b>${esc(x.date)}</div>
+      <div class="actions">${x.tel ? `<a class="btn-wa" href="${waUrl(x.tel, msg)}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}</div>
+      ${x.texte ? `<div class="sd-texte"><b>Le sujet qu'elle veut au prochain live</b>${esc(x.texte)}</div>` : ''}
+      ${x.sujetLibre ? `<div class="sd-texte"><b>Autre sujet de masterclass, avec ses mots</b>${esc(x.sujetLibre)}</div>` : ''}
+    </div>`;
+  }).join('') : `<div class="vide">${tous.length ? 'Personne via ce canal pour l\'instant.' : 'Pas encore de réponse au sondage.'}</div>`;
+}
+$('f-sondage').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fSond = p.dataset.f; renderSondage(); }});
 $('c-add').addEventListener('click', () => {
   const nom = $('c-nom').value.trim();
   if (!nom) return toast('Il manque le prénom');
@@ -2716,25 +2801,25 @@ function openSet(o){ $('voile').classList.toggle('on', o); $('panneau').classLis
 $('btn-set').addEventListener('click', () => {
   $('s-tpl-webi').value = SET.tplWebi; $('s-tpl-invite').value = SET.tplInvite; $('s-tpl-webi-coach').value = SET.tplWebiCoach; $('s-tpl-webi-ecole').value = SET.tplWebiEcole;
   $('s-tpl-cand').value = SET.tplCand; $('s-tpl-call').value = SET.tplCall; $('s-tpl-replay').value = SET.tplReplay; $('s-replay').value = SET.replay;
-  $('s-tpl-schol-rel').value = SET.tplScholRel; $('s-tpl-schol-ok').value = SET.tplScholOk; $('s-tpl-coach').value = SET.tplCoach || TPL_DEF.coach; $('s-tpl-coach-rel').value = SET.tplCoachRel || TPL_DEF.coachRel; $('s-tpl-lead').value = SET.tplLead || TPL_DEF.lead;
+  $('s-tpl-schol-rel').value = SET.tplScholRel; $('s-tpl-schol-ok').value = SET.tplScholOk; $('s-tpl-coach').value = SET.tplCoach || TPL_DEF.coach; $('s-tpl-coach-rel').value = SET.tplCoachRel || TPL_DEF.coachRel; $('s-tpl-sond').value = SET.tplSond || TPL_DEF.sond; $('s-tpl-lead').value = SET.tplLead || TPL_DEF.lead;
   $('s-groupe').value = SET.groupe; $('s-iclosed').value = SET.iclosed;
   $('s-tpl-eow').value = SET.tplEowRelance; $('s-tpl-ambre').value = SET.tplAmbreCheckin; $('s-tpl-ambre-abs').value = SET.tplAmbreAbsente;
   openSet(true);
 });
 $('voile').addEventListener('click', () => openSet(false));
 $('s-save').addEventListener('click', () => {
-  SET = {tplWebi:$('s-tpl-webi').value, tplInvite:$('s-tpl-invite').value, tplWebiCoach:$('s-tpl-webi-coach').value, tplWebiEcole:$('s-tpl-webi-ecole').value, tplCand:$('s-tpl-cand').value, tplCall:$('s-tpl-call').value, tplReplay:$('s-tpl-replay').value, replay:($('s-replay').value.trim() || REPLAY_DEF), tplScholRel:$('s-tpl-schol-rel').value, tplScholOk:$('s-tpl-schol-ok').value, tplCoach:$('s-tpl-coach').value, tplCoachRel:$('s-tpl-coach-rel').value, tplLead:$('s-tpl-lead').value, groupe:$('s-groupe').value.trim(), iclosed:$('s-iclosed').value.trim(), tplEowRelance:$('s-tpl-eow').value, tplAmbreCheckin:$('s-tpl-ambre').value, tplAmbreAbsente:$('s-tpl-ambre-abs').value};
-  store.set('reglages', SET); openSet(false); renderWebi(); renderLive1(); renderCand(); renderAgenda(); renderSchol(); renderCoach(); renderAmbre(); renderLeads(); toast('Enregistré');
+  SET = {tplWebi:$('s-tpl-webi').value, tplInvite:$('s-tpl-invite').value, tplWebiCoach:$('s-tpl-webi-coach').value, tplWebiEcole:$('s-tpl-webi-ecole').value, tplCand:$('s-tpl-cand').value, tplCall:$('s-tpl-call').value, tplReplay:$('s-tpl-replay').value, replay:($('s-replay').value.trim() || REPLAY_DEF), tplScholRel:$('s-tpl-schol-rel').value, tplScholOk:$('s-tpl-schol-ok').value, tplCoach:$('s-tpl-coach').value, tplCoachRel:$('s-tpl-coach-rel').value, tplSond:$('s-tpl-sond').value, tplLead:$('s-tpl-lead').value, groupe:$('s-groupe').value.trim(), iclosed:$('s-iclosed').value.trim(), tplEowRelance:$('s-tpl-eow').value, tplAmbreCheckin:$('s-tpl-ambre').value, tplAmbreAbsente:$('s-tpl-ambre-abs').value};
+  store.set('reglages', SET); openSet(false); renderWebi(); renderLive1(); renderCand(); renderAgenda(); renderSchol(); renderCoach(); renderSondage(); renderAmbre(); renderLeads(); toast('Enregistré');
 });
 $('s-reset').addEventListener('click', () => {
   $('s-tpl-webi').value = TPL_DEF.webi; $('s-tpl-invite').value = TPL_DEF.invite; $('s-tpl-webi-coach').value = TPL_DEF.webiCoach; $('s-tpl-webi-ecole').value = TPL_DEF.webiEcole;
   $('s-tpl-cand').value = TPL_DEF.cand; $('s-tpl-call').value = TPL_DEF.call; $('s-tpl-replay').value = TPL_DEF.replay; $('s-replay').value = REPLAY_DEF;
-  $('s-tpl-schol-rel').value = TPL_DEF.scholRel; $('s-tpl-schol-ok').value = TPL_DEF.scholOk; $('s-tpl-coach').value = TPL_DEF.coach; $('s-tpl-coach-rel').value = TPL_DEF.coachRel;
+  $('s-tpl-schol-rel').value = TPL_DEF.scholRel; $('s-tpl-schol-ok').value = TPL_DEF.scholOk; $('s-tpl-coach').value = TPL_DEF.coach; $('s-tpl-coach-rel').value = TPL_DEF.coachRel; $('s-tpl-sond').value = TPL_DEF.sond;
   $('s-groupe').value = DATA.webi.groupe;
   $('s-tpl-eow').value = TPL_DEF.eowRelance; $('s-tpl-ambre').value = TPL_DEF.ambreCheckin; $('s-tpl-ambre-abs').value = TPL_DEF.ambreAbsente;
 });
 
-renderTabs(); renderObj8(); renderWebi(); renderLive2(); renderLive1(); renderCand(); renderEcole(); renderSchol(); renderCoach(); renderAgenda(); renderTrack(); renderLeads(); renderClients(); renderAmbre(); renderCompta(); renderData();
+renderTabs(); renderObj8(); renderWebi(); renderLive2(); renderLive1(); renderCand(); renderEcole(); renderSchol(); renderCoach(); renderSondage(); renderAgenda(); renderTrack(); renderLeads(); renderClients(); renderAmbre(); renderCompta(); renderData();
 refreshContrats();
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshContrats(); });
 
