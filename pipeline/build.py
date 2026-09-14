@@ -885,9 +885,10 @@ if ty_key:
 
 
 # ---- Objectif 8 : liste priorisée des personnes à rappeler pour booker un call avec Anaïs ----
-# Sources croisées : liste d'attente école, inscrites aux 2 lives, calls iClosed passés sans vente (ou annulés),
+# Sources croisées : liste d'attente école, inscrites aux lives, calls iClosed uniquement annulés,
 # contacts iClosed sans call, candidatures coaching (Tally WOLYdJ) et bourse (Tally Np1Gy0).
-# Exclues : clientes (onglet Clients + ventes de Suivi Calls + contrats), tests, calls à venir déjà bookés,
+# Exclues : clientes (onglet Clients + ventes de Suivi Calls + contrats), tests, toute personne avec un call iClosed non annulé
+# (passé ou à venir, 15/09 ; sauf si cochée « Contactée » AVANT ce call : elle reste en « Call booké » pour le suivi),
 # + les exclusions / messages perso / prénoms du fichier LOCAL objectif8.json (secret GitHub OBJECTIF8 en CI :
 # aucune donnée perso ne vit dans le repo public). Coche partagée = onglet Sheet « Rappels objectif 8 » (pont rappel_set).
 import unicodedata
@@ -910,23 +911,26 @@ o8_notes = {str(k).lower(): v for k, v in (o8cfg.get("notes") or {}).items()}
 o8_prenoms = {str(k).lower(): v for k, v in (o8cfg.get("prenoms") or {}).items()}
 o8_alias = {str(k).lower(): str(v).lower() for k, v in (o8cfg.get("alias") or {}).items()}   # e-mail mal tapé -> e-mail de la même personne
 O8_SEG = OrderedDict([
-    ("cand", "Candidature coaching"), ("chaud", "École chaud / à rappeler"), ("call", "Call passé sans vente"),
+    ("cand", "Candidature coaching"), ("chaud", "École chaud / à rappeler"), ("annule", "Call annulé, à rebooker"),
     ("bourse", "Candidature bourse"), ("ecole", "Liste d'attente non traitée"), ("webi2", "Aux 2 lives"),
     ("webi1", "Un seul live"), ("lead", "iClosed sans call"), ("froid", "École déjà contactée"),
 ])
 O8_LVL = {s: i + 1 for i, s in enumerate(O8_SEG)}
-# messages de repli par segment (les messages perso de objectif8.json priment) : pas d'emoji (le lien wa.me les casse), pas de tiret cadratin
-O8_TPL = {
-    "cand": "Hello {p},\n\nMerci pour ta candidature au coaching avec Anaïs. Elle l'a lue et veut échanger avec toi de vive voix : sa Selfty Academy ouvre le 10 octobre et un appel avec elle te dira vite si c'est fait pour toi.\n\nTon créneau ici : {link}\n\nAlex, l'associé de Anaïs Brault",
-    "chaud": "Hello {p},\n\nOn avait échangé sur l'école de coaching d'Anaïs : elle ouvre le 10 octobre et la première promo se remplit. Le plus simple pour savoir si c'est le bon moment pour toi, c'est un appel direct avec Anaïs.\n\nTon créneau ici : {link}\n\nAlex, l'associé de Anaïs Brault",
-    "call": "Hello {p},\n\nTon appel avec Anaïs remonte au {date} et l'école ouvre le 10 octobre. Si l'envie est toujours là, on te propose un second échange avec elle pour trancher : dis-moi 2 créneaux qui t'arrangent cette semaine et je te les bloque.\n\nAlex, l'associé de Anaïs Brault",
-    "bourse": "Hello {p},\n\nOn a bien reçu ta candidature pour la bourse : Anaïs lit tout elle-même et tu auras sa réponse d'ici le 15 septembre. En attendant elle veut t'entendre de vive voix, quelle que soit la décision sur la bourse : l'école ouvre le 10 octobre.\n\nTon créneau ici : {link}\n\nAlex, l'associé de Anaïs Brault",
-    "ecole": "Hello {p},\n\nTu avais répondu au questionnaire de l'école de coaching d'Anaïs : elle ouvre le 10 octobre et je reprends contact avec chaque personne de la liste d'attente. Le plus simple, c'est un appel avec Anaïs pour voir si c'est fait pour toi.\n\nTon créneau ici : {link}\n\nAlex, l'associé de Anaïs Brault",
-    "webi2": "Hello {p},\n\nTu as suivi les deux lives d'Anaïs (31 août et 9 septembre), donc le sujet te parle. Sa Selfty Academy ouvre le 10 octobre et la première promo se remplit : je te propose un appel avec Anaïs pour voir si c'est fait pour toi.\n\nTon créneau ici : {link}\n\nAlex, l'associé de Anaïs Brault",
-    "webi1": "Hello {p},\n\nTu avais pris ta place au live d'Anaïs du {live}. Sa Selfty Academy ouvre le 10 octobre et la première promo se remplit : si devenir coach (ou aller plus loin dans ta pratique) te parle, un appel avec Anaïs te dira vite si c'est fait pour toi.\n\nTon créneau ici : {link}\n\nAlex, l'associé de Anaïs Brault",
-    "lead": "Hello {p},\n\nJ'ai vu que tu avais commencé ta candidature pour la Selfty Academy sans réserver ton appel avec Anaïs. L'école ouvre le 10 octobre : c'est un échange de 45 minutes avec elle, sans engagement, pour voir si c'est fait pour toi.\n\nTon créneau ici : {link}\n\nAlex, l'associé de Anaïs Brault",
-    "froid": "Hello {p},\n\nOn avait échangé au sujet de l'école de coaching d'Anaïs. Elle ouvre le 10 octobre et la première promo se remplit : si c'est toujours d'actualité pour toi, un appel avec Anaïs te dira vite si c'est le bon moment.\n\nTon créneau ici : {link}\n\nAlex, l'associé de Anaïs Brault",
-}
+# messages de repli par segment (les messages perso de objectif8.json priment) : pas d'emoji (le lien wa.me les casse), pas de tiret cadratin.
+# 15/09 : chaque message annonce que l'agenda d'Anaïs est complet cette semaine (O8_DISPO) avant le lien.
+O8_DISPO = "Cette semaine, l'agenda d'Anaïs est complet. De nouveaux créneaux s'ouvrent dans quelques jours : réserve dès maintenant pour bloquer le tien.\n\n{link}"
+O8_SIGN = "Alex, l'associé d'Anaïs Brault"
+O8_TPL = {k: "Hello {p},\n\n" + v + "\n\n" + O8_DISPO + "\n\n" + O8_SIGN for k, v in {
+    "cand": "Merci pour ta candidature au coaching avec Anaïs. Elle l'a lue et veut en parler avec toi de vive voix : sa Selfty Academy ouvre le 10 octobre.",
+    "chaud": "On avait échangé sur l'école de coaching d'Anaïs : elle ouvre le 10 octobre et la première promo se remplit. Le plus simple pour savoir si c'est le bon moment, c'est un appel avec elle.",
+    "annule": "Ton appel avec Anaïs du {date} a été annulé, et l'école ouvre le 10 octobre. Si l'envie est toujours là, reprends un créneau avec elle.",
+    "bourse": "On a bien reçu ta candidature pour la bourse et Anaïs lit tout elle-même. Quelle que soit sa décision, elle veut t'entendre de vive voix : l'école ouvre le 10 octobre.",
+    "ecole": "Tu avais répondu au questionnaire de l'école de coaching d'Anaïs : elle ouvre le 10 octobre et je reprends contact avec toute la liste d'attente. Le plus simple, c'est un appel avec Anaïs.",
+    "webi2": "Tu as suivi deux lives d'Anaïs, donc le sujet te parle. Sa Selfty Academy ouvre le 10 octobre : un appel avec elle te dira si c'est fait pour toi.",
+    "webi1": "Tu avais pris ta place au live d'Anaïs du {live}. Sa Selfty Academy ouvre le 10 octobre : si devenir coach (ou aller plus loin dans ta pratique) te parle, un appel avec elle te dira vite si c'est fait pour toi.",
+    "lead": "Tu avais commencé ta candidature pour la Selfty Academy sans réserver ton appel avec Anaïs. L'école ouvre le 10 octobre : 45 minutes avec elle, sans engagement, pour voir si c'est fait pour toi.",
+    "froid": "On avait échangé au sujet de l'école de coaching d'Anaïs. Elle ouvre le 10 octobre : si c'est toujours d'actualité pour toi, un appel avec elle te dira si c'est le bon moment.",
+}.items()}
 
 def o8_tel(v):
     t = norm_phone(v)
@@ -980,7 +984,7 @@ def o8_add(mail, tel, nom, prenom=""):
     p = o8_find(mail, tel, nom)
     if not p:
         p = {"names": [], "prenom": "", "mail": "", "tel": "", "sig": [], "info": [], "lives": set(),
-             "client": "", "excl": "", "non": "", "upcoming": ""}
+             "client": "", "excl": "", "non": "", "upcoming": "", "calls": []}
         o8.append(p)
     if mail and not p["mail"]:
         p["mail"] = mail
@@ -1038,7 +1042,7 @@ for e in ecole:
         o8_sig(p, "ecole", e["ts"], f"Questionnaire école du {o8_dd(e['ts'])} ({e['src']}), jamais traité")
     else:
         o8_sig(p, "froid", e["ts"], f"École{qui} : {st[:120]}")
-# 3) calls iClosed : passés sans vente ou annulés -> à rappeler ; à venir -> exclus (sauf déjà cochée) ; vente -> cliente
+# 3) calls iClosed : vente -> cliente ; call non annulé (passé ou à venir) -> exclue ; seulement annulé -> à rebooker
 _now_iso = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
 for c in icalls:
     if str(c["id"]).upper().startswith(("TEST", "DEMO")) or o8_is_test(c["mail"], c["n"]):
@@ -1049,12 +1053,11 @@ for c in icalls:
     if str(t.get("r", "")).lower().startswith("vente"):
         p["client"] = "vente enregistrée dans Suivi Calls"; continue
     if c["cancel"]:
-        o8_sig(p, "call", c["utc"], f"Call iClosed du {o8_dd(c['utc'])} annulé" + (" (par elle)" if "CONTACT" in c["cancelWhy"].upper() else "") + ", à rebooker")
-    elif c["utc"] and c["utc"][:19] > _now_iso:
-        p["upcoming"] = c["utc"]
-    else:
-        res = t.get("r") or t.get("s") or "résultat pas encore renseigné dans Suivi Calls"
-        o8_sig(p, "call", c["utc"], f"Call iClosed du {o8_dd(c['utc'])} : {res}" + (f" · « {t['comment'][:90]} »" if t.get("comment") else ""))
+        o8_sig(p, "annule", c["utc"], f"Call iClosed du {o8_dd(c['utc'])} annulé" + (" (par elle)" if "CONTACT" in c["cancelWhy"].upper() else "") + ", à rebooker")
+    elif c["utc"]:
+        p["calls"].append(c["utc"])
+        if c["utc"][:19] > _now_iso and (not p["upcoming"] or c["utc"] < p["upcoming"]):
+            p["upcoming"] = c["utc"]
 # ventes de Suivi Calls dont le call n'est plus dans iClosed
 for r in (track_rows or []):
     if str(r.get("Résultat") or "").lower().startswith("vente") and not str(r.get("Call ID") or "").upper().startswith(("TEST", "DEMO")):
@@ -1112,8 +1115,13 @@ for p in o8:
     rap = rappels.get(p["mail"]) or rappels.get(p["tel"]) or {}
     if p["client"] or p["excl"]:
         obj8_exclues.append({"n": nom, "pourquoi": p["excl"] or p["client"]}); continue
-    if p["upcoming"] and not rap:
-        obj8_exclues.append({"n": nom, "pourquoi": f"call déjà booké le {o8_dd(p['upcoming'])}"}); continue
+    if p["calls"]:
+        # call iClosed non annulé (passé ou à venir) = exclue ; exception : cochée « Contactée » avant ce call
+        # (booké grâce à la relance Objectif 8) -> reste visible en « Call booké » pour le suivi
+        cd = str(rap.get("cd") or "")[:10] if rap.get("c") else ""
+        if not (cd and all(u[:10] >= cd for u in p["calls"])):
+            passes = sorted(u for u in p["calls"] if u[:19] <= _now_iso)
+            obj8_exclues.append({"n": nom, "motif": "call", "pourquoi": f"a déjà eu un call le {o8_dd(passes[-1])}" if passes else f"call déjà booké le {o8_dd(p['upcoming'])}"}); continue
     LIVE_NOMS = {"31aout": "31 août", "9sept": "9 septembre", "21sept": "21 septembre"}
     if len(p["lives"]) >= 2:
         o8_sig(p, "webi2", "", f"A pris sa place à {len(p['lives'])} lives (" + " + ".join(LIVE_NOMS[x] for x in ("31aout", "9sept", "21sept") if x in p["lives"]) + ")")
@@ -1135,7 +1143,7 @@ for p in o8:
     nom = " ".join(toks)
     why = list(OrderedDict.fromkeys(s["why"] for s in sigs))
     live = "21 septembre" if "21sept" in p["lives"] else "9 septembre" if "9sept" in p["lives"] else "31 août"
-    date_call = next((o8_dd(s["ts"]) for s in sigs if s["seg"] == "call"), "")
+    date_call = next((o8_dd(s["ts"]) for s in sigs if s["seg"] == "annule"), "")
     msg = o8_msgs.get(p["mail"]) or o8_msgs.get(p["tel"]) or O8_TPL[seg]
     msg = msg.replace("{p}", pre or "toi").replace("{link}", ICLOSED_LINK).replace("{live}", live).replace("{date}", date_call or "quelques jours")
     obj8_list.append({
@@ -1145,7 +1153,7 @@ for p in o8:
         "last": last, "lastLab": o8_dd(last) if last else "",
         "msg": msg, "perso": bool(o8_msgs.get(p["mail"]) or o8_msgs.get(p["tel"])), "info": p["info"][:14],
         "c": bool(rap.get("c")), "cd": rap.get("cd", ""),
-        "b": bool(rap.get("b")) or bool(p["upcoming"]), "bd": rap.get("bd", "") or (f"iClosed, call le {o8_dd(p['upcoming'])}" if p["upcoming"] else ""),
+        "b": bool(rap.get("b")) or bool(p["calls"]), "bd": rap.get("bd", "") or (f"iClosed, call le {o8_dd(p['upcoming'] or max(p['calls']))}" if p["calls"] else ""),
         "rnote": rap.get("note", ""), "maj": rap.get("maj", ""),
     })
 # du plus chaud au plus froid ; à niveau égal, la plus récente d'abord
@@ -1171,8 +1179,8 @@ for r in (track_rows or []):
     ventes_depuis += d >= OBJ8_DEBUT
 obj8 = {"ok": True, "debut": OBJ8_DEBUT, "cible": OBJ8_CIBLE, "link": ICLOSED_LINK, "rappelsOk": rappel_rows is not None,
         "ventesMois": ventes_mois, "ventesDepuis": ventes_depuis, "segments": list(O8_SEG.items()),
-        "list": obj8_list, "exclues": len(obj8_exclues), "persoMsgs": len(o8_msgs)}
-print(f"Objectif 8 : {len(obj8_list)} personnes à rappeler ({len(obj8_exclues)} exclues), {ventes_depuis} vente(s) depuis le {OBJ8_DEBUT}, {ventes_mois} sur le mois")
+        "list": obj8_list, "exclues": len(obj8_exclues), "exclCall": sum(1 for x in obj8_exclues if x.get("motif") == "call"), "persoMsgs": len(o8_msgs)}
+print(f"Objectif 8 : {len(obj8_list)} personnes à rappeler ({len(obj8_exclues)} exclues dont {obj8['exclCall']} pour un call iClosed), {ventes_depuis} vente(s) depuis le {OBJ8_DEBUT}, {ventes_mois} sur le mois")
 
 # ---- Mail du sondage : destinataires (calculés ici, embarqués dans la page chiffrée, envoyés par le script Contrats `mail_liste`) ----
 # Toutes les personnes uniques par e-mail : inscrites live 1 + live 2, liste d'attente école, contacts + calls iClosed

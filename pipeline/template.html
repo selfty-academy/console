@@ -258,7 +258,7 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 .prep-alex{grid-column:1/-1;background:#FFF7E6;border:1px solid #F3D9A4;border-radius:10px;padding:8px 10px;margin-top:6px;white-space:pre-wrap}
 .prep-alex b{display:block;color:#8a5a00;margin-bottom:2px}
 /* onglet Objectif 8 */
-.o8-cand{background:#1F3A5F;color:#fff}.o8-chaud{background:var(--danger);color:#fff}.o8-call{background:var(--warn);color:#fff}
+.o8-cand{background:#1F3A5F;color:#fff}.o8-chaud{background:var(--danger);color:#fff}.o8-annule{background:var(--warn);color:#fff}
 .o8-bourse{background:#6E4A6E;color:#fff}.o8-ecole{background:#EAD9EA;color:#6E4A6E}.o8-webi2,.o8-webi1{background:var(--rose);color:var(--mauve-deep)}
 .o8-lead{background:#EEF3F9;color:#4F79A8}.o8-froid{border:1px solid var(--border);color:var(--muted);background:transparent}
 .o8-why{margin-top:4px;font-size:12.5px;color:var(--ink-soft);line-height:1.4}
@@ -293,6 +293,21 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 body.raf-on .wrap{padding-bottom:210px}
 .btn-raf{border:1px solid var(--wa);background:var(--surface);color:var(--wa);border-radius:999px;padding:7px 14px;font:500 13.5px "Jost",sans-serif;cursor:pointer}
 .btn-raf:hover{background:var(--wa);color:#fff}
+.td-add{display:grid;grid-template-columns:1.1fr 1.4fr auto;gap:8px;margin:0 0 14px}
+.td{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px 16px;box-shadow:var(--shadow);display:grid;grid-template-columns:auto 1fr auto;gap:4px 14px;align-items:start}
+.td input[type=checkbox]{width:20px;height:20px;margin:3px 0 0;accent-color:var(--ok);cursor:pointer}
+.td .t{font-weight:600;font-size:16px;line-height:1.35}
+.td .d{font-size:13.5px;color:var(--ink-soft);margin-top:3px;line-height:1.5}
+.td .acts{display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.td .acts a.btn-ghost{text-decoration:none;white-space:nowrap}
+.td .perso{font-size:11.5px;color:var(--muted);font-weight:500;margin-left:6px}
+.td.done{opacity:.55;background:rgba(255,253,251,.55)}
+.td.done .t{text-decoration:line-through;text-decoration-color:var(--muted)}
+.td-del{border:none;background:transparent;color:var(--muted);font-size:17px;cursor:pointer;padding:2px 6px;border-radius:8px}
+.td-del:hover{color:var(--danger);background:var(--rose)}
+.td-fait{margin:18px 0 8px}
+.td-fait summary{cursor:pointer;color:var(--muted);font-size:14px;margin-bottom:8px}
+@media (max-width:760px){.td-add{grid-template-columns:1fr}.td{grid-template-columns:auto 1fr}.td .acts{grid-column:2;justify-content:flex-start}}
 .o8-rang{display:inline-block;min-width:26px;text-align:center;background:var(--ink);color:#FFFDFB;border-radius:999px;font-size:12px;font-weight:600;padding:1px 7px;margin-right:6px;vertical-align:middle}
 </style>
 
@@ -314,12 +329,24 @@ body.raf-on .wrap{padding-bottom:210px}
 
 <!-- ===================== OBJECTIF 8 : rappels pour booker un call avec Anaïs ===================== -->
 <section class="panel" id="p-obj8">
-  <p class="intro">Objectif : <strong>8 clientes de plus ce mois-ci</strong>. Tout le monde est là, du plus chaud au plus froid : candidatures coaching, liste d'attente école, calls passés sans vente, candidatures bourse, inscrites aux lives, leads iClosed. Un message perso par personne avec une seule proposition : un appel avec Anaïs. Les coches « Contactée » et « Call booké » sont <strong>partagées</strong> (onglet « Rappels objectif 8 » du Sheet École) : Alex et Anaïs voient la même chose sur tous les appareils. La liste se recalcule à chaque mise à jour (clientes, calls bookés et tests sortent tout seuls).</p>
+  <p class="intro">Objectif : <strong>8 clientes de plus ce mois-ci</strong>. Tout le monde est là, du plus chaud au plus froid : candidatures coaching, liste d'attente école, calls annulés à rebooker, candidatures bourse, inscrites aux lives, leads iClosed. Un message perso par personne avec une seule proposition : un appel avec Anaïs. Les coches « Contactée » et « Call booké » sont <strong>partagées</strong> (onglet « Rappels objectif 8 » du Sheet École) : Alex et Anaïs voient la même chose sur tous les appareils. La liste se recalcule à chaque mise à jour : clientes, contrats, tests et <strong>toute personne qui a déjà eu ou booké un call avec Anaïs</strong> sortent tout seuls.</p>
   <div class="kpis kpis-mini" id="o8-kpis"></div>
   <div class="pills" id="f-o8-seg"></div>
   <div class="pills" id="f-o8"></div>
   <div style="margin:0 0 14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center"><input type="search" id="q-o8" class="search" placeholder="Chercher un prénom, un mail, un numéro…"><button class="btn-raf" id="raf-o8" title="Ouvre WhatsApp pour chaque personne à rappeler, dans l'ordre, et coche « Contactée » à chaque « Suivant »">📲 Envoyer un par un</button></div>
   <div class="liste" id="l-o8"></div>
+</section>
+
+<!-- ===================== TO DO ===================== -->
+<section class="panel" id="p-todo">
+  <p class="intro">La to-do d'Alex pour Selfty. Chaque tâche ouvre directement le bon onglet. Les coches et les tâches ajoutées restent sur <strong>cet appareil</strong> (navigateur).</p>
+  <div class="kpis kpis-mini" id="todo-kpis"></div>
+  <form id="todo-add" class="td-add">
+    <input type="text" id="todo-titre" placeholder="Nouvelle tâche" maxlength="140" required>
+    <input type="text" id="todo-detail" placeholder="Détail (facultatif)" maxlength="300">
+    <button class="btn-add" type="submit">Ajouter</button>
+  </form>
+  <div class="liste" id="l-todo"></div>
 </section>
 
 <!-- ===================== LIVE 9 SEPT ===================== -->
@@ -747,19 +774,19 @@ const esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;',
 /* ---------- réglages ---------- */
 const REPLAY_DEF = 'https://selfty-academy.github.io/replay/';
 const TPL_DEF = {
-  webi: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nPetit rappel : le live c'est CE SOIR à 18h ! Voici le lien pour nous rejoindre :\n{live}\n\nSi tu n'y es pas, voici le lien du groupe WhatsApp du live :\n{groupe}\n\nÀ ce soir !",
-  invite: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nTu t'étais inscrite au live d'Anaïs du 31 août, alors je te préviens en avance : elle refait un live DEMAIN, mercredi à 18h, sur un nouveau thème : « Tu es formée mais tu ne t'es pas encore lancée ».\n\nVoici le lien Zoom pour nous rejoindre demain :\n{live}\n\nEt le groupe WhatsApp du live pour être sûre de ne pas le rater :\n{groupe}\n\nÀ demain !",
-  webiCoach: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nMerci pour ta candidature au coaching en direct de ce soir. Cette fois on a choisi une autre personne, mais ta candidature nous a beaucoup plu et on la garde précieusement si on refait un live coaching.\n\nEt on t'attend quand même au live CE SOIR à 18h, voici le lien :\n{live}\n\nSi tu n'y es pas, voici le lien du groupe WhatsApp du live :\n{groupe}\n\nÀ ce soir !",
-  webiEcole: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nJ'ai vu que tu t'étais inscrit(e) à la liste d'attente de l'école. Elle n'a pas encore ouvert, mais si tu veux, je te propose un call avec moi pour en parler : voir où tu en es et te présenter ce qu'on prépare. Dis-moi si ça te tente et je t'envoie un créneau.\n\nEt en attendant, le live c'est CE SOIR à 18h, voici le lien :\n{live}\n\nSi tu n'y es pas, voici le lien du groupe WhatsApp du live :\n{groupe}\n\nÀ ce soir !",
-  cand: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nMerci pour ta candidature au coaching en direct. Cette fois on a choisi une autre personne, mais ta candidature nous a beaucoup plu et on la garde précieusement : si on refait un live coaching un jour, tu fais partie des personnes à qui on pensera en premier.\n\nEt bien sûr on t'attend au live ce soir à 18h, voici le lien :\n{live}",
-  replay: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nEn attendant ton appel avec Anaïs {quand}, voici le replay de son live si tu veux le voir ou le revoir avant de lui parler :\n{replay}\n\nÀ très vite !",
-  call: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nPetit rappel pour ton appel avec Anaïs {quand}. À tout à l'heure !",
-  scholRel: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nJ'ai vu que tu avais commencé ta candidature pour la bourse mais qu'elle n'est pas allée au bout. Les candidatures ferment le 15 septembre : si tu veux ta chance, tu peux la finir ici :\n{lien}\n\nEt si tu bloques quelque part, dis-moi !",
-  lead: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nJ'ai vu que tu avais commencé ta candidature pour l'Academy mais que tu n'as pas encore réservé ton appel avec Anaïs. C'est un échange de 45 minutes, sans engagement, pour voir si l'école est faite pour toi.\n\nTu peux choisir ton créneau ici :\n{iclosed}\n\nEt si tu as une question avant, dis-moi !",
-  coach: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault 🌸\n\nOn a bien reçu ta candidature pour le coaching individuel avec Anaïs, merci pour ta confiance. Anaïs l'a lue et aimerait échanger avec toi : quelles sont tes disponibilités cette semaine pour un premier appel ?",
-  sond: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault 🌸\n\nMerci pour ta réponse au sondage sur le prochain live, Anaïs l'a lue. Tu lui proposes : « {sujet} ». Je te préviens dès que la date et le thème sont fixés.\n\nEt si tu veux en parler directement avec elle avant le live, tu peux réserver ton appel ici :\n{iclosed}",
-  coachRel: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault 🌸\n\nJ'ai vu que tu avais commencé ta candidature pour le coaching individuel avec Anaïs mais qu'elle n'est pas allée au bout. Il ne reste que deux minutes, tu peux la finir ici :\n{lien}\n\nEt si tu bloques quelque part, dis-moi !",
-  scholOk: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault à la Selfty Academy 🌸\n\nOn a bien reçu ta candidature pour la bourse, merci pour ta confiance. Anaïs lit tout personnellement : tu auras une réponse avant le 15 septembre.",
+  webi: "Hello {prenom}, c'est Alex, l'associé d'Anaïs Brault à la Selfty Academy 🌸\n\nPetit rappel : le live c'est CE SOIR à 18h ! Voici le lien pour nous rejoindre :\n{live}\n\nSi tu n'y es pas, voici le lien du groupe WhatsApp du live :\n{groupe}\n\nÀ ce soir !",
+  invite: "Hello {prenom}, c'est Alex, l'associé d'Anaïs Brault à la Selfty Academy 🌸\n\nTu t'étais inscrite au live d'Anaïs du 31 août, alors je te préviens en avance : elle refait un live DEMAIN, mercredi à 18h, sur un nouveau thème : « Tu es formée mais tu ne t'es pas encore lancée ».\n\nVoici le lien Zoom pour nous rejoindre demain :\n{live}\n\nEt le groupe WhatsApp du live pour être sûre de ne pas le rater :\n{groupe}\n\nÀ demain !",
+  webiCoach: "Hello {prenom}, c'est Alex, l'associé d'Anaïs Brault à la Selfty Academy 🌸\n\nMerci pour ta candidature au coaching en direct de ce soir. Cette fois on a choisi une autre personne, mais ta candidature nous a beaucoup plu et on la garde précieusement si on refait un live coaching.\n\nEt on t'attend quand même au live CE SOIR à 18h, voici le lien :\n{live}\n\nSi tu n'y es pas, voici le lien du groupe WhatsApp du live :\n{groupe}\n\nÀ ce soir !",
+  webiEcole: "Hello {prenom}, c'est Alex, l'associé d'Anaïs Brault à la Selfty Academy 🌸\n\nJ'ai vu que tu t'étais inscrit(e) à la liste d'attente de l'école. Elle n'a pas encore ouvert, mais si tu veux, je te propose un call avec moi pour en parler : voir où tu en es et te présenter ce qu'on prépare. Dis-moi si ça te tente et je t'envoie un créneau.\n\nEt en attendant, le live c'est CE SOIR à 18h, voici le lien :\n{live}\n\nSi tu n'y es pas, voici le lien du groupe WhatsApp du live :\n{groupe}\n\nÀ ce soir !",
+  cand: "Hello {prenom}, c'est Alex, l'associé d'Anaïs Brault à la Selfty Academy 🌸\n\nMerci pour ta candidature au coaching en direct. Cette fois on a choisi une autre personne, mais ta candidature nous a beaucoup plu et on la garde précieusement : si on refait un live coaching un jour, tu fais partie des personnes à qui on pensera en premier.\n\nEt bien sûr on t'attend au live ce soir à 18h, voici le lien :\n{live}",
+  replay: "Hello {prenom}, c'est Alex, l'associé d'Anaïs Brault à la Selfty Academy 🌸\n\nEn attendant ton appel avec Anaïs {quand}, voici le replay de son live si tu veux le voir ou le revoir avant de lui parler :\n{replay}\n\nÀ très vite !",
+  call: "Hello {prenom}, c'est Alex, l'associé d'Anaïs Brault à la Selfty Academy 🌸\n\nPetit rappel pour ton appel avec Anaïs {quand}. À tout à l'heure !",
+  scholRel: "Hello {prenom}, c'est Alex, l'associé d'Anaïs Brault à la Selfty Academy 🌸\n\nJ'ai vu que tu avais commencé ta candidature pour la bourse mais qu'elle n'est pas allée au bout. Les candidatures ferment le 15 septembre : si tu veux ta chance, tu peux la finir ici :\n{lien}\n\nEt si tu bloques quelque part, dis-moi !",
+  lead: "Hello {prenom}, c'est Alex, l'associé d'Anaïs Brault à la Selfty Academy 🌸\n\nJ'ai vu que tu avais commencé ta candidature pour l'Academy mais que tu n'as pas encore réservé ton appel avec Anaïs. C'est un échange de 45 minutes, sans engagement, pour voir si l'école est faite pour toi.\n\nTu peux choisir ton créneau ici :\n{iclosed}\n\nEt si tu as une question avant, dis-moi !",
+  coach: "Hello {prenom}, c'est Alex, l'associé d'Anaïs Brault 🌸\n\nOn a bien reçu ta candidature pour le coaching individuel avec Anaïs, merci pour ta confiance. Anaïs l'a lue et aimerait échanger avec toi : quelles sont tes disponibilités cette semaine pour un premier appel ?",
+  sond: "Hello {prenom}, c'est Alex, l'associé d'Anaïs Brault.\n\nMerci pour ta réponse au sondage sur le prochain live, Anaïs l'a lue. Tu lui proposes : « {sujet} ». Je te préviens dès que la date et le thème sont fixés.\n\nEt si tu veux en parler directement avec elle avant le live, tu peux réserver ton appel ici :\n{iclosed}",
+  coachRel: "Hello {prenom}, c'est Alex, l'associé d'Anaïs Brault 🌸\n\nJ'ai vu que tu avais commencé ta candidature pour le coaching individuel avec Anaïs mais qu'elle n'est pas allée au bout. Il ne reste que deux minutes, tu peux la finir ici :\n{lien}\n\nEt si tu bloques quelque part, dis-moi !",
+  scholOk: "Hello {prenom}, c'est Alex, l'associé d'Anaïs Brault à la Selfty Academy 🌸\n\nOn a bien reçu ta candidature pour la bourse, merci pour ta confiance. Anaïs lit tout personnellement : tu auras une réponse avant le 15 septembre.",
   eowRelance: "Hello {prenom}, c'est Ambre de la Selfty Academy 🌸\n\nJe n'ai pas encore vu ton bilan de la semaine. Cinq minutes pour prendre du recul sur ta semaine, et ça nous aide à t'accompagner au plus près. Voici ton lien perso :\n{lien}\n\nMerci, et belle journée !",
   ambreCheckin: "Hello {prenom}, c'est Ambre de la Selfty Academy 🌸\n\nJe prends de tes nouvelles : comment tu te sens en ce moment dans la formation ? Y a-t-il quelque chose qu'on peut faire pour mieux t'accompagner ? Je suis là si besoin.",
   exo: "Hello {prenom}, c'est Anaïs 🌸\n\nJ'ai lu ton exercice « {lecon} ».\n\n{commentaire}\n\nOn en reparle au prochain call de groupe si tu veux creuser.",
@@ -777,6 +804,9 @@ if (!SET.tplReplay) SET.tplReplay = TPL_DEF.replay;
 if (!SET.tplCall || SET.tplCall === "Hello {prenom}, c'est Alex de la Selfty Academy 🌸 Petit rappel pour notre appel {quand}. À tout à l'heure !") SET.tplCall = TPL_DEF.call;
 if (!SET.replay) SET.replay = REPLAY_DEF;
 if (!SET.tplExo) SET.tplExo = TPL_DEF.exo;
+// 15/09 : « l'associé de Anaïs » -> « l'associé d'Anaïs » dans les templates déjà enregistrés, et plus d'emoji dans le merci du sondage
+Object.keys(SET).forEach(k => { if (typeof SET[k] === 'string' && SET[k].includes("l'associé de Anaïs")) SET[k] = SET[k].replaceAll("l'associé de Anaïs", "l'associé d'Anaïs"); });
+if (SET.tplSond && SET.tplSond.includes('🌸')) SET.tplSond = SET.tplSond.replace(/ ?🌸(?=\n)/g, '.').replace(/ ?🌸/g, '');
 
 function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),2200); }
 function waUrl(tel, msg){ return 'https://wa.me/'+tel+'?text='+encodeURIComponent(msg); }
@@ -785,6 +815,7 @@ const WA_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10
 /* ---------- onglets ---------- */
 const TABS = [
   {id:'obj8', lab:'📞 Objectif 8'},
+  {id:'todo', lab:'✅ To do'},
   {id:'track', lab:'Calls effectués à remplir'},
   {id:'calls', lab:'Prochains calls'},
   {id:'leads', lab:'Leads sans call'},
@@ -809,6 +840,8 @@ const TABS = [
 const LEAVES = TABS.flatMap(t => t.sub ? t.sub : [t]);           // onglets « feuilles » = panneaux
 const groupOf = id => (TABS.find(t => t.sub && t.sub.some(x => x.id === id)) || {}).id || null;
 let tabOn = store.get('tab','obj8');
+{ const h = decodeURIComponent(location.hash.slice(1)); const hg = TABS.find(t => t.id === h && t.sub);
+  if (hg) tabOn = hg.sub[0].id; else if (h && LEAVES.some(t => t.id === h)) tabOn = h; }   // lien direct console/#sondage
 if (!LEAVES.some(t => t.id === tabOn)) tabOn = 'obj8';
 function renderTabs(){
   const done = store.get('relwebi', {});
@@ -832,7 +865,7 @@ function renderTabs(){
   const bCoach = ((DATA.coach && DATA.coach.subs) || []).filter(s => !cdone[s.id]).length;
   const bO8 = o8List().filter(p => !p.c && !p.b).length;
   const bSond = ((DATA.sondage && DATA.sondage.subs) || []).length;
-  const b = {live3:null, obj8:bO8, sondage:bSond||null, live2:bLive2, live1:bLive1, webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, coach:bCoach, calls:bCalls, track:bTrack, leads:bLeads, clients:bCli, ambre:ambreManquants().length + eowNonAttribues().length + engATraiter().length, exos:exosList().filter(x => x.statut !== 'Corrigé').length, paie:bPaie, compta:null, data:null};
+  const b = {live3:null, obj8:bO8, todo:todoItems().filter(t => !todoDone()[t.id]).length, sondage:bSond||null, live2:bLive2, live1:bLive1, webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, coach:bCoach, calls:bCalls, track:bTrack, leads:bLeads, clients:bCli, ambre:ambreManquants().length + eowNonAttribues().length + engATraiter().length, exos:exosList().filter(x => x.statut !== 'Corrigé').length, paie:bPaie, compta:null, data:null};
   TABS.filter(t => t.sub).forEach(t => { b[t.id] = t.sub.reduce((n, x) => n + (b[x.id] || 0), 0); });
   const g = groupOf(tabOn);
   $('tabs').innerHTML = TABS.map(t =>
@@ -842,14 +875,25 @@ function renderTabs(){
   if (grp) $('subtabs').innerHTML = grp.sub.map(x => `<button class="pill${x.id===tabOn?' on':''}" data-t="${x.id}">${x.lab}${b[x.id]?` <b>${b[x.id]}</b>`:''}</button>`).join('');
   LEAVES.forEach(t => $('p-'+t.id).classList.toggle('on', t.id===tabOn));
 }
-document.addEventListener('click', e => {
-  const t = e.target.closest('.tab, #subtabs .pill'); if(!t) return;
-  const grp = TABS.find(x => x.id === t.dataset.t && x.sub);
-  if (grp){ const last = store.get('subtab', {})[grp.id]; tabOn = grp.sub.some(x => x.id === last) ? last : grp.sub[0].id; }
-  else tabOn = t.dataset.t;
+// ouvrir un onglet par id (feuille ou groupe) ; l'URL garde #id (lien direct, retour arrière du navigateur)
+function goTab(id, opts){
+  opts = opts || {};
+  const grp = TABS.find(x => x.id === id && x.sub);
+  if (grp){ const last = store.get('subtab', {})[grp.id]; id = grp.sub.some(x => x.id === last) ? last : grp.sub[0].id; }
+  if (!LEAVES.some(t => t.id === id)) return false;
+  tabOn = id;
   const g = groupOf(tabOn); if (g){ const S = store.get('subtab', {}); S[g] = tabOn; store.set('subtab', S); }
   store.set('tab', tabOn); renderTabs();
+  if (!opts.noHash && location.hash !== '#' + tabOn){ try { history.replaceState(null, '', '#' + tabOn); } catch(e){} }
+  if (opts.scroll) window.scrollTo({top: 0, behavior: 'smooth'});
+  return true;
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('.tab, #subtabs .pill, [data-goto]'); if(!t) return;
+  if (t.dataset.goto){ e.preventDefault(); goTab(t.dataset.goto, {scroll:true}); return; }
+  goTab(t.dataset.t);
 });
+window.addEventListener('hashchange', () => { const h = decodeURIComponent(location.hash.slice(1)); if (h && h !== tabOn) goTab(h, {noHash:true}); });
 
 /* ---------- bandeau webi ---------- */
 $('maj').textContent = DATA.maj;
@@ -2777,6 +2821,57 @@ function renderSchol(){
 }
 $('f-schol').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fSchol = p.dataset.f; renderSchol(); }});
 
+/* ---------- to do d'Alex (coches + tâches ajoutées en localStorage : sc-todo, sc-todoperso) ---------- */
+const TODO_DEF = [
+  {id:'d-sond-wa', t:'Remercier les répondantes du sondage sur WhatsApp', d:'Onglet Sondage, bouton 📲 Envoyer un par un, message déjà écrit (sans emoji)', go:'sondage', lab:'Ouvrir Sondage'},
+  {id:'d-zoom-21', t:'Préparer le Zoom du live du lundi 21/09 18h en amont', d:"Micros coupés pour toutes à l'entrée, participantes ne peuvent pas se réactiver, pas de partage d'écran, pas de renommage, salle d'attente, chat vers l'hôte seulement, Alex co-animateur en régie, test du son partagé depuis le Mac, lien Zoom mis sur la LP et dans le mail de confirmation", url:'https://zoom.us/profile/setting', lab:'Réglages Zoom ↗'},
+  {id:'d-sond-mail', t:'Envoyer le mail du sondage à la liste', d:"Après validation du Google Doc par Anaïs : onglet Sondage, M'envoyer un test puis Envoyer à la liste", go:'sondage', lab:'Ouvrir Sondage'},
+  {id:'d-o8-wa', t:"Relancer les personnes d'Objectif 8 sur WhatsApp", d:'Bouton 📲 Envoyer un par un, 15 à 20 messages par heure maximum', go:'obj8', lab:'Ouvrir Objectif 8'},
+  {id:'d-agenda-zoom', t:"Ajouter le lien Zoom des Selfty Calls dans l'agenda", d:"Dès qu'Anaïs l'envoie : selfty-agenda/config.json puis build_ics.py"},
+];
+const todoDone = () => store.get('todo', {});
+const todoItems = () => TODO_DEF.concat(store.get('todoperso', []).map(x => Object.assign({perso:true}, x)));
+function todoCard(x, done){
+  const act = x.go ? `<a class="btn-ghost" href="#${esc(x.go)}" data-goto="${esc(x.go)}">${esc(x.lab || 'Ouvrir')} →</a>`
+    : x.url ? `<a class="btn-ghost" href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.lab || 'Ouvrir ↗')}</a>` : '';
+  return `<div class="td${done ? ' done' : ''}">
+    <input type="checkbox" data-todo="${esc(x.id)}" ${done ? 'checked' : ''} aria-label="Fait">
+    <div><div class="t">${esc(x.t)}${x.perso ? '<span class="perso">ajoutée</span>' : ''}</div>${x.d ? `<div class="d">${esc(x.d)}</div>` : ''}${done ? `<div class="d" style="color:var(--muted)">Fait le ${esc(new Date(done).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}))}</div>` : ''}</div>
+    <div class="acts">${act}${x.perso ? `<button class="td-del" data-tododel="${esc(x.id)}" title="Supprimer la tâche" aria-label="Supprimer">✕</button>` : ''}</div>
+  </div>`;
+}
+function renderTodo(){
+  if (!$('l-todo')) return;
+  const D = todoDone(), all = todoItems();
+  const aFaire = all.filter(x => !D[x.id]), faites = all.filter(x => D[x.id]).sort((a, b) => D[b.id] - D[a.id]);
+  $('todo-kpis').innerHTML = [[aFaire.length, 'à faire'], [faites.length, 'faites']]
+    .map(([v, l]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div></div>`).join('');
+  $('l-todo').innerHTML = (aFaire.length ? aFaire.map(x => todoCard(x, 0)).join('') : `<div class="vide">Tout est fait. Ajoute une tâche au-dessus si besoin.</div>`)
+    + (faites.length ? `<details class="td-fait"><summary>Faites (${faites.length})</summary><div class="liste">${faites.map(x => todoCard(x, D[x.id])).join('')}</div></details>` : '');
+}
+document.addEventListener('change', e => {
+  const k = e.target.dataset.todo; if (!k) return;
+  const D = todoDone(); if (e.target.checked) D[k] = Date.now(); else delete D[k];
+  store.set('todo', D); renderTodo(); renderTabs();
+});
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-tododel]'); if (!b) return;
+  const x = store.get('todoperso', []).find(t => t.id === b.dataset.tododel); if (!x) return;
+  if (!confirm(`Supprimer la tâche « ${x.t} » ?`)) return;
+  store.set('todoperso', store.get('todoperso', []).filter(t => t.id !== x.id));
+  const D = todoDone(); delete D[x.id]; store.set('todo', D);
+  renderTodo(); renderTabs();
+});
+$('todo-add').addEventListener('submit', e => {
+  e.preventDefault();
+  const t = $('todo-titre').value.trim(); if (!t) return;
+  const L = store.get('todoperso', []);
+  L.push({id: 'p-' + Date.now().toString(36), t, d: $('todo-detail').value.trim()});
+  store.set('todoperso', L);
+  $('todo-titre').value = ''; $('todo-detail').value = '';
+  renderTodo(); renderTabs(); toast('Tâche ajoutée');
+});
+
 /* ---------- objectif 8 : rappels pour booker un call avec Anaïs (coche partagée via le pont, onglet « Rappels objectif 8 ») ---------- */
 const O8 = DATA.obj8 || {ok:false, list:[], segments:[], cible:8, ventesMois:0, ventesDepuis:0, debut:''};
 const O8_SEG = Object.fromEntries(O8.segments || []);
@@ -3314,7 +3409,7 @@ setTimeout(() => {
   }
 }, 300);
 
-renderTabs(); renderObj8(); renderWebi(); renderLive3(); renderLive2(); renderLive1(); renderCand(); renderEcole(); renderSchol(); renderCoach(); renderSondage(); renderAgenda(); renderTrack(); renderLeads(); renderClients(); renderAmbre(); renderExos(); renderCompta(); renderData();
+renderTabs(); renderTodo(); renderObj8(); renderWebi(); renderLive3(); renderLive2(); renderLive1(); renderCand(); renderEcole(); renderSchol(); renderCoach(); renderSondage(); renderAgenda(); renderTrack(); renderLeads(); renderClients(); renderAmbre(); renderExos(); renderCompta(); renderData();
 mlMaybe();   // onglet Sondage ouvert au chargement : état du mail à la liste
 refreshContrats();
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshContrats(); });
