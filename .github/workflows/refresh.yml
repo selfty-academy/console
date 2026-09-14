@@ -50,6 +50,12 @@ jobs:
         run: |
           curl -s -m 120 -L "https://script.google.com/macros/s/AKfycbwhr4s_j6vijp-aWj0qWBYIR-8qSYy-tFUoasujsrqCr1-jVIomeBfiUMtkfixxJVLd/exec" \
             -H "Content-Type: application/json" -d "{\"what\":\"eow_rappel\",\"key\":\"$PONT_KEY\"}" | head -c 600; echo
+      - name: Mail du sondage, lot suivant (reprise si des destinataires restent en attente dans « Mails sondage »)
+        env:
+          PONT_KEY: ${{ secrets.PONT_KEY }}
+        run: |
+          curl -s -m 300 -L "https://script.google.com/macros/s/AKfycbwhr4s_j6vijp-aWj0qWBYIR-8qSYy-tFUoasujsrqCr1-jVIomeBfiUMtkfixxJVLd/exec" \
+            -H "Content-Type: application/json" -d "{\"what\":\"mail_liste_lot\",\"key\":\"$PONT_KEY\"}" | head -c 600; echo
       - name: Notif Telegram nouveaux calls
         env:
           TG_TOKEN: ${{ secrets.TG_TOKEN }}

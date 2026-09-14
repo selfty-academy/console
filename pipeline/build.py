@@ -485,7 +485,7 @@ if raw_tc.strip():
     print(f"faux calls ajoutés : {len(fake)}")
 # ---- Leads iClosed sans call : contacts iClosed (formulaire commencé) sans aucun call booké ----
 # suivi (statut de relance + notes) dans l'onglet « Leads iClosed » du Sheet École, écrit par la console (lead_update)
-leads, leads_ok = [], False
+leads, leads_ok, ic_contacts = [], False, []
 if ic_key:
     try:
         req = urllib.request.Request("https://public.api.iclosed.io/v1/contacts?limit=100&page=0",
@@ -493,6 +493,7 @@ if ic_key:
         with urllib.request.urlopen(req, timeout=30) as resp:
             cdata = json.loads(resp.read().decode("utf-8")).get("data", {})
         contacts = cdata.get("contacts") or []
+        ic_contacts = contacts
         booked_ids = {str(c.get("cid") or "") for c in icalls}
         booked_mails = {c["mail"] for c in icalls if c.get("mail")}
         booked_tels = {c["tel"] for c in icalls if c.get("tel")}
@@ -1148,6 +1149,57 @@ obj8 = {"ok": True, "debut": OBJ8_DEBUT, "cible": OBJ8_CIBLE, "link": ICLOSED_LI
         "list": obj8_list, "exclues": len(obj8_exclues), "persoMsgs": len(o8_msgs)}
 print(f"Objectif 8 : {len(obj8_list)} personnes à rappeler ({len(obj8_exclues)} exclues), {ventes_depuis} vente(s) depuis le {OBJ8_DEBUT}, {ventes_mois} sur le mois")
 
+# ---- Mail du sondage : destinataires (calculés ici, embarqués dans la page chiffrée, envoyés par le script Contrats `mail_liste`) ----
+# Toutes les personnes uniques par e-mail : inscrites live 1 + live 2, liste d'attente école, contacts + calls iClosed
+# (les candidatures coaching Tally n'ont pas d'e-mail : injoignables par mail). Moins : clientes signées, contrats envoyés,
+# ventes de Suivi Calls, tests, exclusions objectif8.json (anciennes clientes, mineur, hors cible) et désinscrites (« stop » / « désinscri » dans un statut).
+def sd_desinscrite(*vals):
+    return any(re.search(r"\bstop\b|d[ée]sinscri|unsubscribe|ne veut plus", str(v or ""), re.I) for v in vals)
+
+sd_excl = set(TEST_EMAILS) | {"selfty.academy@gmail.com"} | {c["mail"] for c in clientes if c["mail"]} | set(contrats.keys())   # l'expéditeur ne s'écrit pas à lui-même
+for r in (track_rows or []):
+    if str(r.get("Résultat") or "").lower().startswith("vente"):
+        sd_excl.add(str(r.get("E-mail") or "").strip().lower())
+for x in (o8cfg.get("exclure") or []):
+    m = str(x.get("mail") or "").strip().lower()
+    if m:
+        sd_excl.add(m)
+sd_dest, sd_src = OrderedDict(), Counter()
+def sd_add(mail, prenom, src, nom=""):
+    mail = o8_alias.get(str(mail or "").strip().lower(), str(mail or "").strip().lower())
+    if "@" not in mail or "." not in mail.split("@")[-1] or mail in sd_excl or o8_is_test(mail, nom or prenom):
+        return
+    prenom = str(prenom or "").strip().split(" ")[0]
+    if mail not in sd_dest:
+        sd_dest[mail] = {"email": mail, "prenom": "", "src": src}
+        sd_src[src] += 1
+    if prenom and not sd_dest[mail]["prenom"]:
+        sd_dest[mail]["prenom"] = prenom
+for i in inscrits:
+    if sd_desinscrite(i["statut"], i["etape"]):
+        sd_excl.add(i["mail"].lower()); continue
+    sd_add(i["mail"], i["n"], "live1" if i["live"] == "31aout" else "live2", i["n"])
+for e in ecole:
+    if sd_desinscrite(e["statut"], e["chaud"]):
+        sd_excl.add(e["mail"]); continue
+    sd_add(e["mail"], "", "ecole", e["n"])
+for ct in ic_contacts:
+    sd_add(ct.get("email"), ct.get("firstName"), "iclosed", (str(ct.get("firstName") or "") + " " + str(ct.get("lastName") or "")).strip())
+for c in icalls:
+    if not str(c["id"]).upper().startswith(("TEST", "DEMO")):
+        sd_add(c["mail"], c["n"].split(" ")[0], "iclosed", c["n"])
+for m, d in sd_dest.items():
+    p = o8_by_mail.get(m)
+    pre = o8_prenom(p) if p else ""
+    if not pre and not d["prenom"] and p and p["names"]:
+        pre = o8_clean_name(p["names"][0]).split(" ")[0]
+    if pre:
+        d["prenom"] = pre
+    if d["prenom"] and (d["prenom"].isupper() or d["prenom"].islower()):
+        d["prenom"] = "-".join(w.capitalize() for w in d["prenom"].split("-"))
+sd_dest = [d for d in sd_dest.values() if d["email"] not in sd_excl]
+print(f"Mail sondage : {len(sd_dest)} destinataires ({dict(sd_src)}), {len(sd_excl)} e-mails exclus")
+
 data = {
     "maj": datetime.datetime.now().strftime("%d/%m/%Y %H:%M"),
     "ecoleDebut": ECOLE_DEBUT,
@@ -1180,7 +1232,8 @@ data = {
               "stats": schol_stats, "subs": schol_subs},
     "coach": {"ok": coach_ok, "url": f"https://tally.so/r/{COACH_FORM}", "subs": coach_subs},
     "sondage": {"ok": sond_ok, "url": f"https://tally.so/r/{SOND_FORM}", "sujets": [c for _, c in SOND_SUJETS],
-                "sources": SOND_SOURCES, "subs": sond_subs},
+                "sources": SOND_SOURCES, "subs": sond_subs,
+                "dest": sd_dest, "destSrc": dict(sd_src), "destExclus": len(sd_excl)},
     "obj8": obj8,
     "compta": {
         "ok": compta_ok,

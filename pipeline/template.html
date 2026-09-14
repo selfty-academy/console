@@ -248,6 +248,30 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 .o8-note{flex:1;min-width:180px;border:1px solid var(--border);border-radius:999px;padding:7px 12px;font:14px "Jost",sans-serif;background:var(--surface);color:var(--ink)}
 .o8-msg{white-space:pre-wrap;font-size:14px}
 .o8-obj .val{color:var(--ok)}
+/* mail du sondage à la liste */
+.ml-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.ml-row input{max-width:300px}
+.ml-etat{font-size:14px;color:var(--ink-soft)}
+.ml-etat b{color:var(--ok)}
+.ml-apercu{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin:8px 0;max-width:600px}
+.ml-mails{font-size:12.5px;color:var(--muted);line-height:1.5;word-break:break-all;margin-top:6px}
+/* rafale WhatsApp : bandeau flottant */
+.raf{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:28;width:min(760px,calc(100% - 16px));background:var(--ink);color:#FFFDFB;border-radius:18px;padding:12px 16px 11px;box-shadow:0 10px 34px rgba(58,42,42,.35);display:none}
+.raf.on{display:block}
+.raf-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:14.5px}
+.raf-top b.cnt{background:var(--rose);color:var(--mauve-deep);border-radius:999px;padding:2px 11px;font-size:13.5px;font-variant-numeric:tabular-nums}
+.raf-top .who{flex:1;min-width:140px;font-weight:600}
+.raf-top .who small{font-weight:400;opacity:.75;margin-left:6px}
+.raf-x{background:transparent;border:1px solid rgba(255,253,251,.35);color:#FFFDFB;border-radius:999px;width:30px;height:30px;cursor:pointer;font-size:15px}
+.raf-acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:9px}
+.raf-acts .btn-add{background:var(--wa);border-radius:999px;padding:8px 16px}
+.raf-acts .raf-ghost{background:transparent;color:#FFFDFB;border-color:rgba(255,253,251,.4)}
+.raf-info{margin-top:8px;font-size:12.5px;opacity:.85;line-height:1.45}
+.raf-info .h{color:#F3C27A;font-weight:600}
+.raf-info .d{color:#F09A9A;font-weight:600}
+body.raf-on .wrap{padding-bottom:210px}
+.btn-raf{border:1px solid var(--wa);background:var(--surface);color:var(--wa);border-radius:999px;padding:7px 14px;font:500 13.5px "Jost",sans-serif;cursor:pointer}
+.btn-raf:hover{background:var(--wa);color:#fff}
 .o8-rang{display:inline-block;min-width:26px;text-align:center;background:var(--ink);color:#FFFDFB;border-radius:999px;font-size:12px;font-weight:600;padding:1px 7px;margin-right:6px;vertical-align:middle}
 </style>
 
@@ -273,7 +297,7 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
   <div class="kpis kpis-mini" id="o8-kpis"></div>
   <div class="pills" id="f-o8-seg"></div>
   <div class="pills" id="f-o8"></div>
-  <div style="margin:0 0 14px"><input type="search" id="q-o8" class="search" placeholder="Chercher un prénom, un mail, un numéro…"></div>
+  <div style="margin:0 0 14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center"><input type="search" id="q-o8" class="search" placeholder="Chercher un prénom, un mail, un numéro…"><button class="btn-raf" id="raf-o8" title="Ouvre WhatsApp pour chaque personne à rappeler, dans l'ordre, et coche « Contactée » à chaque « Suivant »">📲 Envoyer un par un</button></div>
   <div class="liste" id="l-o8"></div>
 </section>
 
@@ -391,8 +415,17 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 <section class="panel" id="p-sondage">
   <p class="intro">Les réponses au sondage « Le prochain live, c'est toi qui choisis » arrivent ici toutes seules depuis Tally : masterclass ou pas, quel sujet, envie de vivre l'expérience somatique, et le sujet qu'elle veut qu'Anaïs aborde. Filtre par canal d'envoi (mail, WhatsApp, story, école). Quand la personne est retrouvée dans les inscrites (même e-mail), le bouton WhatsApp est prêt avec son prénom et son sujet.</p>
   <div class="bandeau" id="bandeau-sondage"></div>
+  <div class="carte" id="ml-carte">
+    <h3 style="margin:0 0 6px">✉️ Le mail du sondage à toute la liste</h3>
+    <p class="intro" style="margin-bottom:8px">Objet « J'ai une question pour toi », signé L'équipe Selfty, envoyé <strong>depuis selfty.academy@gmail.com</strong> (script Contrats). Destinataires calculés à chaque mise à jour : inscrites aux 2 lives, liste d'attente école, contacts iClosed, sans les clientes, les contrats envoyés, les tests et les désinscrites. Lots de 40, 100 mails par jour maximum (quota Gmail), reprise automatique, jamais deux fois au même e-mail (onglet Sheet « Mails sondage »). Le lien du sondage porte l'e-mail et le prénom en champs cachés.</p>
+    <div class="kpis kpis-mini" id="ml-kpis"></div>
+    <details class="sujet"><summary>Voir le mail et la liste des destinataires</summary><div id="ml-apercu" class="ml-apercu"></div><div id="ml-liste" class="ml-mails"></div></details>
+    <div class="ml-row"><input type="text" id="ml-test" inputmode="email" autocapitalize="off" placeholder="ton e-mail pour le test"><button class="btn-ghost" id="ml-test-go">M'envoyer un test</button></div>
+    <div class="ml-row"><button class="btn-add" id="ml-go">Envoyer à la liste</button><button class="btn-ghost" id="ml-stop" hidden>Arrêter l'envoi</button><span class="ml-etat" id="ml-etat"></span></div>
+  </div>
   <div class="kpis kpis-mini" id="sd-kpis"></div>
-  <div class="pills" id="f-sondage"></div>
+  <div class="pills" id="f-sondage" style="align-items:center"></div>
+  <div style="margin:-6px 0 14px"><button class="btn-raf" id="raf-sond" title="Ouvre WhatsApp pour chaque répondante joignable, dans l'ordre, et coche « Prévenue » à chaque « Suivant »">📲 Envoyer un par un</button></div>
   <div class="carte" id="sd-chart-carte"><h3 style="margin:0 0 10px">Sujet de masterclass préféré</h3><div id="sd-chart"></div></div>
   <div class="liste" id="l-sondage"></div>
 </section>
@@ -574,6 +607,16 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
     <button class="btn-ghost" id="s-reset">Remettre les messages d'origine</button>
   </div>
 </aside>
+<div class="raf" id="raf" role="region" aria-label="Rafale WhatsApp">
+  <div class="raf-top"><b class="cnt" id="raf-cnt">0 / 0</b><span class="who" id="raf-who"></span><button class="raf-x" id="raf-stop" title="Arrêter la rafale">✕</button></div>
+  <div class="raf-acts">
+    <a class="btn-wa" id="raf-wa" href="#" target="selfty-wa" rel="noopener">WhatsApp</a>
+    <button class="btn-add" id="raf-next">✓ Envoyé, suivant</button>
+    <button class="btn-ghost raf-ghost" id="raf-skip">Passer</button>
+    <button class="btn-ghost raf-ghost" id="raf-pause">Pause</button>
+  </div>
+  <div class="raf-info" id="raf-info"></div>
+</div>
 <div class="toast" id="toast"></div>
 
 <!-- ===================== MODALE MAIL DE BIENVENUE ===================== -->
@@ -2485,7 +2528,7 @@ function effO8(p){
   return o;
 }
 const o8List = () => (O8.list || []).map(effO8);
-let fO8 = 'a', segO8 = 't', qO8 = '';
+let fO8 = 'a', segO8 = 't', qO8 = '', O8_CUR = [];   // O8_CUR = à rappeler, avec numéro, dans l'ordre (rafale WhatsApp)
 function renderObj8(){
   if (!$('l-o8')) return;
   const tous = o8List();
@@ -2507,6 +2550,8 @@ function renderObj8(){
   ].map(([v,l]) => `<button class="pill${fO8===v?' on':''}" data-f="${v}">${l}</button>`).join('');
   let liste = fO8==='a' ? segA : fO8==='c' ? segC : fO8==='b' ? segB : seg;
   if (qO8) liste = liste.filter(p => (p.n+' '+p.mail+' '+p.tel+' '+p.segLab).toLowerCase().includes(qO8));
+  O8_CUR = segA.filter(p => p.tel && (!qO8 || (p.n+' '+p.mail+' '+p.tel+' '+p.segLab).toLowerCase().includes(qO8)));
+  if ($('raf-o8')) $('raf-o8').textContent = `📲 Envoyer un par un (${O8_CUR.length})`;
   if (!O8.ok){ $('l-o8').innerHTML = `<div class="vide">La liste n'a pas pu être calculée à la dernière mise à jour : relance avec ↻.</div>`; return; }
   $('l-o8').innerHTML = liste.length ? liste.map(p => {
     const rang = tous.indexOf(tous.find(x => x.k === p.k)) + 1;
@@ -2624,7 +2669,7 @@ function renderCoach(){
 $('f-coach').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fCoach = p.dataset.f; renderCoach(); }});
 
 /* ---------- sondage prochain live (Tally VLKopa) ---------- */
-let fSond = 't';
+let fSond = 't', SD_CUR = [];   // SD_CUR = répondantes joignables pas encore prévenues (rafale WhatsApp)
 const SD_SRC = {mail:'Mail', whatsapp:'WhatsApp', story:'Story', ecole:'École', autre:'Autre'};
 function renderSondage(){
   const S = DATA.sondage || {ok:false, url:'', sujets:[], sources:[], subs:[]};
@@ -2666,10 +2711,14 @@ function renderSondage(){
     }).join('') + '</svg>';
   }
   const link = SET.iclosed || 'https://app.iclosed.io/e/SelftyAcademy/clarity-call';
+  const sdone = store.get('sonddone', {});
+  const sdMsg = x => (SET.tplSond || TPL_DEF.sond).replaceAll('{prenom}', x.prenom || '').replaceAll('{sujet}', x.texte || x.sujetLibre || x.sujet || '').replaceAll('{iclosed}', link).replace('Hello ,', 'Hello,');
+  SD_CUR = liste.filter(x => x.tel && !sdone[x.id]).map(x => ({k:x.id, n:x.prenom || 'Anonyme', tel:x.tel, msg:sdMsg(x)}));
+  if ($('raf-sond')) $('raf-sond').textContent = `📲 Envoyer un par un (${SD_CUR.length})`;
+  renderMail();
   $('l-sondage').innerHTML = liste.length ? liste.map(x => {
     const prenom = x.prenom || 'Anonyme';
-    const sujet = x.texte || x.sujetLibre || x.sujet || '';
-    const msg = (SET.tplSond || TPL_DEF.sond).replaceAll('{prenom}', x.prenom || '').replaceAll('{sujet}', sujet).replaceAll('{iclosed}', link).replace('Hello ,', 'Hello,');
+    const msg = sdMsg(x);
     const oui = v => v === null ? '' : `<span class="chip ${v ? 'sd-oui' : 'sd-non'}">`;
     return `<div class="ligne">
       <div class="qui"><div class="nom">${esc(prenom)}</div>
@@ -2677,13 +2726,14 @@ function renderSondage(){
         <div style="margin-top:4px"><span class="chip src-${esc(x.src || 'autre')}">${SD_SRC[x.src || 'autre']}</span>${x.done ? '' : ' <span class="chip src-webi">Pas finie</span>'}</div></div>
       <div class="meta">${x.master === null ? '' : `${oui(x.master)}Masterclass : ${x.master ? 'oui' : 'non'}</span> `}${x.soma === null ? '' : `${oui(x.soma)}Somatique : ${x.soma ? 'oui' : 'non'}</span>`}${x.sujetCourt ? `<div style="margin-top:4px">Sujet : <b>${esc(x.sujetCourt)}</b></div>` : ''}</div>
       <div class="meta"><b>${x.tel ? '+'+x.tel : 'Numéro pas retrouvé'}</b>${esc(x.date)}</div>
-      <div class="actions">${x.tel ? `<a class="btn-wa" href="${waUrl(x.tel, msg)}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}</div>
+      <div class="actions">${x.tel ? `<a class="btn-wa" href="${waUrl(x.tel, msg)}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}<label class="chk"><input type="checkbox" data-sonddone="${esc(x.id)}" ${sdone[x.id]?'checked':''}> Prévenue</label></div>
       ${x.texte ? `<div class="sd-texte"><b>Le sujet qu'elle veut au prochain live</b>${esc(x.texte)}</div>` : ''}
       ${x.sujetLibre ? `<div class="sd-texte"><b>Autre sujet de masterclass, avec ses mots</b>${esc(x.sujetLibre)}</div>` : ''}
     </div>`;
   }).join('') : `<div class="vide">${tous.length ? 'Personne via ce canal pour l\'instant.' : 'Pas encore de réponse au sondage.'}</div>`;
 }
 $('f-sondage').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fSond = p.dataset.f; renderSondage(); }});
+document.addEventListener('change', e => { const k = e.target.dataset.sonddone; if (!k) return; const D = store.get('sonddone', {}); if (e.target.checked) D[k] = Date.now(); else delete D[k]; store.set('sonddone', D); renderSondage(); });
 $('c-add').addEventListener('click', () => {
   const nom = $('c-nom').value.trim();
   if (!nom) return toast('Il manque le prénom');
@@ -2819,7 +2869,189 @@ $('s-reset').addEventListener('click', () => {
   $('s-tpl-eow').value = TPL_DEF.eowRelance; $('s-tpl-ambre').value = TPL_DEF.ambreCheckin; $('s-tpl-ambre-abs').value = TPL_DEF.ambreAbsente;
 });
 
+/* ---------- mail du sondage à toute la liste (script Contrats, depuis selfty.academy@gmail.com) ---------- */
+// Texte repris mot pour mot de selfty-marketing-sept/sondage.md (partie mail), signé « L'équipe Selfty ». Pas d'emoji (MailApp les casse).
+// {prenom} {lien} sont remplacés par le script pour chaque destinataire ; « Hello {prenom}, » devient « Hello, » sans prénom.
+const ML = {
+  camp: 'sondage',
+  sujet: "J'ai une question pour toi",
+  lien: 'https://tally.so/r/VLKopa?source=mail',   // + &email=…&prenom=… ajoutés par le script (champs cachés du Tally)
+  paras: [
+    "Hello {prenom},",
+    "Tu t'es inscrite à un de mes lives (ou tu as rempli le questionnaire de l'école). Merci d'avoir été là.",
+    "Je prépare le prochain, et je ne veux pas le construire sur ce que j'imagine de tes besoins. Je veux le construire sur ce que tu me dis.",
+    "Alors j'ai trois questions pour toi, une minute montre en main :",
+    ["Une masterclass sur un sujet précis, ça t'intéresse ? Et lequel.", "Une expérience somatique guidée, en direct, tu la vis avec nous ?", "Le sujet que tu veux que j'aborde, avec tes mots."],
+    "**Je réponds aux 3 questions** → {lien}",
+    "Je lis chaque réponse moi-même. Le prochain live sera construit dessus, et tu recevras la date en premier.",
+    "L'équipe Selfty",
+  ],
+  stop: "Tu ne veux plus recevoir nos mails ? Réponds STOP à ce mail.",
+};
+ML.texte = ML.paras.map(x => Array.isArray(x) ? x.map((l, i) => `${i+1}. ${l}`).join('\n') : x.replace(/\*\*/g, '')).join('\n\n') + '\n\n' + ML.stop;
+ML.html = '<div style="font-family:Helvetica,Arial,sans-serif;font-size:15.5px;line-height:1.6;color:#3A2A2A;max-width:560px">'
+  + ML.paras.map(x => Array.isArray(x)
+      ? '<ol style="margin:0 0 14px;padding-left:22px">' + x.map(l => `<li style="margin:0 0 4px">${esc(l)}</li>`).join('') + '</ol>'
+      : `<p style="margin:0 0 14px">${esc(x).replace('{lien}', '<a href="{lienHtml}" style="color:#7E5252">{lienHtml}</a>').replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')}</p>`).join('')
+  + `<p style="font-size:12.5px;color:#8A7070;margin:22px 0 0">${esc(ML.stop)}</p></div>`;
+let mlEtat = store.get('mletat', null), mlTimer = null, mlBusy = false;
+const mlDest = () => ((DATA.sondage && DATA.sondage.dest) || []);
+async function mlPost(o){
+  if (!PONT.key || PONT.key.startsWith('__')) throw new Error('pont non configuré');
+  const r = await fetch(PONT_CTR, { method:'POST', body: JSON.stringify(Object.assign({ key: PONT.key, camp: ML.camp }, o)) });
+  const j = await r.json(); if (!j.ok) throw new Error(j.error || 'refus du script'); return j;
+}
+function renderMail(){
+  if (!$('ml-kpis')) return;
+  const dest = mlDest(), S = DATA.sondage || {}, src = S.destSrc || {};
+  const e = mlEtat || {};
+  $('ml-kpis').innerHTML = [
+    [dest.length, 'destinataires'],
+    [e.envoyes || 0, 'mails envoyés'],
+    [e.restants || 0, 'en attente'],
+    [e.quota === undefined ? '·' : e.quota, 'quota Gmail restant aujourd\'hui'],
+  ].map(([v,l]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div></div>`).join('');
+  const ex = { email: 'prenom@exemple.fr', prenom: 'Camille' };
+  const lien = ML.lien + '&email=' + encodeURIComponent(ex.email) + '&prenom=' + encodeURIComponent(ex.prenom);
+  $('ml-apercu').innerHTML = `<div style="font-size:13px;color:var(--muted);margin-bottom:8px">Objet : <b>${esc(ML.sujet)}</b> · de : Selfty Academy &lt;selfty.academy@gmail.com&gt; · exemple avec le prénom « Camille »</div>`
+    + ML.html.replace(/Hello \{prenom\},/g, 'Hello ' + ex.prenom + ',').replace(/\{lienHtml\}/g, esc(lien));
+  const par = Object.entries(src).map(([k, n]) => `${({live1:'live du 31 août', live2:'live du 9 sept', ecole:'liste d\'attente école', iclosed:'iClosed'})[k] || k} ${n}`).join(' · ');
+  $('ml-liste').innerHTML = `<b>${dest.length} destinataires</b> (${esc(par)} · ${S.destExclus || 0} e-mails exclus : clientes, contrats, tests, désinscrites) :<br>`
+    + dest.map(d => `${esc(d.prenom || '?')} &lt;${esc(d.email)}&gt;`).join(' · ');
+  $('ml-go').textContent = `Envoyer à la liste (${dest.length})`;
+  $('ml-go').disabled = mlBusy || !dest.length || (e.restants > 0);
+  $('ml-stop').hidden = !(e.restants > 0);
+  let txt;
+  if (!mlEtat) txt = 'Pas encore envoyé (état pas encore lu depuis le script).';
+  else if (e.restants > 0) txt = `⏳ En cours : <b>${e.envoyes}</b> envoyés, ${e.restants} en attente${e.quota <= 8 ? ' (quota du jour atteint, reprise demain)' : ''}. Prochain lot dans 10 min tant que cette page est ouverte, sinon au passage de la mise à jour auto.`;
+  else if (e.envoyes > 0) txt = `✅ Envoyé le <b>${esc((e.dernier || e.premier || '').split(' ')[0])}</b> à <b>${e.envoyes}</b> personne${e.envoyes > 1 ? 's' : ''}${e.erreurs ? ` · ${e.erreurs} erreur${e.erreurs > 1 ? 's' : ''} (${esc((e.erreursListe || []).join(' ; '))})` : ''}${e.dernier && e.premier && e.dernier.split(' ')[0] !== e.premier.split(' ')[0] ? ` (du ${esc(e.premier.split(' ')[0])} au ${esc(e.dernier.split(' ')[0])})` : ''}. Un nouvel envoi ne repart qu'aux e-mails pas encore servis.`;
+  else txt = 'Pas encore envoyé.';
+  $('ml-etat').innerHTML = txt;
+}
+function mlPlan(){
+  clearTimeout(mlTimer);
+  if (mlEtat && mlEtat.restants > 0) mlTimer = setTimeout(async () => { try { await mlPost({ what:'mail_liste_lot' }); } catch(err){} mlRefresh(); }, 10*60*1000);
+}
+async function mlRefresh(){
+  try { mlEtat = await mlPost({ what:'mail_liste_etat' }); store.set('mletat', mlEtat); } catch(err){}
+  renderMail(); mlPlan();
+}
+let mlLoaded = false;
+function mlMaybe(){ if (tabOn === 'sondage' && !mlLoaded){ mlLoaded = true; mlRefresh(); } }
+document.addEventListener('click', e => { if (e.target.closest('.tab, #subtabs .pill')) setTimeout(mlMaybe, 0); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && tabOn === 'sondage' && mlLoaded) mlRefresh(); });
+$('ml-test').value = store.get('mailtest', '');
+$('ml-test-go').addEventListener('click', async () => {
+  const to = $('ml-test').value.trim().toLowerCase();
+  if (!to.includes('@')) return toast('Écris ton e-mail pour le test');
+  store.set('mailtest', to);
+  const b = $('ml-test-go'); b.disabled = true; b.textContent = 'Envoi…';
+  try {
+    const j = await mlPost({ what:'mail_liste', sujet: ML.sujet, html: ML.html, texte: ML.texte, lien: ML.lien, destinataires: [], test: to, testPrenom: 'Alex' });
+    toast(`Test envoyé à ${j.to} ✅`); if (j.quota !== undefined){ mlEtat = Object.assign({}, mlEtat || {}, { quota: j.quota }); renderMail(); }
+  } catch(err){ toast('Échec : ' + err.message); }
+  b.disabled = false; b.textContent = "M'envoyer un test";
+});
+$('ml-go').addEventListener('click', async () => {
+  const dest = mlDest(); if (!dest.length) return;
+  if (!confirm(`Envoyer le mail du sondage à ${dest.length} personnes depuis selfty.academy@gmail.com ?\n\n40 par lot, 100 par jour maximum, jamais deux fois au même e-mail. Tu pourras arrêter les lots restants ensuite.`)) return;
+  const ok = prompt(`Deuxième confirmation : tape ENVOYER pour lancer l'envoi à ${dest.length} personnes.`);
+  if ((ok || '').trim().toUpperCase() !== 'ENVOYER') return toast('Envoi annulé');
+  mlBusy = true; renderMail(); const b = $('ml-go'); b.textContent = 'Envoi du premier lot…';
+  try {
+    const j = await mlPost({ what:'mail_liste', sujet: ML.sujet, html: ML.html, texte: ML.texte, lien: ML.lien, destinataires: dest });
+    toast(`${j.envoyes} envoyé${j.envoyes > 1 ? 's' : ''}, ${j.restants} en attente${j.dejaEnvoyes ? `, ${j.dejaEnvoyes} déjà servis` : ''}`);
+  } catch(err){ toast('Échec : ' + err.message); }
+  mlBusy = false; mlRefresh();
+});
+$('ml-stop').addEventListener('click', async () => {
+  if (!confirm('Arrêter l\'envoi ? Les mails déjà partis restent partis ; les autres sont marqués « Annulé » dans le Sheet.')) return;
+  try { const j = await mlPost({ what:'mail_liste_stop' }); toast(`${j.annules} envoi(s) annulé(s)`); } catch(err){ toast('Échec : ' + err.message); }
+  mlRefresh();
+});
+
+/* ---------- rafale WhatsApp : un par un, dans le même onglet, coche auto à « Suivant » ---------- */
+// WhatsApp n'a pas d'envoi groupé depuis un numéro perso : on ouvre wa.me pour chaque personne (fenêtre nommée « selfty-wa »
+// réutilisée, donc pas 77 onglets), « Suivant » coche la personne (Contactée via le pont rappel_set, ou Prévenue en local) et ouvre
+// la suivante. Sur mobile, wa.me ouvre l'appli WhatsApp : on revient sur cet onglet, le bandeau est toujours là.
+const RAF = { src:'', items:[], i:0, on:false, paused:false };
+const RAF_MOBILE = matchMedia('(pointer:coarse)').matches;
+const RAF_SRC = {
+  o8: { lab:'Objectif 8', items: () => O8_CUR.map(p => ({k:p.k, n:p.n, tel:p.tel, msg:p.msg})),
+        mark: async k => { const p = o8List().find(x => x.k === k); if (!p) return;
+          const F = store.get('rappelfix', {}); const prev = F[k] ? Object.assign({}, F[k]) : null;
+          F[k] = Object.assign(F[k] || {}, {c:true, when: Date.now()}); store.set('rappelfix', F); renderObj8(); renderTabs();
+          try { await o8Send(p, {contactee:true}); }
+          catch(err){ const G = store.get('rappelfix', {}); if (prev) G[k] = prev; else delete G[k]; store.set('rappelfix', G); renderObj8(); renderTabs(); throw err; } } },
+  sond: { lab:'Sondage', items: () => SD_CUR.slice(),
+        mark: async k => { const D = store.get('sonddone', {}); D[k] = Date.now(); store.set('sonddone', D); renderSondage(); } },
+};
+const rafLog = () => store.get('rafalelog', []).filter(t => Date.now() - t < 3600000);
+function rafSave(){ if (RAF.on){ const it = RAF.items[RAF.i]; store.set('rafale', { src: RAF.src, k: it ? it.k : '', paused: RAF.paused, at: Date.now() }); } else store.set('rafale', null); }
+function rafOpen(it){
+  if (!it) return;
+  const url = waUrl(it.tel, it.msg); $('raf-wa').href = url;
+  if (RAF_MOBILE){ try { $('raf-wa').click(); } catch(e){} return; }   // mobile : l'appli WhatsApp s'ouvre, on revient ici après
+  let w = null; try { w = window.open(url, 'selfty-wa'); } catch(e){}
+  if (!w) toast('Pop-up bloquée : clique sur le bouton WhatsApp du bandeau');
+}
+function rafRender(){
+  const on = RAF.on; $('raf').classList.toggle('on', on); document.body.classList.toggle('raf-on', on);
+  if (!on) return;
+  const it = RAF.items[RAF.i];
+  $('raf-cnt').textContent = `${Math.min(RAF.i + 1, RAF.items.length)} / ${RAF.items.length}`;
+  $('raf-who').innerHTML = it ? `${esc(it.n)}<small>+${esc(it.tel)} · ${RAF_SRC[RAF.src].lab}</small>` : 'Terminé';
+  if (it) $('raf-wa').href = waUrl(it.tel, it.msg);
+  $('raf-wa').innerHTML = WA_SVG + (RAF_MOBILE ? ' Ouvrir WhatsApp' : ' Rouvrir WhatsApp');
+  $('raf-next').textContent = RAF.src === 'o8' ? '✓ Envoyé, suivant (coche Contactée)' : '✓ Envoyé, suivant (coche Prévenue)';
+  $('raf-pause').textContent = RAF.paused ? '▶ Reprendre' : 'Pause';
+  $('raf-next').disabled = $('raf-skip').disabled = !it || RAF.paused;
+  rafTick();
+}
+function rafTick(){
+  if (!RAF.on) return;
+  const L = rafLog(), last = L.length ? L[L.length - 1] : 0;
+  const s = last ? Math.floor((Date.now() - last) / 1000) : null;
+  const chrono = s === null ? 'aucun envoi dans la dernière heure' : `dernier envoi il y a ${Math.floor(s/60)} min ${String(s%60).padStart(2,'0')} s`;
+  const cls = L.length >= 20 ? 'd' : L.length >= 15 ? 'h' : '';
+  $('raf-info').innerHTML = `<span class="${cls}">${L.length} envoyé${L.length > 1 ? 's' : ''} dans la dernière heure</span> · ${chrono} · <b>15 à 20 messages par heure maximum</b> (WhatsApp bloque les numéros qui envoient trop vite)${L.length >= 20 ? ' · <span class="d">fais une pause</span>' : ''}${RAF_MOBILE ? '<br>Sur mobile : « Ouvrir WhatsApp » lance l\'appli, tu envoies, tu reviens ici et tu appuies sur « Suivant ».' : '<br>Le message part de WhatsApp Web dans l\'onglet à côté : envoie, reviens ici, « Suivant » ouvre la personne suivante au même endroit.'}`;
+}
+setInterval(rafTick, 1000);
+function rafStart(src, resumeKey){
+  const items = RAF_SRC[src].items();
+  if (!items.length) return toast('Personne à contacter dans cette liste (filtre, numéro, déjà cochée)');
+  let i = 0; if (resumeKey){ const j = items.findIndex(x => x.k === resumeKey); if (j >= 0) i = j; }
+  Object.assign(RAF, { src, items, i, on:true, paused: !!resumeKey });
+  rafRender(); rafSave();
+  if (!resumeKey) rafOpen(items[i]);
+}
+function rafStop(){ Object.assign(RAF, { on:false, items:[], i:0, paused:false }); rafRender(); rafSave(); }
+function rafAdvance(skip){
+  const cur = RAF.items[RAF.i]; if (!cur) return;
+  if (!skip){ const L = rafLog(); L.push(Date.now()); store.set('rafalelog', L); }
+  RAF.i++;
+  const next = RAF.items[RAF.i];
+  if (next){ rafRender(); rafOpen(next); } else { toast('Rafale terminée 🎉'); rafStop(); }
+  rafSave();
+  if (!skip) RAF_SRC[RAF.src].mark(cur.k).catch(err => toast('Coche pas enregistrée pour ' + cur.n + ' : ' + err.message));
+}
+$('raf-next').addEventListener('click', () => rafAdvance(false));
+$('raf-skip').addEventListener('click', () => rafAdvance(true));
+$('raf-pause').addEventListener('click', () => { RAF.paused = !RAF.paused; rafRender(); rafSave(); if (!RAF.paused) rafOpen(RAF.items[RAF.i]); });
+$('raf-stop').addEventListener('click', () => { if (confirm('Arrêter la rafale ? (les coches déjà faites restent)')) rafStop(); });
+$('raf-wa').addEventListener('click', () => { const L = store.get('rafalewa', 0); store.set('rafalewa', L + 1); });
+if ($('raf-o8')) $('raf-o8').addEventListener('click', () => rafStart('o8'));
+if ($('raf-sond')) $('raf-sond').addEventListener('click', () => rafStart('sond'));
+// rafale interrompue (rechargement, retour depuis l'appli WhatsApp) : on la propose en pause au même endroit
+setTimeout(() => {
+  const r = store.get('rafale', null);
+  if (r && r.src && RAF_SRC[r.src] && Date.now() - (r.at || 0) < 12*3600000 && !RAF.on){
+    try { rafStart(r.src, r.k || '__none__'); toast('Rafale reprise là où tu en étais (en pause)'); } catch(e){}
+  }
+}, 300);
+
 renderTabs(); renderObj8(); renderWebi(); renderLive2(); renderLive1(); renderCand(); renderEcole(); renderSchol(); renderCoach(); renderSondage(); renderAgenda(); renderTrack(); renderLeads(); renderClients(); renderAmbre(); renderCompta(); renderData();
+mlMaybe();   // onglet Sondage ouvert au chargement : état du mail à la liste
 refreshContrats();
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshContrats(); });
 
