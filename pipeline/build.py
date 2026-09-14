@@ -408,14 +408,14 @@ visites = [[c.value for c in r] for r in vws.iter_rows(min_row=2) if any(c.value
 v_mobile = sum(1 for v in visites if str(v[1]).strip().lower() == "mobile")
 
 # Live 3 (lundi 21/09) : visites de la LP par source / ad (colonne « Campagne (UTM) » = « lp=21-sept source=ads utm_content=l3-img1 »)
-LIVE3_TEST_VISITES = {"2026-09-15T00:22"}   # 2 captures d'écran de test à la mise en ligne
+LIVE3_TESTS_AVANT = "2026-09-15T01:05"   # visites de test à la mise en ligne de la LP (captures, vérifications)
 live3_vis = Counter()
 live3_vis_src = Counter()
 for v in visites:
     camp = str(v[3] or "") if len(v) > 3 else ""
     if "lp=21-sept" not in camp:
         continue
-    if isinstance(v[0], datetime.datetime) and v[0].strftime("%Y-%m-%dT%H:%M") in LIVE3_TEST_VISITES:
+    if isinstance(v[0], datetime.datetime) and v[0].strftime("%Y-%m-%dT%H:%M") < LIVE3_TESTS_AVANT:
         continue
     ad = (re.search(r"utm_content=(\S+)", camp) or [None, ""])[1]
     sp = (re.search(r"(?:^|\s)source=(\S+)", camp) or [None, ""])[1]
