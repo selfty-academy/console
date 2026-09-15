@@ -669,6 +669,11 @@ body.raf-on .wrap{padding-bottom:210px}
     <div class="note">Variables : {prenom} {date} (date du call)</div>
   </div>
   <div class="champ">
+    <label for="s-tpl-intake">Ambre : questionnaire d'arrivée</label>
+    <textarea id="s-tpl-intake"></textarea>
+    <div class="note">Variables : {prenom} {lien} (lien perso du questionnaire, e-mail et prénom préremplis). Pas d'emoji : le lien WhatsApp les casse.</div>
+  </div>
+  <div class="champ">
     <label for="s-zoom3">Lien Zoom du live du 21 septembre</label>
     <input type="text" id="s-zoom3" placeholder="https://us06web.zoom.us/j/…">
   </div>
@@ -808,6 +813,7 @@ const TPL_DEF = {
   exo: "Hello {prenom}, c'est Anaïs 🌸\n\nJ'ai lu ton exercice « {lecon} ».\n\n{commentaire}\n\nOn en reparle au prochain call de groupe si tu veux creuser.",
   live3J1: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault.\nDemain lundi à 18h, c'est le live gratuit d'Anaïs sur Zoom : une expérience somatique guidée que tu vis de chez toi, puis une vraie séance en direct.\nLe lien pour rejoindre : {zoom}\nMets une alarme à 17h55, on commence à l'heure.\nÀ demain !",
   live3H1: "Hello {prenom}, on commence dans 1 heure.\nInstalle-toi au calme, avec un endroit où poser les pieds au sol : l'expérience somatique ouvre le live.\nLe lien Zoom : {zoom}\nAlex, l'associé de Anaïs Brault",
+  intake: "Hello {prenom}, c'est Ambre de la Selfty Academy.\n\nAvant de commencer, Anaïs aimerait que tu remplisses ton questionnaire d'arrivée : 15 minutes pour poser d'où tu pars et ce que tu veux vivre dans les 6 prochains mois. Ça l'aide à préparer ton accompagnement, et tu en garderas la trace pour mesurer ton chemin.\n\n{lien}\n\nMerci, et à très vite.\nAmbre",
   ambreAbsente: "Hello {prenom}, c'est Ambre de la Selfty Academy 🌸\n\nOn ne t'a pas vue au call de groupe du {date}. Tout va bien de ton côté ? Le replay est disponible, et si tu as une question dessus je suis là."
 };
 const MEM = {};
@@ -815,13 +821,14 @@ const store = {
   get: (k, d) => { try { const v = localStorage.getItem('sc-'+k); return v===null ? d : JSON.parse(v); } catch(e){ return k in MEM ? MEM[k] : d; } },
   set: (k, v) => { MEM[k] = v; try { localStorage.setItem('sc-'+k, JSON.stringify(v)); } catch(e){} }
 };
-let SET = Object.assign({tplWebi:TPL_DEF.webi, tplInvite:TPL_DEF.invite, tplWebiCoach:TPL_DEF.webiCoach, tplWebiEcole:TPL_DEF.webiEcole, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, tplReplay:TPL_DEF.replay, replay:REPLAY_DEF, tplScholRel:TPL_DEF.scholRel, tplScholOk:TPL_DEF.scholOk, tplCoach:TPL_DEF.coach, tplCoachRel:TPL_DEF.coachRel, tplSond:TPL_DEF.sond, tplLead:TPL_DEF.lead, tplEowRelance:TPL_DEF.eowRelance, tplAmbreCheckin:TPL_DEF.ambreCheckin, tplAmbreAbsente:TPL_DEF.ambreAbsente, tplExo:TPL_DEF.exo, tplLive3J1:TPL_DEF.live3J1, tplLive3H1:TPL_DEF.live3H1, zoom3:'', groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
+let SET = Object.assign({tplWebi:TPL_DEF.webi, tplInvite:TPL_DEF.invite, tplWebiCoach:TPL_DEF.webiCoach, tplWebiEcole:TPL_DEF.webiEcole, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, tplReplay:TPL_DEF.replay, replay:REPLAY_DEF, tplScholRel:TPL_DEF.scholRel, tplScholOk:TPL_DEF.scholOk, tplCoach:TPL_DEF.coach, tplCoachRel:TPL_DEF.coachRel, tplSond:TPL_DEF.sond, tplLead:TPL_DEF.lead, tplEowRelance:TPL_DEF.eowRelance, tplAmbreCheckin:TPL_DEF.ambreCheckin, tplAmbreAbsente:TPL_DEF.ambreAbsente, tplIntake:TPL_DEF.intake, tplExo:TPL_DEF.exo, tplLive3J1:TPL_DEF.live3J1, tplLive3H1:TPL_DEF.live3H1, zoom3:'', groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
 if (!SET.tplInvite) SET.tplInvite = TPL_DEF.invite;
 if (!SET.tplReplay) SET.tplReplay = TPL_DEF.replay;
 // ancien rappel « notre appel » enregistré dans ⚙️ : c'est Anaïs qui prend l'appel, pas Alex
 if (!SET.tplCall || SET.tplCall === "Hello {prenom}, c'est Alex de la Selfty Academy 🌸 Petit rappel pour notre appel {quand}. À tout à l'heure !") SET.tplCall = TPL_DEF.call;
 if (!SET.replay) SET.replay = REPLAY_DEF;
 if (!SET.tplExo) SET.tplExo = TPL_DEF.exo;
+if (!SET.tplIntake) SET.tplIntake = TPL_DEF.intake;
 if (!SET.tplLive3J1) SET.tplLive3J1 = TPL_DEF.live3J1;
 if (!SET.tplLive3H1) SET.tplLive3H1 = TPL_DEF.live3H1;
 // 15/09 : « l'associé de Anaïs » -> « l'associé d'Anaïs » dans les templates déjà enregistrés, et plus d'emoji dans le merci du sondage
@@ -2515,6 +2522,31 @@ function eowLienPerso(c){
   const prenom = (c.n||'').trim().split(' ')[0];
   return `${DATA.eow.url}?email=${encodeURIComponent(c.mail)}&prenom=${encodeURIComponent(prenom)}&semaine=${semaineBilan().key}`;
 }
+/* questionnaire d'arrivée (Tally 81X5kk) : lien perso, rempli (build : soumissions Tally + pont Engagements), coche « envoyé » locale sc-intakeenv */
+function intakeLien(c){
+  const prenom = (c.n||'').trim().split(' ')[0];
+  return `${(DATA.intake && DATA.intake.url) || 'https://tally.so/r/81X5kk'}?email=${encodeURIComponent((c.mail||'').toLowerCase())}&prenom=${encodeURIComponent(prenom)}`;
+}
+function intakeRempli(mail){
+  mail = (mail||'').toLowerCase();
+  const M = (DATA.intake && DATA.intake.mails) || {};
+  if (M[mail]) return M[mail];
+  const el = typeof engDe === 'function' ? engDe(mail) : null;
+  return el && el.intake_le ? el.intake_le : '';
+}
+const intakeMsg = c => (SET.tplIntake || TPL_DEF.intake).replaceAll('{prenom}', (c.n||'').trim().split(' ')[0]).replaceAll('{lien}', intakeLien(c));
+function intakeBloc(c){
+  const r = intakeRempli(c.mail);
+  if (r) return ` <span class="chip src-live" style="background:#E3EFE7;color:#4C7A5E" title="Rempli le ${esc(frDate(r))}">📋 Questionnaire rempli ✓</span>`;
+  const env = store.get('intakeenv', {})[(c.mail||'').toLowerCase()];
+  return (c.tel ? ` <a class="btn-wa" href="${waUrl(c.tel, intakeMsg(c))}" target="_blank" rel="noopener">${WA_SVG} Questionnaire d'arrivée</a>` : ` <button class="btn-ghost am-copy" data-toast="Lien du questionnaire copié" data-lien="${esc(intakeLien(c))}" title="Pas de numéro : copie le lien perso">🔗 Lien questionnaire d'arrivée</button>`)
+    + ` <label class="chk"><input type="checkbox" data-intakeenv="${esc((c.mail||'').toLowerCase())}" ${env ? 'checked' : ''}> Questionnaire envoyé${env ? ' le ' + esc(new Date(env).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'})) : ''}</label>`;
+}
+document.addEventListener('change', e => {
+  const m = e.target.dataset.intakeenv; if (!m) return;
+  const E = store.get('intakeenv', {}); if (e.target.checked) E[m] = Date.now(); else delete E[m];
+  store.set('intakeenv', E); renderAmbre();
+});
 function ambreFiche(c){
   const mail = (c.mail||'').toLowerCase();
   const bilans = eowDe(mail); const sb = semaineBilan();
@@ -2575,7 +2607,7 @@ function renderAmbre(){
         ${f.derniere && !f.derniere.present ? ' <span class="chip src-webi">absente au call du ' + esc(f.derniere.date.slice(0,5)) + '</span>' : ''}</div></div>
       <div class="meta"><b>${c.date ? 'Signée le ' + esc(c.date) : ''}</b>${cc ? `Closing ${esc(quandUtc(cc.c.utc).txt)}${cc.t.q ? ' · qualif ' + cc.t.q + '/10' : ''}` : 'Pas de call iClosed rattaché'}</div>
       <div class="meta"><b>${ecoleCommencee() ? 'Semaine ' + f.semaine + ' / ' + ECOLE_SEMAINES : 'Démarre le 10/10'}</b><div class="am-prog"><i style="width:${Math.round(100*f.semaine/ECOLE_SEMAINES)}%"></i></div>${f.bilans.length} bilan${f.bilans.length>1?'s':''}${dern ? ' · dernier le ' + esc(dern.date.split(' ')[0]) : ''} · ${nbPres}/${f.pres.length || sess.length || 0} call${(f.pres.length||sess.length)>1?'s':''}</div>
-      <div class="actions">${c.tel ? `<a class="btn-wa" href="${waUrl(c.tel, ambreMsg(c, f))}" target="_blank" rel="noopener">${WA_SVG} ${f.manque ? 'Relancer le bilan' : (f.derniere && !f.derniere.present) ? 'Absente au call' : 'Prendre des nouvelles'}</a>` : ''} <button class="btn-ghost am-copy" data-lien="${esc(eowLienPerso(c))}" title="Lien perso du questionnaire hebdo">🔗 Lien bilan</button>${cc && cc.c.link ? ` <a class="btn-ghost" href="${esc(cc.c.link)}" target="_blank" rel="noopener">🎥 Visio du closing</a>` : ''}${bvBtn(c)}</div>
+      <div class="actions">${c.tel ? `<a class="btn-wa" href="${waUrl(c.tel, ambreMsg(c, f))}" target="_blank" rel="noopener">${WA_SVG} ${f.manque ? 'Relancer le bilan' : (f.derniere && !f.derniere.present) ? 'Absente au call' : 'Prendre des nouvelles'}</a>` : ''} <button class="btn-ghost am-copy" data-lien="${esc(eowLienPerso(c))}" title="Lien perso du questionnaire hebdo">🔗 Lien bilan</button>${cc && cc.c.link ? ` <a class="btn-ghost" href="${esc(cc.c.link)}" target="_blank" rel="noopener">🎥 Visio du closing</a>` : ''}${bvBtn(c)}${intakeBloc(c)}</div>
       ${dern ? `<div style="grid-column:1/-1">${dern.seances ? `<span class="am-sc">séances <b>${esc(dern.seances)}</b></span>` : ''}${scoreChip('Ressenti', dern.feel)}${scoreChip('Énergie', dern.energie)}${scoreChip('En séance', dern.ressentiSeances)}${scoreChip('Confiance', dern.confiance)}${scoreChip('Semaine', dern.note)}${dern.presence ? `<span class="am-sc">calls (déclaré) <b>${esc(dern.presence)}</b></span>` : ''}</div>` : ''}
       ${cc ? `<details class="sujet"><summary>📞 Call de closing du ${esc(quandUtc(cc.c.utc).txt)}${cc.c.closer ? ' · ' + esc(cc.c.closer) : ''}</summary>
         ${cc.c.link ? `<div class="rep"><b>Lien de la visio</b><a href="${esc(cc.c.link)}" target="_blank" rel="noopener">${esc(cc.c.link)}</a></div>` : ''}
@@ -2622,7 +2654,7 @@ document.addEventListener('click', async e => {
     const v = ($('am-sess-new').value || '').trim(); if (!frToIso(v)) return toast('Date attendue : jj/mm/aaaa');
     const S = store.get('sessions', []); if (!S.includes(v)) S.push(v); store.set('sessions', S); store.set('amsess', v); renderAmbre(); return;
   }
-  const cp = e.target.closest('.am-copy'); if (cp){ try { await navigator.clipboard.writeText(cp.dataset.lien); toast('Lien du bilan copié 🔗'); } catch(err){ prompt('Lien perso du bilan :', cp.dataset.lien); } return; }
+  const cp = e.target.closest('.am-copy'); if (cp){ try { await navigator.clipboard.writeText(cp.dataset.lien); toast(cp.dataset.toast || 'Lien du bilan copié 🔗'); } catch(err){ prompt('Lien perso :', cp.dataset.lien); } return; }
   const na = e.target.closest('.am-na-ok, .am-na-ign');
   if (na){
     const card = na.closest('.am-bilan'); const id = card.dataset.id;
@@ -2916,6 +2948,7 @@ $('f-schol').addEventListener('click', e => { const p = e.target.closest('.pill'
 
 /* ---------- to do d'Alex (coches + tâches ajoutées en localStorage : sc-todo, sc-todoperso) ---------- */
 const TODO_DEF = [
+  {id:'d-intake-wa', t:"Envoyer le questionnaire d'arrivée aux clientes déjà inscrites", d:"Onglet Ambre suivi client, bouton WhatsApp Questionnaire d'arrivée (10 secondes par cliente)", go:'ambre', lab:'Ouvrir Ambre'},
   {id:'d-sond-wa', t:'Remercier les répondantes du sondage sur WhatsApp', d:'Onglet Sondage, bouton 📲 Envoyer un par un, message déjà écrit (sans emoji)', go:'sondage', lab:'Ouvrir Sondage'},
   {id:'d-zoom-21', t:'Préparer le Zoom du live du lundi 21/09 18h en amont', d:"Micros coupés pour toutes à l'entrée, participantes ne peuvent pas se réactiver, pas de partage d'écran, pas de renommage, salle d'attente, chat vers l'hôte seulement, Alex co-animateur en régie, test du son partagé depuis le Mac, lien Zoom mis sur la LP et dans le mail de confirmation", url:'https://zoom.us/profile/setting', lab:'Réglages Zoom ↗'},
   {id:'d-sond-mail', t:'Envoyer le mail du sondage à la liste', d:"Après validation du Google Doc par Anaïs : onglet Sondage, M'envoyer un test puis Envoyer à la liste", go:'sondage', lab:'Ouvrir Sondage'},
@@ -3305,12 +3338,12 @@ $('btn-set').addEventListener('click', () => {
   $('s-tpl-cand').value = SET.tplCand; $('s-tpl-call').value = SET.tplCall; $('s-tpl-replay').value = SET.tplReplay; $('s-replay').value = SET.replay;
   $('s-tpl-schol-rel').value = SET.tplScholRel; $('s-tpl-schol-ok').value = SET.tplScholOk; $('s-tpl-coach').value = SET.tplCoach || TPL_DEF.coach; $('s-tpl-coach-rel').value = SET.tplCoachRel || TPL_DEF.coachRel; $('s-tpl-sond').value = SET.tplSond || TPL_DEF.sond; $('s-tpl-lead').value = SET.tplLead || TPL_DEF.lead;
   $('s-groupe').value = SET.groupe; $('s-iclosed').value = SET.iclosed;
-  $('s-tpl-eow').value = SET.tplEowRelance; $('s-tpl-ambre').value = SET.tplAmbreCheckin; $('s-tpl-ambre-abs').value = SET.tplAmbreAbsente; $('s-tpl-exo').value = SET.tplExo; $('s-zoom3').value = SET.zoom3 || ''; $('s-tpl-live3j1').value = SET.tplLive3J1; $('s-tpl-live3h1').value = SET.tplLive3H1;
+  $('s-tpl-eow').value = SET.tplEowRelance; $('s-tpl-ambre').value = SET.tplAmbreCheckin; $('s-tpl-ambre-abs').value = SET.tplAmbreAbsente; $('s-tpl-intake').value = SET.tplIntake || TPL_DEF.intake; $('s-tpl-exo').value = SET.tplExo; $('s-zoom3').value = SET.zoom3 || ''; $('s-tpl-live3j1').value = SET.tplLive3J1; $('s-tpl-live3h1').value = SET.tplLive3H1;
   openSet(true);
 });
 $('voile').addEventListener('click', () => openSet(false));
 $('s-save').addEventListener('click', () => {
-  SET = {tplWebi:$('s-tpl-webi').value, tplInvite:$('s-tpl-invite').value, tplWebiCoach:$('s-tpl-webi-coach').value, tplWebiEcole:$('s-tpl-webi-ecole').value, tplCand:$('s-tpl-cand').value, tplCall:$('s-tpl-call').value, tplReplay:$('s-tpl-replay').value, replay:($('s-replay').value.trim() || REPLAY_DEF), tplScholRel:$('s-tpl-schol-rel').value, tplScholOk:$('s-tpl-schol-ok').value, tplCoach:$('s-tpl-coach').value, tplCoachRel:$('s-tpl-coach-rel').value, tplSond:$('s-tpl-sond').value, tplLead:$('s-tpl-lead').value, groupe:$('s-groupe').value.trim(), iclosed:$('s-iclosed').value.trim(), tplEowRelance:$('s-tpl-eow').value, tplAmbreCheckin:$('s-tpl-ambre').value, tplAmbreAbsente:$('s-tpl-ambre-abs').value, tplExo:$('s-tpl-exo').value, zoom3:$('s-zoom3').value.trim(), tplLive3J1:$('s-tpl-live3j1').value, tplLive3H1:$('s-tpl-live3h1').value};
+  SET = {tplWebi:$('s-tpl-webi').value, tplInvite:$('s-tpl-invite').value, tplWebiCoach:$('s-tpl-webi-coach').value, tplWebiEcole:$('s-tpl-webi-ecole').value, tplCand:$('s-tpl-cand').value, tplCall:$('s-tpl-call').value, tplReplay:$('s-tpl-replay').value, replay:($('s-replay').value.trim() || REPLAY_DEF), tplScholRel:$('s-tpl-schol-rel').value, tplScholOk:$('s-tpl-schol-ok').value, tplCoach:$('s-tpl-coach').value, tplCoachRel:$('s-tpl-coach-rel').value, tplSond:$('s-tpl-sond').value, tplLead:$('s-tpl-lead').value, groupe:$('s-groupe').value.trim(), iclosed:$('s-iclosed').value.trim(), tplEowRelance:$('s-tpl-eow').value, tplAmbreCheckin:$('s-tpl-ambre').value, tplAmbreAbsente:$('s-tpl-ambre-abs').value, tplIntake:$('s-tpl-intake').value, tplExo:$('s-tpl-exo').value, zoom3:$('s-zoom3').value.trim(), tplLive3J1:$('s-tpl-live3j1').value, tplLive3H1:$('s-tpl-live3h1').value};
   store.set('reglages', SET); openSet(false); renderWebi(); renderLive1(); renderCand(); renderAgenda(); renderSchol(); renderCoach(); renderSondage(); renderAmbre(); renderExos(); renderLive3(); renderLeads(); toast('Enregistré');
 });
 $('s-reset').addEventListener('click', () => {
@@ -3318,7 +3351,7 @@ $('s-reset').addEventListener('click', () => {
   $('s-tpl-cand').value = TPL_DEF.cand; $('s-tpl-call').value = TPL_DEF.call; $('s-tpl-replay').value = TPL_DEF.replay; $('s-replay').value = REPLAY_DEF;
   $('s-tpl-schol-rel').value = TPL_DEF.scholRel; $('s-tpl-schol-ok').value = TPL_DEF.scholOk; $('s-tpl-coach').value = TPL_DEF.coach; $('s-tpl-coach-rel').value = TPL_DEF.coachRel; $('s-tpl-sond').value = TPL_DEF.sond;
   $('s-groupe').value = DATA.webi.groupe;
-  $('s-tpl-eow').value = TPL_DEF.eowRelance; $('s-tpl-ambre').value = TPL_DEF.ambreCheckin; $('s-tpl-ambre-abs').value = TPL_DEF.ambreAbsente; $('s-tpl-exo').value = TPL_DEF.exo; $('s-tpl-live3j1').value = TPL_DEF.live3J1; $('s-tpl-live3h1').value = TPL_DEF.live3H1;
+  $('s-tpl-eow').value = TPL_DEF.eowRelance; $('s-tpl-ambre').value = TPL_DEF.ambreCheckin; $('s-tpl-ambre-abs').value = TPL_DEF.ambreAbsente; $('s-tpl-intake').value = TPL_DEF.intake; $('s-tpl-exo').value = TPL_DEF.exo; $('s-tpl-live3j1').value = TPL_DEF.live3J1; $('s-tpl-live3h1').value = TPL_DEF.live3H1;
 });
 
 /* ---------- mail du sondage à toute la liste (script Contrats, depuis selfty.academy@gmail.com) ---------- */

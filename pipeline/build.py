@@ -1368,6 +1368,54 @@ if SHOW_TEST and (HERE / "test-engagements.json").exists():
     eng["rappels"] += t.get("rappels", [])
 print(f"Engagements : {len(eng['eleves'])} élèves, {sum(1 for r in eng['rappels'] if not r.get('traite'))} relances à traiter")
 
+# ---- Questionnaire d'arrivée des élèves (form Tally 81X5kk « Ton point de départ », même clé) ----
+# e-mail = hidden field `email` du lien perso, sinon le champ « E-mail » ; seulement les soumissions complètes
+INTAKE_FORM = "81X5kk"
+
+def intake_parse(d, qlabels, out):
+    for q in d.get("questions") or []:
+        qlabels[q["id"]] = (str(q.get("title") or "").strip(), str(q.get("type") or ""))
+    for s in d.get("submissions") or []:
+        if s.get("isCompleted") is False:
+            continue
+        hid, mail = {}, ""
+        for r in s.get("responses") or []:
+            lab, qtype = qlabels.get(r.get("questionId"), ("", ""))
+            ans = r.get("answer")
+            if qtype == "HIDDEN_FIELDS" and isinstance(ans, dict):
+                hid = ans
+            elif lab == "E-mail" and not mail:
+                mail = ty_txt(ans).strip().lower()
+        mail = str(hid.get("email") or "").strip().lower() or mail
+        if not mail or (mail in TEST_EMAILS and not SHOW_TEST):
+            continue
+        at = str(s.get("submittedAt") or "")
+        if mail not in out or at < out[mail]:
+            out[mail] = at   # première soumission complète
+
+intake_mails, intake_ok = {}, False
+if ty_key:
+    try:
+        qlabels, page = {}, 1
+        while True:
+            req = urllib.request.Request(
+                f"https://api.tally.so/forms/{INTAKE_FORM}/submissions?filter=completed&page={page}",
+                headers={"Authorization": "Bearer " + ty_key, "User-Agent": "curl/8.4.0"})
+            d = json.load(urllib.request.urlopen(req, timeout=30))
+            intake_parse(d, qlabels, intake_mails)
+            if not d.get("hasMore"):
+                break
+            page += 1
+        intake_ok = True
+    except Exception as ex:
+        print("Tally questionnaire d'arrivée KO (on garde la console sans) :", ex)
+# repli : date d'intake connue du pont Engagements (webhook Tally -> onglet Élèves)
+for e in eng.get("eleves") or []:
+    m = str(e.get("email") or "").strip().lower()
+    if m and e.get("intake_le") and m not in intake_mails:
+        intake_mails[m] = str(e.get("intake_le"))
+print(f"Questionnaire d'arrivée : {len(intake_mails)} rempli(s)")
+
 data = {
     "maj": datetime.datetime.now().strftime("%d/%m/%Y %H:%M"),
     "ecoleDebut": ECOLE_DEBUT,
@@ -1407,6 +1455,7 @@ data = {
                 "sources": SOND_SOURCES, "subs": sond_subs,
                 "dest": sd_dest, "destSrc": dict(sd_src), "destExclus": len(sd_excl)},
     "obj8": obj8,
+    "intake": {"ok": intake_ok, "url": f"https://tally.so/r/{INTAKE_FORM}", "mails": intake_mails},
     "compta": {
         "ok": compta_ok,
         "sheetUrl": "https://docs.google.com/spreadsheets/d/1CUiT962_dGEAWhydaboYmC23ir8gA-CtZyUXB4gErIc/edit",
