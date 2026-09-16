@@ -59,7 +59,18 @@ def src_label(s):
         return "Insta autre"
     return "Direct / autre"
 
-wb = openpyxl.load_workbook(XLSX, data_only=True)
+def load_wb(path):
+    """Charge un export xlsx Google en remettant les entiers en int : depuis mi-septembre 2026 l'export
+    écrit « 2509944.0 » au lieu de « 2509944 », ce qui cassait la correspondance Call ID iClosed <-> Suivi Calls."""
+    wb_ = openpyxl.load_workbook(path, data_only=True)
+    for ws_ in wb_.worksheets:
+        for row_ in ws_.iter_rows():
+            for c_ in row_:
+                if isinstance(c_.value, float) and c_.value.is_integer():
+                    c_.value = int(c_.value)
+    return wb_
+
+wb = load_wb(XLSX)
 ws = wb["Inscriptions"]
 hdr = [c.value for c in ws[1]]
 rows = [dict(zip(hdr, [c.value for c in r])) for r in ws.iter_rows(min_row=2) if any(c.value for c in r)]
@@ -115,7 +126,7 @@ for r in real:
 la_deja = sum(1 for r in real if r.get("Dernière étape") == "liste_attente_deja_inscrite")
 
 # ---- Liste d'attente école (Sheet « École de coaching  (réponses) ») ----
-ewb = openpyxl.load_workbook(HERE / "liste-attente.xlsx", data_only=True)
+ewb = load_wb(HERE / "liste-attente.xlsx")
 ews = ewb.active
 ehdr = [str(c.value or "").strip() for c in ews[1]]
 def short_label(h):
@@ -279,7 +290,7 @@ charges += _rec
 track_rows = read_tab(ewb, "suivi calls")
 track = {}
 for r in (track_rows or []):
-    cid = str(r.get("Call ID") or "").strip()
+    cid = re.sub(r"\.0$", "", str(r.get("Call ID") or "").strip())
     if not cid or (cid.upper().startswith("TEST") and not SHOW_TEST):
         continue
     track[cid] = {
@@ -551,7 +562,22 @@ if ic_key:
 # suivi closing du Sheet accroché à chaque call ; « Call test » = exclu de partout
 for c in icalls:
     c["trk"] = track.get(str(c["id"]))
-icalls = [c for c in icalls if not (c["trk"] and c["trk"]["s"].lower() == "call test")]
+# garde-fou : Suivi Calls rempli mais aucun call iClosed ne s'y accroche = format d'ID cassé
+# (bug du 16/09 : export « 2509944.0 ») -> alerte Telegram au lieu de tout renvoyer « à remplir » en silence
+import urllib.parse
+_ids_reels = [k for k in track if k.isdigit()]
+if ic_ok and len(_ids_reels) >= 5 and not any(c["trk"] for c in icalls):
+    print("⚠ ALERTE : aucun call iClosed ne correspond à l'onglet Suivi Calls (format des Call ID ?)", _ids_reels[:3])
+    if os.environ.get("TG_TOKEN") and os.environ.get("TG_CHAT"):
+        try:
+            urllib.request.urlopen(urllib.request.Request(
+                f"https://api.telegram.org/bot{os.environ['TG_TOKEN']}/sendMessage",
+                data=urllib.parse.urlencode({"chat_id": os.environ["TG_CHAT"], "text":
+                    "⚠ Console Selfty : aucun call iClosed ne correspond au Sheet Suivi Calls, "
+                    "tous les calls vont ressortir « à remplir ». Format des Call ID à vérifier."}).encode()), timeout=10)
+        except Exception as ex:
+            print("alerte Telegram KO :", ex)
+icalls =[c for c in icalls if not (c["trk"] and c["trk"]["s"].lower() == "call test")]
 if ic_ok:
     # dump minimal pour notify_calls.py (notif Telegram des nouveaux bookings)
     (HERE / "icalls.json").write_text(json.dumps(
