@@ -1529,6 +1529,21 @@ tg["token"] = os.environ.get("TG_TOKEN", tg["token"])
 tg["chat_id"] = os.environ.get("TG_CHAT", tg["chat_id"])
 
 tpl = (HERE / "template.html").read_text()
+# garde-fou général : un identifiant ou un téléphone qui ressort « 2509944.0 » = format d'export Google
+# encore changé -> alerte Telegram (le bug du 16/09 avait vidé « Calls effectués » sans prévenir)
+_flottants = re.findall(r'"(\d{5,}\.0)"', json.dumps(data, ensure_ascii=False))
+if _flottants:
+    print("⚠ ALERTE : valeurs en « .0 » dans les données :", _flottants[:5])
+    if os.environ.get("TG_TOKEN") and os.environ.get("TG_CHAT"):
+        try:
+            import urllib.parse
+            urllib.request.urlopen(urllib.request.Request(
+                f"https://api.telegram.org/bot{os.environ['TG_TOKEN']}/sendMessage",
+                data=urllib.parse.urlencode({"chat_id": os.environ["TG_CHAT"], "text":
+                    f"⚠ Console Selfty : {len(_flottants)} valeurs lues avec un « .0 » (ex. {_flottants[0]}). "
+                    "Le format d'export du Sheet a changé, IDs et téléphones à vérifier."}).encode()), timeout=10)
+        except Exception as ex:
+            print("alerte Telegram KO :", ex)
 out = (tpl.replace("__DATA__", json.dumps(data, ensure_ascii=False)).replace("__LOGO__", logo)
        .replace("__PONT_URL__", pont["url"]).replace("__PONT_KEY__", pont["key"])
        .replace("__TG_TOKEN__", tg["token"]).replace("__TG_CHAT__", tg["chat_id"])
