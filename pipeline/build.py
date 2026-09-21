@@ -418,7 +418,7 @@ vws = wb["Visites"]
 visites = [[c.value for c in r] for r in vws.iter_rows(min_row=2) if any(c.value for c in r)]
 v_mobile = sum(1 for v in visites if str(v[1]).strip().lower() == "mobile")
 
-# Live 3 (lundi 21/09) : visites de la LP par source / ad (colonne « Campagne (UTM) » = « lp=21-sept source=ads utm_content=l3-img1 »)
+# Live 3 (jeudi 24/09, reporté du lundi 21 : le tag « 21-sept » et la clé « 21sept » restent) : visites de la LP par source / ad (colonne « Campagne (UTM) » = « lp=21-sept source=ads utm_content=l3-img1 »)
 LIVE3_TESTS_AVANT = "2026-09-15T01:05"   # visites de test à la mise en ligne de la LP (captures, vérifications)
 live3_vis = Counter()
 live3_vis_src = Counter()
@@ -1152,7 +1152,7 @@ for p in o8:
         if not (cd and all(u[:10] >= cd for u in p["calls"])):
             passes = sorted(u for u in p["calls"] if u[:19] <= _now_iso)
             obj8_exclues.append({"n": nom, "motif": "call", "pourquoi": f"a déjà eu un call le {o8_dd(passes[-1])}" if passes else f"call déjà booké le {o8_dd(p['upcoming'])}"}); continue
-    LIVE_NOMS = {"31aout": "31 août", "9sept": "9 septembre", "21sept": "21 septembre"}
+    LIVE_NOMS = {"31aout": "31 août", "9sept": "9 septembre", "21sept": "24 septembre"}
     if len(p["lives"]) >= 2:
         o8_sig(p, "webi2", "", f"A pris sa place à {len(p['lives'])} lives (" + " + ".join(LIVE_NOMS[x] for x in ("31aout", "9sept", "21sept") if x in p["lives"]) + ")")
     elif len(p["lives"]) == 1:
@@ -1172,7 +1172,7 @@ for p in o8:
         toks = [pre] + [t for t in toks if t.lower() != pre.lower()]
     nom = " ".join(toks)
     why = list(OrderedDict.fromkeys(s["why"] for s in sigs))
-    live = "21 septembre" if "21sept" in p["lives"] else "9 septembre" if "9sept" in p["lives"] else "31 août"
+    live = "24 septembre" if "21sept" in p["lives"] else "9 septembre" if "9sept" in p["lives"] else "31 août"
     date_call = next((o8_dd(s["ts"]) for s in sigs if s["seg"] == "annule"), "")
     msg = o8_msgs.get(p["mail"]) or o8_msgs.get(p["tel"]) or O8_TPL[seg]
     msg = msg.replace("{p}", pre or "toi").replace("{link}", ICLOSED_LINK).replace("{live}", live).replace("{date}", date_call or "quelques jours")
@@ -1457,7 +1457,7 @@ data = {
         "lp": "https://selfty-academy.github.io/live-9-septembre/",
         "lpPrec": "https://selfty-academy.github.io/live-31-aout/",
     },
-    "live3": {"label": "Live du lundi 21 septembre, 18h", "lp": "https://selfty-academy.github.io/live-21-septembre/",
+    "live3": {"label": "Live du jeudi 24 septembre, 18h", "lp": "https://selfty-academy.github.io/live-24-septembre/",
               "visites": dict(live3_vis), "visitesSrc": dict(live3_vis_src)},
     "inscrits": sorted(inscrits, key=lambda x: x["ts"], reverse=True),
     "cands": sorted(cands, key=lambda c: (c["accord"] != "oui", c["ts"])),
