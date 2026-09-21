@@ -252,6 +252,17 @@ for r in (paiements_rows or []):
     if not (r.get("Client") or r.get("E-mail")):
         continue
     dt = r.get("Date")
+    # lignes « Impayé versement k/n » (0 €) : marque « pas reçu » posée depuis la console, pas un paiement
+    if str(r.get("Note") or "").strip().startswith("Impay"):
+        paiements.append({
+            "date": fmt_date(dt) if isinstance(dt, datetime.datetime) else str(dt or "").strip(),
+            "ts": dt.isoformat() if isinstance(dt, datetime.datetime) else "",
+            "client": str(r.get("Client") or "").strip(),
+            "mail": str(r.get("E-mail") or "").strip().lower(),
+            "montant": 0.0, "total": 0.0,
+            "note": str(r.get("Note") or "").strip(),
+        })
+        continue
     paiements.append({
         "date": fmt_date(dt) if isinstance(dt, datetime.datetime) else str(dt or "").strip(),
         "ts": dt.isoformat() if isinstance(dt, datetime.datetime) else "",
@@ -398,6 +409,8 @@ for r in (contrats_rows or []):
 ecole_by_mail = {e["mail"]: e for e in ecole if e["mail"]}
 clients = OrderedDict()
 for p in sorted(paiements, key=lambda x: x["ts"]):
+    if p["note"].startswith("Impay"):
+        continue
     k = p["mail"] or p["client"].lower()
     c = clients.setdefault(k, {"nom": p["client"] or p["mail"], "mail": p["mail"],
                               "paiements": [], "recu": 0.0, "total": 0.0})

@@ -489,7 +489,7 @@ body.raf-on .wrap{padding-bottom:210px}
 
 <!-- ===================== CLIENTES ===================== -->
 <section class="panel" id="p-clients">
-  <p class="intro">Le suivi des clientes signées. Une vente marquée dans « Calls effectués » crée la fiche toute seule ; tu peux aussi en ajouter une à la main. Statut et notes s'écrivent dans l'onglet « Clients » du Sheet ; l'encaissé vient de l'onglet « Paiements » de la Compta : coche chaque versement reçu directement sur la fiche. « Envoyer le contrat » envoie par e-mail le contrat à signer en ligne (signature au doigt, PDF automatique pour elle et pour toi) ; le statut suit ici.</p>
+  <p class="intro">Le suivi des clientes signées. Une vente marquée dans « Calls effectués » crée la fiche toute seule ; tu peux aussi en ajouter une à la main. Statut et notes s'écrivent dans l'onglet « Clients » du Sheet ; l'encaissé vient de l'onglet « Paiements » de la Compta : chaque versement est compté reçu dès sa date d'échéance, clique dessus pour retirer un virement qui n'est pas arrivé. « Envoyer le contrat » envoie par e-mail le contrat à signer en ligne (signature au doigt, PDF automatique pour elle et pour toi) ; le statut suit ici.</p>
   <div class="kpis kpis-mini" id="clients-kpis"></div>
   <div class="carte" id="cli-manq" hidden></div>
   <div class="liste" id="l-cli"></div>
@@ -544,7 +544,7 @@ body.raf-on .wrap{padding-bottom:210px}
 
 <!-- ===================== PAIEMENTS ===================== -->
 <section class="panel" id="p-paie">
-  <p class="intro">Le suivi des versements, centralisé : les dates prévues (fixées à l'envoi du contrat, modifiables ici), les rappels envoyés automatiquement par e-mail 2 jours avant depuis selfty.academy@gmail.com, et ce qui est reçu ou reste à recevoir. Coche « Reçu » dès que le virement arrive : la facture acquittée part toute seule. « Facturer avant paiement » envoie la facture à régler avant l'échéance (elle passe en acquittée à la réception). <a id="paie-drive" href="__DRIVE_CONTRATS__" target="_blank" rel="noopener">📁 Dossier Drive des contrats</a> · <a href="__DRIVE_FACTURES__" target="_blank" rel="noopener">🧾 Factures</a></p>
+  <p class="intro">Le suivi des versements, centralisé : les dates prévues (fixées à l'envoi du contrat, modifiables ici), les rappels envoyés automatiquement par e-mail 2 jours avant depuis selfty.academy@gmail.com, et ce qui est reçu ou reste à recevoir. <b>Rien à cocher</b> : dès qu'une échéance arrive à sa date, le versement est compté comme reçu et entre dans la compta. Si un virement n'est pas arrivé, clique sur « Reçu ✓ » pour le retirer, il repassera en retard. « Envoyer la facture » envoie la facture acquittée à la cliente, « Facturer avant paiement » la facture à régler avant l'échéance. <a id="paie-drive" href="__DRIVE_CONTRATS__" target="_blank" rel="noopener">📁 Dossier Drive des contrats</a> · <a href="__DRIVE_FACTURES__" target="_blank" rel="noopener">🧾 Factures</a></p>
   <div class="kpis kpis-mini" id="paie-kpis"></div>
   <div class="carte" id="paie-chart-carte" style="padding:14px 16px 8px"><h3 style="margin:0 0 6px;font-size:15px">Reçu et à recevoir, mois par mois</h3><div class="chart-scroll" id="paie-chart"></div></div>
   <div class="pills" id="f-paie"></div>
@@ -1686,6 +1686,7 @@ async function refreshContrats(){
     });
     store.set('ctrlive', live); store.set('ctrpend', C);
     renderClients(); renderAmbre(); renderTabs();
+    autoPaiements();   // échéances arrivées à leur date = versements reçus, sans clic
   } catch(e){ /* hors ligne : on garde ce qu'on a */ }
 }
 function effCtr(c){
@@ -1717,10 +1718,19 @@ function montantsDe(k, prix){
 const AC_DEFAUT = 1600;
 // acompte : cas particulier négocié avec Amandine (10/09/2026), pas proposé aux autres leads (sauf si un acompte est déjà enregistré)
 const acPossible = (nom, ac) => !!ac || /amandine/i.test(nom || '');
+/* « pas reçu » : ligne à 0 € notée « Impayé versement k/n » dans le Sheet, elle empêche la validation automatique */
+const estImpaye = p => String(p.note||'').indexOf('Impayé') === 0;
+function impayesDe(mail){
+  const set = {};
+  (DATA.compta.paiements||[]).forEach(p => { if (p.mail === mail && estImpaye(p)){ const m = /versement (\d+)\/(\d+)/.exec(p.note||''); if (m) set[+m[1]] = true; } });
+  const N = store.get('paienon', {})[mail] || {};
+  Object.keys(N).forEach(k => { if (N[k]) set[+k] = true; else delete set[+k]; });
+  return set;
+}
 function paiesDe(mail){
   // versements déjà dans le Sheet (notes « Versement k/n ») + overlay local en attente de la prochaine MAJ
   const set = {};
-  (DATA.compta.paiements||[]).forEach(p => { if (p.mail === mail){ const m = /Versement (\d+)\/(\d+)/.exec(p.note||''); if (m) set[+m[1]] = true; } });
+  (DATA.compta.paiements||[]).forEach(p => { if (p.mail === mail && !estImpaye(p)){ const m = /Versement (\d+)\/(\d+)/.exec(p.note||''); if (m) set[+m[1]] = true; } });
   const F = store.get('paiefix', {}); const f = F[mail] || {}; let changed = false;
   Object.keys(f).forEach(k => {
     const o = f[k];
@@ -1734,10 +1744,38 @@ function effRecu(c, k){
   // encaissé = Sheet + versements cochés localement pas encore dans le Sheet
   const mail = (c.mail||'').toLowerCase(); if (!mail) return c.recu||0;
   const prix = (k && k.prix) || c.prix || c.total || 0, v = montantsDe(k, prix);
-  const inSheet = {}; (DATA.compta.paiements||[]).forEach(p => { if (p.mail === mail){ const m = /Versement (\d+)\/(\d+)/.exec(p.note||''); if (m) inSheet[+m[1]] = p.montant; } });
+  const inSheet = {}; (DATA.compta.paiements||[]).forEach(p => { if (p.mail === mail && !estImpaye(p)){ const m = /Versement (\d+)\/(\d+)/.exec(p.note||''); if (m) inSheet[+m[1]] = p.montant; } });
   let recu = c.recu||0; const f = (store.get('paiefix', {})[mail]) || {};
   Object.keys(f).forEach(kk => { if (f[kk].on && !inSheet[kk]) recu += v[kk-1]||0; if (!f[kk].on && inSheet[kk]) recu -= inSheet[kk]; });
   return recu;
+}
+/* date prévue d'un versement (jj/mm/aaaa du contrat) : écrite telle quelle dans la compta */
+function dateEchDe(mail, k){
+  const c = clientes().find(x => (x.mail||'').toLowerCase() === mail); const kc = c && effCtr(c);
+  const e = kc && (kc.ech||[])[k-1];
+  return (e && e.date) || '';
+}
+/* Validation automatique : dès qu'une échéance est arrivée à sa date, le versement est compté comme reçu
+   (Anaïs ne renseigne une date que lorsque l'argent est là). Elle peut toujours le retirer d'un clic :
+   une ligne « Impayé versement k/n » est alors écrite dans le Sheet et l'auto ne le recoche plus. */
+let autoPaieFait = false;
+async function autoPaiements(){
+  if (autoPaieFait || !DATA.compta) return; autoPaieFait = true;
+  const dus = echeancesToutes().filter(x => !x.paye && x.iso && x.diff !== null && x.diff <= 0 && !impayesDe((x.c.mail||'').toLowerCase())[x.kk]);
+  if (!dus.length) return;
+  let ok = 0, total = 0;
+  for (const x of dus){
+    const mail = (x.c.mail||'').toLowerCase(); if (!mail) continue;
+    try {
+      const r = await fetch(PONT.url, { method:'POST', body: JSON.stringify({ what:'paiement_set', key:PONT.key, email:mail, nom:x.c.n, k:x.kk, n:x.n,
+        montant:x.montant, total:(x.k.prix || x.c.prix || x.c.total || 0), on:true, auto:true, date:x.date }) });
+      const j = await r.json();
+      if (!j.ok) continue;
+      const F = store.get('paiefix', {}); F[mail] = F[mail] || {}; F[mail][x.kk] = { on:true, when: Date.now() }; store.set('paiefix', F);
+      ok++; total += x.montant || 0;
+    } catch(e){ /* hors ligne : on retentera au prochain chargement */ }
+  }
+  if (ok){ renderPaie(); renderClients(); renderCompta(); renderTabs(); toast(`${ok} versement${ok>1?'s':''} arrivé${ok>1?'s':''} à échéance compté${ok>1?'s':''} comme reçu${ok>1?'s':''} : ${EUR(total)} 💶`); }
 }
 function paieRow(c, k, label){
   const mail = (c.mail||'').toLowerCase();
@@ -1745,7 +1783,7 @@ function paieRow(c, k, label){
   const v = montantsDe(k, prix), np = v.length, on = paiesDe(mail);
   return `<div class="paie-row" data-mail="${esc(mail)}" data-nom="${esc(c.n)}" data-total="${prix}" data-np="${np}">
     <span class="tk-lab">${label || 'Encaissé'}</span>${v.map((m,i) => `<button class="tk-pill tk-mini paie-pill${on[i+1]?' on':''}" data-k="${i+1}" data-montant="${m}">${np===1?'Payé':'Versement '+(i+1)} · ${EUR(m)}</button>`).join('')}
-    <span class="tk-hint">${np>1 ? 'clique chaque versement reçu' : 'clique quand le virement est reçu'} : paiement dans « Paiements » + facture envoyée</span>
+    <span class="tk-hint">${np>1 ? 'chaque versement' : 'le versement'} est compté reçu à sa date d'échéance ; clique pour retirer ce qui n'est pas arrivé</span>
     ${facturesDe(mail).map(f => factChip(f)).join('')}
     ${v.map((m,i) => !on[i+1] && !facturesDe(mail).some(f => f.versement === (i+1)+'/'+np) ? `<button class="btn-ghost fact-avance" data-mail="${esc(mail)}" data-nom="${esc(c.n)}" data-k="${i+1}" data-n="${np}" data-montant="${m}" data-total="${prix}" title="Envoyer la facture avant le virement">🧾 Facture${np>1?' versement '+(i+1):''} avant paiement</button>` : '').join('')}</div>`;
 }
@@ -1755,12 +1793,14 @@ document.addEventListener('click', async e => {
   const mail = row.dataset.mail, k = +b.dataset.k, n = +row.dataset.np, montant = +b.dataset.montant, total = +row.dataset.total;
   b.disabled = true;
   try {
-    const r = await fetch(PONT.url, { method:'POST', body: JSON.stringify({ what:'paiement_set', key:PONT.key, email:mail, nom:row.dataset.nom, k, n, montant, total, on }) });
+    const r = await fetch(PONT.url, { method:'POST', body: JSON.stringify({ what:'paiement_set', key:PONT.key, email:mail, nom:row.dataset.nom, k, n, montant, total, on, date: dateEchDe(mail, k) }) });
     const j = await r.json();
     if (!j.ok) throw new Error(j.error || 'refus du pont');
     const F = store.get('paiefix', {}); F[mail] = F[mail] || {}; F[mail][k] = { on, when: Date.now() }; store.set('paiefix', F);
-    toast(on ? `Versement ${k}/${n} enregistré : ${EUR(montant)} ✅ Facture en cours…` : `Versement ${k}/${n} retiré (la facture émise reste, à annuler par un avoir si besoin)`);
-    renderClients(); renderTrack(); renderTabs();
+    // décoché à la main = « pas reçu » : la validation automatique ne doit plus le recocher
+    const N = store.get('paienon', {}); N[mail] = N[mail] || {}; if (on) delete N[mail][k]; else N[mail][k] = true; store.set('paienon', N);
+    toast(on ? `Versement ${k}/${n} enregistré : ${EUR(montant)} ✅ Facture en cours…` : `Versement ${k}/${n} retiré : il repasse en attente, la console ne le recochera pas`);
+    renderClients(); renderTrack(); renderPaie(); renderCompta(); renderTabs();
     if (on){
       // facture auto du versement (script Contrats : PDF, Drive, mail cliente + école)
       const rf = await fetch(PONT_CTR, { method:'POST', body: JSON.stringify({ what:'facture', key:PONT.key, email:mail, nom:row.dataset.nom, k, n, montant, total }) });
@@ -1782,16 +1822,19 @@ document.addEventListener('click', async e => {
   const mail = b.dataset.mail, k = +b.dataset.k, n = +b.dataset.n, montant = +b.dataset.montant, total = +b.dataset.total;
   const c = clientes().find(x => (x.mail||'').toLowerCase() === mail); const kc = c && effCtr(c);
   const dateEch = kc && kc.ech && kc.ech[k-1] ? kc.ech[k-1].date : '';
-  if (!confirm(`Envoyer maintenant la facture ${n>1?'du versement '+k+'/'+n:''} de ${EUR(montant)} à ${b.dataset.nom}, à régler${dateEch?' avant le '+dateEch:''} ?`)) return;
+  const acq = b.dataset.acq === '1';   // versement déjà reçu : facture acquittée, pas une facture « à régler »
+  if (!confirm(acq
+    ? `Envoyer la facture acquittée ${n>1?'du versement '+k+'/'+n+' ':''}de ${EUR(montant)} à ${b.dataset.nom} ?`
+    : `Envoyer maintenant la facture ${n>1?'du versement '+k+'/'+n:''} de ${EUR(montant)} à ${b.dataset.nom}, à régler${dateEch?' avant le '+dateEch:''} ?`)) return;
   b.disabled = true; b.textContent = 'Envoi…';
   try {
-    const rf = await fetch(PONT_CTR, { method:'POST', body: JSON.stringify({ what:'facture', key:PONT.key, email:mail, nom:b.dataset.nom, k, n, montant, total, avance:true, dateEch }) });
+    const rf = await fetch(PONT_CTR, { method:'POST', body: JSON.stringify({ what:'facture', key:PONT.key, email:mail, nom:b.dataset.nom, k, n, montant, total, avance:!acq, dateEch }) });
     const jf = await rf.json();
     if (!jf.ok) throw new Error(jf.error || 'refus');
     const X = store.get('factfix', {}); X[mail] = (X[mail] || []).filter(x => x.versement !== k+'/'+n);
-    X[mail].push({ numero: jf.numero, versement: k+'/'+n, ttc: jf.ttc, pdf: jf.pdf, payee: false, date: new Date().toLocaleDateString('fr-FR'), when: Date.now() });
+    X[mail].push({ numero: jf.numero, versement: k+'/'+n, ttc: jf.ttc, pdf: jf.pdf, payee: acq, date: new Date().toLocaleDateString('fr-FR'), when: Date.now() });
     store.set('factfix', X);
-    toast(jf.deja ? `Facture ${jf.numero} déjà émise pour ce versement` : `Facture ${jf.numero} envoyée à ${mail}, à régler 🧾`);
+    toast(jf.deja ? `Facture ${jf.numero} déjà émise pour ce versement` : `Facture ${jf.numero} envoyée à ${mail}${acq ? ' (acquittée) 🧾' : ', à régler 🧾'}`);
     renderClients(); renderTrack();
     setTimeout(refreshContrats, 1500);
   } catch(err){ toast('Échec : ' + err.message); b.disabled = false; b.textContent = '🧾 Facture avant paiement'; }
@@ -2141,9 +2184,14 @@ function addDaysIso(iso, n){ const d = new Date(iso + 'T12:00:00'); d.setDate(d.
 function echActions(x){
   const mail = (x.c.mail||'').toLowerCase(), total = x.k.prix || x.c.prix || x.c.total || 0;
   const fact = facturesDe(mail).find(f => f.versement === x.kk + '/' + x.n);
+  const nonRecu = !x.paye && impayesDe(mail)[x.kk];
+  const btnFact = `<button class="btn-ghost fact-avance" data-mail="${esc(mail)}" data-nom="${esc(x.c.n)}" data-k="${x.kk}" data-n="${x.n}" data-montant="${x.montant}" data-total="${total}"`;
   return `<div class="paie-row" style="margin:0" data-mail="${esc(mail)}" data-nom="${esc(x.c.n)}" data-total="${total}" data-np="${x.n}">
-    <button class="tk-pill tk-mini paie-pill${x.paye?' on':''}" data-k="${x.kk}" data-montant="${x.montant}">${x.paye ? 'Reçu ✓' : 'Reçu ?'}</button>
-    ${fact ? factChip(fact) : (!x.paye ? `<button class="btn-ghost fact-avance" data-mail="${esc(mail)}" data-nom="${esc(x.c.n)}" data-k="${x.kk}" data-n="${x.n}" data-montant="${x.montant}" data-total="${total}" title="Envoyer la facture avant le virement">🧾 Facturer avant paiement</button>` : '')}
+    <button class="tk-pill tk-mini paie-pill${x.paye?' on':''}" data-k="${x.kk}" data-montant="${x.montant}" title="${x.paye ? 'Le virement n\'est pas arrivé ? clique pour le retirer' : 'Marquer ce versement comme reçu'}">${x.paye ? 'Reçu ✓' : 'Reçu ?'}</button>
+    ${nonRecu ? '<span class="tag-warn">marqué pas reçu</span>' : ''}
+    ${fact ? factChip(fact) : (x.paye
+      ? `${btnFact} data-acq="1" title="Envoyer la facture acquittée de ce versement">🧾 Envoyer la facture</button>`
+      : `${btnFact} title="Envoyer la facture avant le virement">🧾 Facturer avant paiement</button>`)}
     <input type="date" class="ech-date" data-mail="${esc(mail)}" data-k="${x.kk}" value="${esc(x.iso)}" title="Modifier la date prévue"${x.paye ? ' disabled' : ''}>
   </div>`;
 }
