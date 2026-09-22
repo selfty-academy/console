@@ -351,7 +351,7 @@ body.raf-on .wrap{padding-bottom:210px}
 
 <!-- ===================== LIVE 9 SEPT ===================== -->
 <section class="panel" id="p-live3">
-  <p class="intro">Les inscrites au live du jeudi 24 septembre à 18h (reporté du lundi 21) (<a href="https://selfty-academy.github.io/live-24-septembre/" target="_blank" rel="noopener">page d'inscription</a>), au fur et à mesure, et d'où elles viennent : chaque ad a son lien (<code>?source=ads&amp;utm_content=nom-de-l-ad</code>), le tableau compte les visites et les inscrites par ad pour couper les moins bonnes à 48 h. Mention « déjà venue » = inscrite à un live précédent.</p>
+  <p class="intro">Les inscrites au live du lundi 28 septembre à 18h (reporté du 21 puis du 24) (<a href="https://selfty-academy.github.io/live-28-septembre/" target="_blank" rel="noopener">page d'inscription</a>), au fur et à mesure, et d'où elles viennent : chaque ad a son lien (<code>?source=ads&amp;utm_content=nom-de-l-ad</code>), le tableau compte les visites et les inscrites par ad pour couper les moins bonnes à 48 h. Mention « déjà venue » = inscrite à un live précédent.</p>
   <div class="kpis" id="k-live3"></div>
   <div class="carte" id="c-live3-ads" style="margin-top:14px"><h3>Par ad et par source</h3><div id="t-live3" style="overflow-x:auto"></div></div>
   <div class="pills" id="f-live3"></div>
@@ -674,16 +674,16 @@ body.raf-on .wrap{padding-bottom:210px}
     <div class="note">Variables : {prenom} {lien} (lien perso du questionnaire, e-mail et prénom préremplis). Pas d'emoji : le lien WhatsApp les casse.</div>
   </div>
   <div class="champ">
-    <label for="s-zoom3">Lien Zoom du live du 24 septembre</label>
+    <label for="s-zoom3">Lien Zoom du live du 28 septembre</label>
     <input type="text" id="s-zoom3" placeholder="https://us06web.zoom.us/j/…">
   </div>
   <div class="champ">
-    <label for="s-tpl-live3j1">Live 24 sept : rappel J-1 (mercredi 18h)</label>
+    <label for="s-tpl-live3j1">Live 28 sept : rappel J-1 (dimanche 18h)</label>
     <textarea id="s-tpl-live3j1"></textarea>
     <div class="note">Variables : {prenom} {zoom}</div>
   </div>
   <div class="champ">
-    <label for="s-tpl-live3h1">Live 24 sept : rappel H-1 (jeudi 17h)</label>
+    <label for="s-tpl-live3h1">Live 28 sept : rappel H-1 (lundi 17h)</label>
     <textarea id="s-tpl-live3h1"></textarea>
     <div class="note">Variables : {prenom} {zoom}</div>
   </div>
@@ -794,6 +794,8 @@ const esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;',
 
 /* ---------- réglages ---------- */
 const REPLAY_DEF = 'https://selfty-academy.github.io/replay/';
+/* Zoom du live 3 (lundi 28/09 18h, réunion « Live Selfty Academy avec Anaïs », ID 858 3217 8806) */
+const ZOOM3_DEF = 'https://us06web.zoom.us/j/85832178806?pwd=xh1cw12dW6Q9qG9mEVkNxPx3x2eRJT.1';
 const TPL_DEF = {
   webi: "Hello {prenom}, c'est Alex, l'associé d'Anaïs Brault à la Selfty Academy 🌸\n\nPetit rappel : le live c'est CE SOIR à 18h ! Voici le lien pour nous rejoindre :\n{live}\n\nSi tu n'y es pas, voici le lien du groupe WhatsApp du live :\n{groupe}\n\nÀ ce soir !",
   invite: "Hello {prenom}, c'est Alex, l'associé d'Anaïs Brault à la Selfty Academy 🌸\n\nTu t'étais inscrite au live d'Anaïs du 31 août, alors je te préviens en avance : elle refait un live DEMAIN, mercredi à 18h, sur un nouveau thème : « Tu es formée mais tu ne t'es pas encore lancée ».\n\nVoici le lien Zoom pour nous rejoindre demain :\n{live}\n\nEt le groupe WhatsApp du live pour être sûre de ne pas le rater :\n{groupe}\n\nÀ demain !",
@@ -811,7 +813,7 @@ const TPL_DEF = {
   eowRelance: "Hello {prenom}, c'est Ambre de la Selfty Academy 🌸\n\nJe n'ai pas encore vu ton bilan de la semaine. Cinq minutes pour prendre du recul sur ta semaine, et ça nous aide à t'accompagner au plus près. Voici ton lien perso :\n{lien}\n\nMerci, et belle journée !",
   ambreCheckin: "Hello {prenom}, c'est Ambre de la Selfty Academy 🌸\n\nJe prends de tes nouvelles : comment tu te sens en ce moment dans la formation ? Y a-t-il quelque chose qu'on peut faire pour mieux t'accompagner ? Je suis là si besoin.",
   exo: "Hello {prenom}, c'est Anaïs 🌸\n\nJ'ai lu ton exercice « {lecon} ».\n\n{commentaire}\n\nOn en reparle au prochain call de groupe si tu veux creuser.",
-  live3J1: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault.\nDemain jeudi à 18h, c'est le live gratuit d'Anaïs sur Zoom : une expérience somatique guidée que tu vis de chez toi, puis une vraie séance en direct.\nLe lien pour rejoindre : {zoom}\nMets une alarme à 17h55, on commence à l'heure.\nÀ demain !",
+  live3J1: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault.\nDemain lundi à 18h, c'est le live gratuit d'Anaïs sur Zoom : une expérience somatique guidée que tu vis de chez toi, puis une vraie séance en direct.\nLe lien pour rejoindre : {zoom}\nMets une alarme à 17h55, on commence à l'heure.\nÀ demain !",
   live3H1: "Hello {prenom}, on commence dans 1 heure.\nInstalle-toi au calme, avec un endroit où poser les pieds au sol : l'expérience somatique ouvre le live.\nLe lien Zoom : {zoom}\nAlex, l'associé de Anaïs Brault",
   intake: "Hello {prenom}, c'est Ambre de la Selfty Academy.\n\nAvant de commencer, Anaïs aimerait que tu remplisses ton questionnaire d'arrivée : 15 minutes pour poser d'où tu pars et ce que tu veux vivre dans les 6 prochains mois. Ça l'aide à préparer ton accompagnement, et tu en garderas la trace pour mesurer ton chemin.\n\n{lien}\n\nMerci, et à très vite.\nAmbre",
   ambreAbsente: "Hello {prenom}, c'est Ambre de la Selfty Academy 🌸\n\nOn ne t'a pas vue au call de groupe du {date}. Tout va bien de ton côté ? Le replay est disponible, et si tu as une question dessus je suis là."
@@ -821,7 +823,7 @@ const store = {
   get: (k, d) => { try { const v = localStorage.getItem('sc-'+k); return v===null ? d : JSON.parse(v); } catch(e){ return k in MEM ? MEM[k] : d; } },
   set: (k, v) => { MEM[k] = v; try { localStorage.setItem('sc-'+k, JSON.stringify(v)); } catch(e){} }
 };
-let SET = Object.assign({tplWebi:TPL_DEF.webi, tplInvite:TPL_DEF.invite, tplWebiCoach:TPL_DEF.webiCoach, tplWebiEcole:TPL_DEF.webiEcole, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, tplReplay:TPL_DEF.replay, replay:REPLAY_DEF, tplScholRel:TPL_DEF.scholRel, tplScholOk:TPL_DEF.scholOk, tplCoach:TPL_DEF.coach, tplCoachRel:TPL_DEF.coachRel, tplSond:TPL_DEF.sond, tplLead:TPL_DEF.lead, tplEowRelance:TPL_DEF.eowRelance, tplAmbreCheckin:TPL_DEF.ambreCheckin, tplAmbreAbsente:TPL_DEF.ambreAbsente, tplIntake:TPL_DEF.intake, tplExo:TPL_DEF.exo, tplLive3J1:TPL_DEF.live3J1, tplLive3H1:TPL_DEF.live3H1, zoom3:'', groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
+let SET = Object.assign({tplWebi:TPL_DEF.webi, tplInvite:TPL_DEF.invite, tplWebiCoach:TPL_DEF.webiCoach, tplWebiEcole:TPL_DEF.webiEcole, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, tplReplay:TPL_DEF.replay, replay:REPLAY_DEF, tplScholRel:TPL_DEF.scholRel, tplScholOk:TPL_DEF.scholOk, tplCoach:TPL_DEF.coach, tplCoachRel:TPL_DEF.coachRel, tplSond:TPL_DEF.sond, tplLead:TPL_DEF.lead, tplEowRelance:TPL_DEF.eowRelance, tplAmbreCheckin:TPL_DEF.ambreCheckin, tplAmbreAbsente:TPL_DEF.ambreAbsente, tplIntake:TPL_DEF.intake, tplExo:TPL_DEF.exo, tplLive3J1:TPL_DEF.live3J1, tplLive3H1:TPL_DEF.live3H1, zoom3:ZOOM3_DEF, groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
 if (!SET.tplInvite) SET.tplInvite = TPL_DEF.invite;
 if (!SET.tplReplay) SET.tplReplay = TPL_DEF.replay;
 // ancien rappel « notre appel » enregistré dans ⚙️ : c'est Anaïs qui prend l'appel, pas Alex
@@ -853,7 +855,7 @@ const TABS = [
   {id:'paie', lab:'Paiements'},
   {id:'ecole', lab:"Liste d'attente école"},
   {id:'webis', lab:'Webinaires', sub:[
-    {id:'live3', lab:'Live 24 sept'},
+    {id:'live3', lab:'Live 28 sept'},
     {id:'live2', lab:'Live 9 sept'},
     {id:'live1', lab:'À inviter au live 2'},
     {id:'webi',  lab:'Relances webi'},
@@ -924,7 +926,7 @@ window.addEventListener('hashchange', () => { const h = decodeURIComponent(locat
 
 /* ---------- bandeau webi ---------- */
 $('maj').textContent = DATA.maj;
-$('bandeau-webi').innerHTML = `<strong>Prochain : ${esc(DATA.live3.label)}</strong> <a href="${esc(DATA.live3.lp)}" target="_blank" rel="noopener">Page d'inscription du 24/09</a> · <span style="color:var(--muted)">Précédent :</span> <strong>${esc(DATA.webi.label)}</strong>
+$('bandeau-webi').innerHTML = `<strong>Prochain : ${esc(DATA.live3.label)}</strong> <a href="${esc(DATA.live3.lp)}" target="_blank" rel="noopener">Page d'inscription du 28/09</a> · <span style="color:var(--muted)">Précédent :</span> <strong>${esc(DATA.webi.label)}</strong>
   <a href="${esc(DATA.webi.meet)}" target="_blank" rel="noopener">Lien visio du live</a>
   <a href="${esc(SET.groupe)}" target="_blank" rel="noopener">Groupe WhatsApp</a>
   <a href="${esc(DATA.webi.lp)}" target="_blank" rel="noopener">Page d'inscription</a>`;
@@ -945,7 +947,7 @@ function renderWebi(){
   $('f-webi-live').innerHTML = [
     ['9sept', `Live du 9 sept <b>${tousLives.filter(i => i.live==='9sept').length}</b>`],
     ['31aout', `Live du 31 août <b>${tousLives.filter(i => i.live==='31aout').length}</b>`],
-    ['21sept', `Live du 24 sept <b>${tousLives.filter(i => i.live==='21sept').length}</b>`],
+    ['21sept', `Live du 28 sept <b>${tousLives.filter(i => i.live==='21sept').length}</b>`],
     ['t', `Tous <b>${tousLives.length}</b>`]
   ].map(([v,l]) => `<button class="pill${liveWebi===v?' on':''}" data-f="${v}">${l}</button>`).join('');
   let tous = liveWebi==='t' ? tousLives : tousLives.filter(i => i.live === liveWebi);
@@ -1036,7 +1038,7 @@ function renderLive2(){
 $('f-live2').addEventListener('click', e => { const p = e.target.closest('.pill'); if(p){ fLive2 = p.dataset.f; renderLive2(); }});
 $('q-live2').addEventListener('input', e => { qLive2 = e.target.value.trim().toLowerCase(); renderLive2(); });
 
-/* ---------- live 3 : jeudi 24 septembre (reporté du lundi 21 ; clé interne « 21sept » gardée) ---------- */
+/* ---------- live 3 : lundi 28 septembre (reporté du 21 puis du 24 ; clé interne « 21sept » gardée) ---------- */
 let fLive3 = 't', qLive3 = '';
 function renderLive3(){
   const tous = DATA.inscrits.filter(i => i.live === '21sept');
@@ -1078,8 +1080,8 @@ function renderLive3(){
 function live3Btns(i){
   if (!i.tel) return '';
   const k = key(i), R = store.get('rel3', {});
-  const msg = tpl => tpl.replaceAll('{prenom}', i.n).replaceAll('{zoom}', SET.zoom3 || '');
-  if (!SET.zoom3) return '<span class="bm-note">Colle le lien Zoom dans ⚙️ pour les rappels</span>';
+  const msg = tpl => tpl.replaceAll('{prenom}', i.n).replaceAll('{zoom}', SET.zoom3 || ZOOM3_DEF);
+  if (!(SET.zoom3 || ZOOM3_DEF)) return '<span class="bm-note">Colle le lien Zoom dans ⚙️ pour les rappels</span>';
   return [['j1', 'Rappel J-1', SET.tplLive3J1], ['h1', 'Rappel H-1', SET.tplLive3H1]].map(([t, lab, tpl]) =>
     `<a class="btn-wa" href="${waUrl(i.tel, msg(tpl))}" target="_blank" rel="noopener">${WA_SVG} ${lab}</a><label class="chk"><input type="checkbox" data-rel3="${esc(k + '|' + t)}" ${R[k + '|' + t] ? 'checked' : ''}> envoyé</label>`).join(' ');
 }
@@ -2998,7 +3000,7 @@ $('f-schol').addEventListener('click', e => { const p = e.target.closest('.pill'
 const TODO_DEF = [
   {id:'d-intake-wa', t:"Envoyer le questionnaire d'arrivée aux clientes déjà inscrites", d:"Onglet Ambre suivi client, bouton WhatsApp Questionnaire d'arrivée (10 secondes par cliente)", go:'ambre', lab:'Ouvrir Ambre'},
   {id:'d-sond-wa', t:'Remercier les répondantes du sondage sur WhatsApp', d:'Onglet Sondage, bouton 📲 Envoyer un par un, message déjà écrit (sans emoji)', go:'sondage', lab:'Ouvrir Sondage'},
-  {id:'d-zoom-21', t:'Préparer le Zoom du live du jeudi 24/09 18h en amont', d:"Micros coupés pour toutes à l'entrée, participantes ne peuvent pas se réactiver, pas de partage d'écran, pas de renommage, salle d'attente, chat vers l'hôte seulement, Alex co-animateur en régie, test du son partagé depuis le Mac, lien Zoom mis sur la LP et dans le mail de confirmation", url:'https://zoom.us/profile/setting', lab:'Réglages Zoom ↗'},
+  {id:'d-zoom-21', t:'Préparer le Zoom du live du lundi 28/09 18h en amont', d:"Micros coupés pour toutes à l'entrée, participantes ne peuvent pas se réactiver, pas de partage d'écran, pas de renommage, salle d'attente, chat vers l'hôte seulement, Alex co-animateur en régie, test du son partagé depuis le Mac, lien Zoom mis sur la LP et dans le mail de confirmation", url:'https://zoom.us/profile/setting', lab:'Réglages Zoom ↗'},
   {id:'d-sond-mail', t:'Envoyer le mail du sondage à la liste', d:"Après validation du Google Doc par Anaïs : onglet Sondage, M'envoyer un test puis Envoyer à la liste", go:'sondage', lab:'Ouvrir Sondage'},
   {id:'d-o8-wa', t:"Relancer les personnes d'Objectif 8 sur WhatsApp", d:'Bouton 📲 Envoyer un par un, 15 à 20 messages par heure maximum', go:'obj8', lab:'Ouvrir Objectif 8'},
   {id:'d-agenda-zoom', t:"Ajouter le lien Zoom des Selfty Calls dans l'agenda", d:"Dès qu'Anaïs l'envoie : selfty-agenda/config.json puis build_ics.py"},
@@ -3386,7 +3388,7 @@ $('btn-set').addEventListener('click', () => {
   $('s-tpl-cand').value = SET.tplCand; $('s-tpl-call').value = SET.tplCall; $('s-tpl-replay').value = SET.tplReplay; $('s-replay').value = SET.replay;
   $('s-tpl-schol-rel').value = SET.tplScholRel; $('s-tpl-schol-ok').value = SET.tplScholOk; $('s-tpl-coach').value = SET.tplCoach || TPL_DEF.coach; $('s-tpl-coach-rel').value = SET.tplCoachRel || TPL_DEF.coachRel; $('s-tpl-sond').value = SET.tplSond || TPL_DEF.sond; $('s-tpl-lead').value = SET.tplLead || TPL_DEF.lead;
   $('s-groupe').value = SET.groupe; $('s-iclosed').value = SET.iclosed;
-  $('s-tpl-eow').value = SET.tplEowRelance; $('s-tpl-ambre').value = SET.tplAmbreCheckin; $('s-tpl-ambre-abs').value = SET.tplAmbreAbsente; $('s-tpl-intake').value = SET.tplIntake || TPL_DEF.intake; $('s-tpl-exo').value = SET.tplExo; $('s-zoom3').value = SET.zoom3 || ''; $('s-tpl-live3j1').value = SET.tplLive3J1; $('s-tpl-live3h1').value = SET.tplLive3H1;
+  $('s-tpl-eow').value = SET.tplEowRelance; $('s-tpl-ambre').value = SET.tplAmbreCheckin; $('s-tpl-ambre-abs').value = SET.tplAmbreAbsente; $('s-tpl-intake').value = SET.tplIntake || TPL_DEF.intake; $('s-tpl-exo').value = SET.tplExo; $('s-zoom3').value = SET.zoom3 || ZOOM3_DEF; $('s-tpl-live3j1').value = SET.tplLive3J1; $('s-tpl-live3h1').value = SET.tplLive3H1;
   openSet(true);
 });
 $('voile').addEventListener('click', () => openSet(false));
