@@ -752,8 +752,8 @@ SOND_FORM = "VLKopa"
 SQ_MASTER, SQ_MASTER_SUJET, SQ_MASTER_LIBRE = "Une masterclass d", "Si oui, sur quel sujet", "Un autre sujet"
 SQ_SOMA, SQ_SUJET, SQ_PRENOM = "Une expérience somatique", "Le sujet que tu veux", "Ton prénom"
 # sujets de masterclass proposés -> libellé court pour le graphique (préfixe du choix)
-SOND_SUJETS = [("Ta première cliente", "Première cliente payante"), ("Annoncer ton prix", "Annoncer son prix, rapport à l'argent"),
-               ("La structure d", "Structure d'une séance (5 niveaux)"), ("Te montrer", "Visibilité, se montrer"), ("Un autre sujet", "Autre sujet")]
+SOND_SUJETS = [("La critique interne", "Critique interne"), ("Le passage à l", "Passage à l'action"),
+               ("Les blessures inconscientes", "Blessures inconscientes"), ("Un autre sujet", "Autre sujet")]
 SOND_SOURCES = ["mail", "whatsapp", "story", "ecole"]
 sond_subs, sond_ok, sond_stats = [], False, {}
 

@@ -474,7 +474,7 @@ body.raf-on .wrap{padding-bottom:210px}
   <div class="bandeau" id="bandeau-sondage"></div>
   <div class="carte" id="ml-carte">
     <h3 style="margin:0 0 6px">✉️ Le mail du sondage à toute la liste</h3>
-    <p class="intro" style="margin-bottom:8px">Objet « J'ai une question pour toi », signé L'équipe Selfty, envoyé <strong>depuis selfty.academy@gmail.com</strong> (script Contrats). Destinataires calculés à chaque mise à jour : inscrites aux 2 lives, liste d'attente école, contacts iClosed, sans les clientes, les contrats envoyés, les tests et les désinscrites. Lots de 40, 100 mails par jour maximum (quota Gmail), reprise automatique, jamais deux fois au même e-mail (onglet Sheet « Mails sondage »). Le lien du sondage porte l'e-mail et le prénom en champs cachés.</p>
+    <p class="intro" style="margin-bottom:8px">Objet « J'ai besoin de ton aide (tu veux bien ?) », version réécrite par Anaïs, signé L'équipe Selfty, envoyé <strong>depuis selfty.academy@gmail.com</strong> (script Contrats). Destinataires calculés à chaque mise à jour : inscrites aux 2 lives, liste d'attente école, contacts iClosed, sans les clientes, les contrats envoyés, les tests et les désinscrites. Lots de 40, 100 mails par jour maximum (quota Gmail), reprise automatique, jamais deux fois au même e-mail (onglet Sheet « Mails sondage »). Le lien du sondage porte l'e-mail et le prénom en champs cachés.</p>
     <div class="kpis kpis-mini" id="ml-kpis"></div>
     <details class="sujet"><summary>Voir le mail et la liste des destinataires</summary><div id="ml-apercu" class="ml-apercu"></div><div id="ml-liste" class="ml-mails"></div></details>
     <div class="ml-row"><input type="text" id="ml-test" inputmode="email" autocapitalize="off" placeholder="ton e-mail pour le test"><button class="btn-ghost" id="ml-test-go">M'envoyer un test</button></div>
@@ -3405,21 +3405,23 @@ $('s-reset').addEventListener('click', () => {
 });
 
 /* ---------- mail du sondage à toute la liste (script Contrats, depuis selfty.academy@gmail.com) ---------- */
-// Texte repris mot pour mot de selfty-marketing-sept/sondage.md (partie mail), signé « L'équipe Selfty ». Pas d'emoji (MailApp les casse).
+// Version réécrite par Anaïs le 21/09 dans le Google Doc 10rYvEFw (objet, ton, sujets de masterclass), signée « L'équipe Selfty ». Pas d'emoji (MailApp les casse).
 // {prenom} {lien} sont remplacés par le script pour chaque destinataire ; « Hello {prenom}, » devient « Hello, » sans prénom.
 const ML = {
   camp: 'sondage',
-  sujet: "J'ai une question pour toi",
+  sujet: "J’ai besoin de ton aide (tu veux bien ?)",
   lien: 'https://tally.so/r/VLKopa?source=mail',   // + &email=…&prenom=… ajoutés par le script (champs cachés du Tally)
   paras: [
     "Hello {prenom},",
-    "Tu t'es inscrite à un de mes lives (ou tu as rempli le questionnaire de l'école). Merci d'avoir été là.",
-    "Je prépare le prochain, et je ne veux pas le construire sur ce que j'imagine de tes besoins. Je veux le construire sur ce que tu me dis.",
-    "Alors j'ai trois questions pour toi, une minute montre en main :",
-    ["Une masterclass sur un sujet précis, ça t'intéresse ? Et lequel.", "Une expérience somatique guidée, en direct, tu la vis avec nous ?", "Le sujet que tu veux que j'aborde, avec tes mots."],
+    "C’est Anaïs, fondatrice de Selfty Academy !",
+    "Tu t’es inscrit(e) à un de mes lives ou tu as peut-être rempli le questionnaire de l’école. Ravie de savoir qu’on a des intérêts similaires toi et moi !",
+    "On prépare le prochain live, et je veux le créer en fonction de ce qui te serait le plus utile ! Alors dis-moi, qu’est-ce que tu aimerais le + voir venant de moi ?",
+    "J’ai 3 questions pour toi, 1 minute pour y répondre. Tu préfères :",
+    ["Une masterclass sur un sujet précis et si oui lequel ? (critique interne, le passage à l’action, les blessures inconscientes…)", "Une expérience somatique guidée, en direct ?", "Le sujet que tu veux qu’on aborde, avec tes mots."],
     "**Je réponds aux 3 questions** → {lien}",
-    "Je lis chaque réponse moi-même. Le prochain live sera construit dessus, et tu recevras la date en premier.",
-    "L'équipe Selfty",
+    "On lit chaque réponse. Le prochain live sera construit dessus.",
+    "Merci de ton aide,",
+    "L’équipe Selfty",
   ],
   stop: "Tu ne veux plus recevoir nos mails ? Réponds STOP à ce mail.",
 };
