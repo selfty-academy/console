@@ -491,8 +491,9 @@ body.raf-on .wrap{padding-bottom:210px}
   <p class="intro">Les réponses au sondage « Le prochain live, c'est toi qui choisis » arrivent ici toutes seules depuis Tally : masterclass ou pas, quel sujet, envie de vivre l'expérience somatique, et le sujet qu'elle veut qu'Anaïs aborde. Sous le graphique, le détail de chaque choix : le libellé complet du sujet et qui a voté quoi. Filtre par canal d'envoi (mail, WhatsApp, story, école). Quand la personne est retrouvée dans les inscrites (même e-mail), le bouton WhatsApp est prêt avec son prénom et son sujet.</p>
   <div class="bandeau" id="bandeau-sondage"></div>
   <div class="carte" id="ml-carte">
-    <h3 style="margin:0 0 6px">✉️ Le mail du sondage à toute la liste</h3>
-    <p class="intro" style="margin-bottom:8px">Objet « J'ai besoin de ton aide (tu veux bien ?) », version réécrite par Anaïs, signé L'équipe Selfty, envoyé <strong>depuis selfty.academy@gmail.com</strong> (script Contrats). Destinataires calculés à chaque mise à jour : inscrites aux 2 lives, liste d'attente école, contacts iClosed, sans les clientes, les contrats envoyés, les tests et les désinscrites. Lots de 40, 100 mails par jour maximum (quota Gmail), reprise automatique, jamais deux fois au même e-mail (onglet Sheet « Mails sondage »). Le lien du sondage porte l'e-mail et le prénom en champs cachés.</p>
+    <h3 style="margin:0 0 6px">✉️ Les mails à toute la liste</h3>
+    <div class="pills" id="ml-camp" style="margin:0 0 10px"></div>
+    <p class="intro" style="margin-bottom:8px">Deux campagnes : le sondage (déjà parti le 22/09) et l'invitation au live du 28 septembre. Choisis la campagne ci-dessus : l'aperçu, le test et l'envoi suivent. Chaque campagne a son propre compteur, jamais deux fois au même e-mail. Envoyé <strong>depuis selfty.academy@gmail.com</strong> (script Contrats). Destinataires calculés à chaque mise à jour : inscrites aux 2 lives, liste d'attente école, contacts iClosed, sans les clientes, les contrats envoyés, les tests et les désinscrites. Lots de 40, 100 mails par jour maximum (quota Gmail), reprise automatique, jamais deux fois au même e-mail (onglet Sheet « Mails sondage »). Le lien du sondage porte l'e-mail et le prénom en champs cachés.</p>
     <div class="kpis kpis-mini" id="ml-kpis"></div>
     <details class="sujet"><summary>Voir le mail et la liste des destinataires</summary><div id="ml-apercu" class="ml-apercu"></div><div id="ml-liste" class="ml-mails"></div></details>
     <div class="ml-row"><input type="text" id="ml-test" inputmode="email" autocapitalize="off" placeholder="ton e-mail pour le test"><button class="btn-ghost" id="ml-test-go">M'envoyer un test</button></div>
@@ -3071,7 +3072,16 @@ const TODO_DEF = [
   {id:'d-zoom-21', t:'Préparer le Zoom du live du lundi 28/09 18h en amont', d:"Micros coupés pour toutes à l'entrée, participantes ne peuvent pas se réactiver, pas de partage d'écran, pas de renommage, salle d'attente, chat vers l'hôte seulement, Alex co-animateur en régie, test du son partagé depuis le Mac, lien Zoom mis sur la LP et dans le mail de confirmation", url:'https://zoom.us/profile/setting', lab:'Réglages Zoom ↗'},
   {id:'d-sond-mail', t:'Envoyer le mail du sondage à la liste', d:"Après validation du Google Doc par Anaïs : onglet Sondage, M'envoyer un test puis Envoyer à la liste", go:'sondage', lab:'Ouvrir Sondage'},
   {id:'d-o8-wa', t:"Relancer les personnes d'Objectif 8 sur WhatsApp", d:'Bouton 📲 Envoyer un par un, 15 à 20 messages par heure maximum', go:'obj8', lab:'Ouvrir Objectif 8'},
-  {id:'d-agenda-zoom', t:"Ajouter le lien Zoom des Selfty Calls dans l'agenda", d:"Dès qu'Anaïs l'envoie : selfty-agenda/config.json puis build_ics.py"},
+  {id:'d-agenda-zoom', t:"Ajouter le lien Zoom des Selfty Calls dans l'agenda", d:"Dès qu'Anaïs l'envoie : selfty-agenda/config.json puis build_ics.py. En attendant, les événements disent « il sera ajouté ici dès qu'il est créé » plutôt qu'un lien mort."},
+  // ajoutées le 23/09
+  {id:'d-invit-live3', t:"Envoyer l'invitation au live du 28 à toute la liste", d:"0 inscrite à 5 jours du live. Onglet Sondage, campagne « Invitation au live du 28 », test puis envoi. À valider par Anaïs d'abord (c'est elle qui anime).", go:'sondage', lab:'Ouvrir les mails'},
+  {id:'d-boost-live3', t:'Lancer le boost Instagram du live (2 x 50 €)', d:"Post l3-img5 et reel l3-vid1, fin lundi 28 à 16h. Plan détaillé dans ads-selfty/live-21-sept/.", url:'https://www.instagram.com/', lab:'Ouvrir Instagram ↗'},
+  {id:'d-video-tech', t:'Tourner la vidéo technique (Loom), avant le 5 octobre', d:"Script prêt dans selfty-plateforme/video-technique-script.md. Avant de tourner : valider les points avec Anaïs et tester l'écoute écran verrouillé sur un vrai téléphone."},
+  {id:'d-bienvenue-5oct', t:'Faire valider le mail de bienvenue par Anaïs avant le 1er octobre', d:"Le mail part au plus tard le 5 octobre, et Anaïs est off les 2, 3 et 4. Donc sa validation doit arriver le 1er au plus tard. Bouton « 💌 Mail de bienvenue » sur une fiche cliente pour l'aperçu.", go:'clients', lab:'Ouvrir Clientes'},
+  {id:'d-formspree', t:"Récupérer l'accès au Sheet du formulaire du site d'Anaïs", d:"Message et prompt prêts dans selfty-23-09/message-anais-formspree.md. Dès qu'elle partage le Sheet, le brancher à la console (Leads sans call)."},
+  {id:'d-portail-3mois', t:'Ouvrir le portail : trouver de vraies personnes à faire coacher', d:"Le portail ouvre avec le module 07, le 12 décembre. Les élèves y coachent des gens hors école. Il faut un réservoir de personnes prêtes : anciens prospects d'Anaïs, inscrits aux lives qui n'ont pas acheté, proches des élèves."},
+  {id:'d-anciens-prospects', t:"Fin octobre : reprendre les anciens prospects d'Anaïs", d:"Les rediriger vers le portail (séances gratuites avec une élève) plutôt que de les laisser dormir. Liste de départ : Objectif 8 et les inscrits aux lives sans call."},
+  {id:'d-organisme', t:'Se renseigner : organisme de formation et certification ICF', d:"Deux sujets pour plus tard. Organisme de formation (Qualiopi, NDA) = financements possibles. ICF = la certification reconnue du coaching, elle change ce qu'on peut promettre."},
 ];
 const todoDone = () => store.get('todo', {});
 const todoItems = () => TODO_DEF.concat(store.get('todoperso', []).map(x => Object.assign({perso:true}, x)));
@@ -3528,8 +3538,10 @@ $('s-reset').addEventListener('click', () => {
 /* ---------- mail du sondage à toute la liste (script Contrats, depuis selfty.academy@gmail.com) ---------- */
 // Version réécrite par Anaïs le 21/09 dans le Google Doc 10rYvEFw (objet, ton, sujets de masterclass), signée « L'équipe Selfty ». Pas d'emoji (MailApp les casse).
 // {prenom} {lien} sont remplacés par le script pour chaque destinataire ; « Hello {prenom}, » devient « Hello, » sans prénom.
-const ML = {
+const CAMPAGNES = {};
+CAMPAGNES.sondage = {
   camp: 'sondage',
+  titre: 'Le sondage',
   sujet: "J’ai besoin de ton aide (tu veux bien ?)",
   lien: 'https://tally.so/r/VLKopa?source=mail',   // + &email=…&prenom=… ajoutés par le script (champs cachés du Tally)
   paras: [
@@ -3546,13 +3558,52 @@ const ML = {
   ],
   stop: "Tu ne veux plus recevoir nos mails ? Réponds STOP à ce mail.",
 };
-ML.texte = ML.paras.map(x => Array.isArray(x) ? x.map((l, i) => `${i+1}. ${l}`).join('\n') : x.replace(/\*\*/g, '')).join('\n\n') + '\n\n' + ML.stop;
-ML.html = '<div style="font-family:Helvetica,Arial,sans-serif;font-size:15.5px;line-height:1.6;color:#3A2A2A;max-width:560px">'
-  + ML.paras.map(x => Array.isArray(x)
-      ? '<ol style="margin:0 0 14px;padding-left:22px">' + x.map(l => `<li style="margin:0 0 4px">${esc(l)}</li>`).join('') + '</ol>'
-      : `<p style="margin:0 0 14px">${esc(x).replace('{lien}', '<a href="{lienHtml}" style="color:#7E5252">{lienHtml}</a>').replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')}</p>`).join('')
-  + `<p style="font-size:12.5px;color:#8A7070;margin:22px 0 0">${esc(ML.stop)}</p></div>`;
-let mlEtat = store.get('mletat', null), mlTimer = null, mlBusy = false;
+
+// Invitation au live du lundi 28 septembre. Le thème vient du sondage (critique interne, en tête des votes).
+// ⚠ À faire valider par Anaïs avant l'envoi : c'est elle qui anime, et elle réécrit ses mails.
+CAMPAGNES.live3 = {
+  camp: 'live3',
+  titre: 'Invitation au live du 28',
+  sujet: "Lundi 18h : la voix qui te dit que tu n\u2019es pas légitime",
+  lien: 'https://selfty-academy.github.io/live-28-septembre/?source=mail-invit&utm_content=invit-live3',
+  paras: [
+    "Hello {prenom},",
+    "C\u2019est Anaïs.",
+    "Vous avez été nombreux à répondre au sondage, et un sujet est ressorti devant tous les autres : **la critique interne**. Cette voix qui parle juste avant que tu annonces ton prix, juste avant que tu publies, juste avant que tu proposes ton accompagnement.",
+    "Alors c\u2019est ce qu\u2019on va travailler ensemble, en direct : **lundi 28 septembre à 18h**, 1h15 sur Zoom.",
+    "Ce qu\u2019on va faire :",
+    ["D\u2019où vient cette voix, et pourquoi la raisonner ne marche pas.", "Une expérience somatique guidée, en direct, pour sentir ce qui change quand elle se calme.", "Tes questions, à la fin, sans limite de temps."],
+    "Ce n\u2019est pas une présentation. C\u2019est une séance.",
+    "**Je réserve ma place** → {lien}",
+    "C\u2019est gratuit. Si tu ne peux pas être là lundi, inscris-toi quand même, je t\u2019envoie le replay.",
+    "À lundi,",
+    "Anaïs",
+  ],
+  stop: "Tu ne veux plus recevoir nos mails ? Réponds STOP à ce mail.",
+};
+
+let mlCamp = store.get('mlcamp', 'live3');
+if (!CAMPAGNES[mlCamp]) mlCamp = 'live3';
+let ML = CAMPAGNES[mlCamp];
+function mlPrepare(c){
+  c.texte = c.paras.map(x => Array.isArray(x) ? x.map((l, i) => `${i+1}. ${l}`).join('\n') : x.replace(/\*\*/g, '')).join('\n\n') + '\n\n' + c.stop;
+  c.html = '<div style="font-family:Helvetica,Arial,sans-serif;font-size:15.5px;line-height:1.6;color:#3A2A2A;max-width:560px">'
+    + c.paras.map(x => Array.isArray(x)
+        ? '<ol style="margin:0 0 14px;padding-left:22px">' + x.map(l => `<li style="margin:0 0 4px">${esc(l)}</li>`).join('') + '</ol>'
+        : `<p style="margin:0 0 14px">${esc(x).replace('{lien}', '<a href="{lienHtml}" style="color:#7E5252">{lienHtml}</a>').replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')}</p>`).join('')
+    + `<p style="font-size:12.5px;color:#8A7070;margin:22px 0 0">${esc(c.stop)}</p></div>`;
+  return c;
+}
+Object.keys(CAMPAGNES).forEach(k => mlPrepare(CAMPAGNES[k]));
+function setCampagne(k){
+  if (!CAMPAGNES[k]) return;
+  mlCamp = k; ML = CAMPAGNES[k]; store.set('mlcamp', k);
+  mlEtat = store.get('mletat-' + k, null); mlLoaded = false; renderMail(); mlMaybe();
+}
+const ML_INUTILE = {
+};
+
+let mlEtat = store.get('mletat-' + mlCamp, null), mlTimer = null, mlBusy = false, mlLoaded = false;
 const mlDest = () => ((DATA.sondage && DATA.sondage.dest) || []);
 async function mlPost(o){
   if (!PONT.key || PONT.key.startsWith('__')) throw new Error('pont non configuré');
@@ -3561,6 +3612,8 @@ async function mlPost(o){
 }
 function renderMail(){
   if (!$('ml-kpis')) return;
+  $('ml-camp').innerHTML = Object.keys(CAMPAGNES).map(k =>
+    `<button class="pill${k === mlCamp ? ' on' : ''}" onclick="setCampagne('${k}')">${esc(CAMPAGNES[k].titre)}</button>`).join('');
   const dest = mlDest(), S = DATA.sondage || {}, src = S.destSrc || {};
   const e = mlEtat || {};
   $('ml-kpis').innerHTML = [
@@ -3570,7 +3623,7 @@ function renderMail(){
     [e.quota === undefined ? '·' : e.quota, 'quota Gmail restant aujourd\'hui'],
   ].map(([v,l]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div></div>`).join('');
   const ex = { email: 'prenom@exemple.fr', prenom: 'Camille' };
-  const lien = ML.lien + '&email=' + encodeURIComponent(ex.email) + '&prenom=' + encodeURIComponent(ex.prenom);
+  const lien = ML.lien + (ML.lien.indexOf('?') < 0 ? '?' : '&') + 'email=' + encodeURIComponent(ex.email) + '&prenom=' + encodeURIComponent(ex.prenom);
   $('ml-apercu').innerHTML = `<div style="font-size:13px;color:var(--muted);margin-bottom:8px">Objet : <b>${esc(ML.sujet)}</b> · de : Selfty Academy &lt;selfty.academy@gmail.com&gt; · exemple avec le prénom « Camille »</div>`
     + ML.html.replace(/Hello \{prenom\},/g, 'Hello ' + ex.prenom + ',').replace(/\{lienHtml\}/g, esc(lien));
   const par = Object.entries(src).map(([k, n]) => `${({live1:'live du 31 août', live2:'live du 9 sept', ecole:'liste d\'attente école', iclosed:'iClosed'})[k] || k} ${n}`).join(' · ');
@@ -3591,10 +3644,9 @@ function mlPlan(){
   if (mlEtat && mlEtat.restants > 0) mlTimer = setTimeout(async () => { try { await mlPost({ what:'mail_liste_lot' }); } catch(err){} mlRefresh(); }, 10*60*1000);
 }
 async function mlRefresh(){
-  try { mlEtat = await mlPost({ what:'mail_liste_etat' }); store.set('mletat', mlEtat); } catch(err){}
+  try { mlEtat = await mlPost({ what:'mail_liste_etat' }); store.set('mletat-' + mlCamp, mlEtat); } catch(err){}
   renderMail(); mlPlan();
 }
-let mlLoaded = false;
 function mlMaybe(){ if (tabOn === 'sondage' && !mlLoaded){ mlLoaded = true; mlRefresh(); } }
 document.addEventListener('click', e => { if (e.target.closest('.tab, #subtabs .pill')) setTimeout(mlMaybe, 0); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden && tabOn === 'sondage' && mlLoaded) mlRefresh(); });
