@@ -33,6 +33,13 @@ header .maj{font-size:13px;color:var(--muted)}
 .bandeau strong{color:var(--ink)}
 .bandeau a{white-space:nowrap}
 
+.vue-bascule{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 0}
+.vue-pill{border:1px solid var(--border);background:var(--surface);color:var(--ink-soft);border-radius:999px;padding:6px 14px;font-size:13.5px;cursor:pointer}
+.vue-pill.on{background:var(--ink);border-color:var(--ink);color:#FFFDFB}
+.vue-note{font-size:12px;color:var(--muted);flex:1;min-width:200px}
+.pub-form{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px}
+.pub-form label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+.pub-form input{border:1px solid var(--border);border-radius:9px;padding:8px 10px;font:inherit;font-size:14px;background:var(--surface)}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 20px;position:sticky;top:0;background:rgba(250,238,238,.82);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);padding:10px 0;z-index:5}
 .tab{border:1px solid var(--border);background:var(--surface);color:var(--ink-soft);border-radius:999px;padding:9px 16px;font:500 14.5px "Jost",sans-serif;cursor:pointer;display:flex;align-items:center;gap:7px}
 .tab.on{background:var(--mauve);border-color:var(--mauve);color:#FFFDFB}
@@ -334,6 +341,7 @@ body.raf-on .wrap{padding-bottom:210px}
 
 <div class="bandeau" id="bandeau-webi"></div>
 
+<div class="vue-bascule" id="vue-bascule"></div>
 <nav class="tabs" id="tabs"></nav>
 <div class="pills subtabs" id="subtabs" hidden></div>
 
@@ -397,7 +405,7 @@ body.raf-on .wrap{padding-bottom:210px}
 
 <!-- ===================== CANDIDATURES LIVE ===================== -->
 <section class="panel" id="p-cand">
-  <p class="intro">Les candidatures au coaching en direct des lives 1 et 2, et depuis le 23/09 les <strong>questions posées pour la masterclass</strong> du live 3 (la page d'inscription ne propose plus le coaching en direct, le sondage a choisi la masterclass). Le message pré-écrit sert aux anciennes candidatures : il les prévient gentiment qu'une autre personne a été choisie et les invite quand même.</p>
+  <p class="intro">Les personnes qui ont candidaté pour être coachées en direct. Une autre personne a été choisie : le message pré-écrit les prévient gentiment, garde leur candidature au chaud pour un prochain live coaching, et les invite quand même ce soir.</p>
   <div class="pills" id="f-cand"></div>
   <div class="liste" id="l-cand"></div>
 </section>
@@ -520,6 +528,18 @@ body.raf-on .wrap{padding-bottom:210px}
 <section class="panel" id="p-ambre">
   <p class="intro">Le suivi des clientes pour Ambre, tout au même endroit : la fiche, le call de closing (lien de la visio, retranscription), l'avancée dans le programme, les bilans de la semaine (questionnaire hebdo envoyé automatiquement chaque vendredi, réponses centralisées ici), qui n'a pas fait son bilan, la présence aux calls de groupe. Le bouton WhatsApp est prérempli selon la situation : bilan pas fait, absente au dernier call, ou simple prise de nouvelles (messages modifiables dans ⚙️).</p>
   <div class="kpis kpis-mini" id="am-kpis"></div>
+  <details class="sujet" style="margin:0 0 12px">
+      <summary>📖 Légende : ce que veut dire chaque mot et chaque pastille</summary>
+      <div class="rep"><b>Série en cours</b>Le nombre de jours d'affilée où l'élève a fait l'action quotidienne qu'elle a elle-même déclarée sur sa page Engagements. Elle repart à zéro dès qu'un jour est manqué. « Record » est sa meilleure série depuis le début. Pour une action hebdomadaire, la série se compte en semaines et pas en jours.</div>
+      <div class="rep"><b>Taux sur 4 semaines</b>Sur les 28 derniers jours, le pourcentage de jours faits sur les jours prévus. C'est le chiffre le plus fiable : une série cassée un jour de maladie ne veut rien dire, un taux à 30 % oui.</div>
+      <div class="rep"><b>Les 14 pastilles</b>Les 14 derniers jours, du plus ancien au plus récent. Vert : fait. Rose : manqué. Beige : pas encore aujourd'hui. Bleu : pause déclarée par l'élève.</div>
+      <div class="rep"><b>Bilan de la semaine</b>Le questionnaire du vendredi. « Reçu » = elle l'a rempli pour la semaine en cours. « Pas fait » = le lien perso lui a été envoyé et rien n'est revenu.</div>
+      <div class="rep"><b>Semaine X / 27</b>Où elle en est dans le programme, compté depuis l'ouverture de l'école le 10 octobre. Pas son avancement dans les vidéos : ça, c'est SchoolMaker qui le sait.</div>
+      <div class="rep"><b>Binôme</b>La personne avec qui elle pratique. Quand une élève reste 2 jours sans rien faire, sa binôme reçoit un mail (pas une relance de notre part : c'est elle qui va la chercher).</div>
+      <div class="rep"><b>Les relances</b>2 jours de silence : le système prépare un message WhatsApp. 5 jours : il propose un appel. Rien n'est envoyé tout seul, le bouton rouge ouvre juste WhatsApp avec le texte prêt.</div>
+      <div class="rep"><b>Contrat pas signé</b>Le contrat est parti par mail mais la signature n'est pas revenue. C'est la première chose à relancer : sans signature, il n'y a pas de cadre.</div>
+      <div class="rep"><b>Portail</b>La mise en relation avec de vraies personnes, hors école, pour pratiquer en conditions réelles. Il ouvre avec le module 07, en décembre.</div>
+  </details>
   <div class="pills" id="f-ambre"></div>
   <div class="liste" id="l-ambre"></div>
   <div class="carte" id="eng-carte" style="margin-top:18px">
@@ -543,14 +563,9 @@ body.raf-on .wrap{padding-bottom:210px}
 </section>
 
 <!-- ===================== EXERCICES RENDUS ===================== -->
-<section class="panel" id="p-exos">
-  <p class="intro">Les exercices rendus par les élèves sous les leçons (formulaire « Je rends mon exercice »). Chaque exercice arrive ici dans l'heure, avec sa question et ses pièces jointes. Écris ton retour, clique « Corrigé » : le statut et le commentaire s'écrivent dans le Sheet « Exercices Selfty ». Le bouton WhatsApp ouvre le message prérempli avec ton commentaire (modifiable dans ⚙️). <a href="https://docs.google.com/spreadsheets/d/1lb7WpgYw5YDQXaurQZ9nk_hMZ35sXpwDcS7us428uYg/edit" target="_blank" rel="noopener">📄 Ouvrir le Sheet</a></p>
-  <div id="bandeau-exos"></div>
-  <div class="kpis kpis-mini" id="exo-kpis"></div>
-  <div class="pills" id="f-exos"></div>
-  <div class="pills" id="f-exos-mod"></div>
-  <div id="l-exos"></div>
-</section>
+<!-- Onglet « Exercices rendus » retiré le 23/09/2026 : les rendus passent par le devoir natif de SchoolMaker
+     (étape « Ton exercice », correction par Anaïs). Le pont Exercices et le Tally dWOQbz restent en place,
+     build.py continue de remplir DATA.exos : remettre {id:'exos'} dans TABS suffit à faire revenir l'onglet. -->
 
 <!-- ===================== PAIEMENTS ===================== -->
 <section class="panel" id="p-paie">
@@ -573,6 +588,19 @@ body.raf-on .wrap{padding-bottom:210px}
   <div class="carte">
     <h3>Par mois</h3>
     <div id="compta-mois"></div>
+  </div>
+  <div class="carte">
+    <h3>Publicité</h3>
+    <p class="bm-note" style="margin:0 0 10px">Chaque dépense de pub saisie ici part dans l'onglet « Charges » du Sheet, au poste « Publicité ». Coche « tous les mois » pour un abonnement : la console reporte la ligne automatiquement chaque mois. Les trois chiffres du dessous disent ce que coûte vraiment un call et une cliente.</p>
+    <div class="pub-form">
+      <label>Date<input type="date" id="pub-date"></label>
+      <label>Campagne<input id="pub-lib" placeholder="Ex. : boost reel live 28 sept" size="26"></label>
+      <label>Montant<input type="number" id="pub-mt" min="0" step="0.01" placeholder="0" style="width:110px"></label>
+      <label style="flex-direction:row;align-items:center;gap:6px;padding-bottom:9px"><input type="checkbox" id="pub-mens" style="width:auto">tous les mois</label>
+      <button class="btn-add" id="pub-add">Ajouter</button>
+    </div>
+    <div class="kpis" id="pub-kpis"></div>
+    <div id="l-pub"></div>
   </div>
   <div class="carte">
     <h3>Charges</h3>
@@ -669,11 +697,16 @@ body.raf-on .wrap{padding-bottom:210px}
     <div class="note">Variables : {prenom} {lien} (lien perso du bilan hebdo)</div>
   </div>
   <div class="champ">
+    <label for="s-tpl-ctr">Ambre : contrat pas signé</label>
+    <textarea id="s-tpl-ctr"></textarea>
     <label for="s-tpl-ambre">Ambre : prise de nouvelles</label>
     <textarea id="s-tpl-ambre"></textarea>
     <div class="note">Variables : {prenom}</div>
   </div>
   <div class="champ">
+    <label for="s-replay-calls">Lien pour revoir les visios des calls de groupe</label>
+    <input id="s-replay-calls" type="url" placeholder="https://selftyacademy.schoolmaker.co/…">
+    <p class="mini">Utilisé par le message « absente au call de groupe » ci-dessous, à la place de {replay}.</p>
     <label for="s-tpl-ambre-abs">Ambre : absente au call de groupe</label>
     <textarea id="s-tpl-ambre-abs"></textarea>
     <div class="note">Variables : {prenom} {date} (date du call)</div>
@@ -820,20 +853,22 @@ const TPL_DEF = {
   sond: "Hello {prenom}, c'est Alex, l'associé d'Anaïs Brault.\n\nMerci pour ta réponse au sondage sur le prochain live, Anaïs l'a lue. Tu lui proposes : « {sujet} ». Je te préviens dès que la date et le thème sont fixés.\n\nEt si tu veux en parler directement avec elle avant le live, tu peux réserver ton appel ici :\n{iclosed}",
   coachRel: "Hello {prenom}, c'est Alex, l'associé d'Anaïs Brault 🌸\n\nJ'ai vu que tu avais commencé ta candidature pour le coaching individuel avec Anaïs mais qu'elle n'est pas allée au bout. Il ne reste que deux minutes, tu peux la finir ici :\n{lien}\n\nEt si tu bloques quelque part, dis-moi !",
   scholOk: "Hello {prenom}, c'est Alex, l'associé d'Anaïs Brault à la Selfty Academy 🌸\n\nOn a bien reçu ta candidature pour la bourse, merci pour ta confiance. Anaïs lit tout personnellement : tu auras une réponse avant le 15 septembre.",
-  eowRelance: "Hello {prenom}, c'est Ambre de la Selfty Academy 🌸\n\nJe n'ai pas encore vu ton bilan de la semaine. Cinq minutes pour prendre du recul sur ta semaine, et ça nous aide à t'accompagner au plus près. Voici ton lien perso :\n{lien}\n\nMerci, et belle journée !",
-  ambreCheckin: "Hello {prenom}, c'est Ambre de la Selfty Academy 🌸\n\nJe prends de tes nouvelles : comment tu te sens en ce moment dans la formation ? Y a-t-il quelque chose qu'on peut faire pour mieux t'accompagner ? Je suis là si besoin.",
+  eowRelance: "Hello {prenom}, c'est Ambre de la Selfty Academy 🌸\n\nJe n'ai pas encore vu ton bilan de la semaine\n\nCinq minutes pour prendre du recul, et moi ça m'aide à mieux pouvoir t'accompagner. Ton lien perso :\n{lien}\n\nMerci, et belle journée",
+  ctrRelance: "Hello {prenom}, c'est Ambre de la Selfty Academy 🌸\n\nJe reviens vers toi pour ton contrat : il est parti par mail le {date} et je ne vois pas encore ta signature\n\nTu peux le signer ici, ça prend deux minutes :\n{lien}\n\nS'il y a quoi que ce soit qui bloque, dis-le-moi, moi ça m'aide à mieux pouvoir t'accompagner",
+  ambreCheckin: "Hello {prenom}, c'est Ambre de la Selfty Academy 🌸\n\nJe prends de tes nouvelles : comment tu te sens en ce moment dans la formation ?\n\nEst-ce qu'il y a quelque chose qu'on peut faire pour mieux t'accompagner ? Dis-moi tout, moi ça m'aide à mieux pouvoir t'accompagner",
   exo: "Hello {prenom}, c'est Anaïs 🌸\n\nJ'ai lu ton exercice « {lecon} ».\n\n{commentaire}\n\nOn en reparle au prochain call de groupe si tu veux creuser.",
   live3J1: "Hello {prenom}, c'est Alex, l'associé de Anaïs Brault.\nDemain lundi à 18h, c'est le live gratuit d'Anaïs sur Zoom : une expérience somatique guidée que tu vis de chez toi, puis une vraie séance en direct.\nLe lien pour rejoindre : {zoom}\nMets une alarme à 17h55, on commence à l'heure.\nÀ demain !",
   live3H1: "Hello {prenom}, on commence dans 1 heure.\nInstalle-toi au calme, avec un endroit où poser les pieds au sol : l'expérience somatique ouvre le live.\nLe lien Zoom : {zoom}\nAlex, l'associé de Anaïs Brault",
-  intake: "Hello {prenom}, c'est Ambre de la Selfty Academy.\n\nAvant de commencer, Anaïs aimerait que tu remplisses ton questionnaire d'arrivée : 15 minutes pour poser d'où tu pars et ce que tu veux vivre dans les 6 prochains mois. Ça l'aide à préparer ton accompagnement, et tu en garderas la trace pour mesurer ton chemin.\n\n{lien}\n\nMerci, et à très vite.\nAmbre",
-  ambreAbsente: "Hello {prenom}, c'est Ambre de la Selfty Academy 🌸\n\nOn ne t'a pas vue au call de groupe du {date}. Tout va bien de ton côté ? Le replay est disponible, et si tu as une question dessus je suis là."
+  intake: "Hello {prenom}, c'est Ambre de la Selfty Academy\n\nAvant qu'on commence, on aimerait que tu remplisses ton questionnaire d'arrivée : cinq minutes pour ton adresse postale (on t'envoie ton carnet) et pour nous dire comment tu as envie d'être accompagnée\n\n{lien}\n\nMoi ça m'aide à mieux pouvoir t'accompagner, et toi tu gardes la trace de ton point de départ\n\nMerci, et à très vite\nAmbre",
+  ambreAbsente: "Hello {prenom}, c'est Ambre de la Selfty Academy 🌸\n\nOn ne t'a pas vue au call de groupe du {date}, tout va bien de ton côté ?\n\nTu peux revoir la visio ici :\n{replay}\n\nEt si tu as une question dessus je suis là",
 };
 const MEM = {};
 const store = {
   get: (k, d) => { try { const v = localStorage.getItem('sc-'+k); return v===null ? d : JSON.parse(v); } catch(e){ return k in MEM ? MEM[k] : d; } },
   set: (k, v) => { MEM[k] = v; try { localStorage.setItem('sc-'+k, JSON.stringify(v)); } catch(e){} }
 };
-let SET = Object.assign({tplWebi:TPL_DEF.webi, tplInvite:TPL_DEF.invite, tplWebiCoach:TPL_DEF.webiCoach, tplWebiEcole:TPL_DEF.webiEcole, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, tplReplay:TPL_DEF.replay, replay:REPLAY_DEF, tplScholRel:TPL_DEF.scholRel, tplScholOk:TPL_DEF.scholOk, tplCoach:TPL_DEF.coach, tplCoachRel:TPL_DEF.coachRel, tplSond:TPL_DEF.sond, tplLead:TPL_DEF.lead, tplEowRelance:TPL_DEF.eowRelance, tplAmbreCheckin:TPL_DEF.ambreCheckin, tplAmbreAbsente:TPL_DEF.ambreAbsente, tplIntake:TPL_DEF.intake, tplExo:TPL_DEF.exo, tplLive3J1:TPL_DEF.live3J1, tplLive3H1:TPL_DEF.live3H1, zoom3:ZOOM3_DEF, groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
+const REPLAY_CALLS_DEF = 'https://selftyacademy.schoolmaker.co/';
+let SET = Object.assign({replayCalls:REPLAY_CALLS_DEF, tplWebi:TPL_DEF.webi, tplInvite:TPL_DEF.invite, tplWebiCoach:TPL_DEF.webiCoach, tplWebiEcole:TPL_DEF.webiEcole, tplCand:TPL_DEF.cand, tplCall:TPL_DEF.call, tplReplay:TPL_DEF.replay, replay:REPLAY_DEF, tplScholRel:TPL_DEF.scholRel, tplScholOk:TPL_DEF.scholOk, tplCoach:TPL_DEF.coach, tplCoachRel:TPL_DEF.coachRel, tplSond:TPL_DEF.sond, tplLead:TPL_DEF.lead, tplEowRelance:TPL_DEF.eowRelance, tplAmbreCheckin:TPL_DEF.ambreCheckin, tplCtrRelance:TPL_DEF.ctrRelance, tplAmbreAbsente:TPL_DEF.ambreAbsente, tplIntake:TPL_DEF.intake, tplExo:TPL_DEF.exo, tplLive3J1:TPL_DEF.live3J1, tplLive3H1:TPL_DEF.live3H1, zoom3:ZOOM3_DEF, groupe:DATA.webi.groupe, iclosed:''}, store.get('reglages', {}));
 if (!SET.tplInvite) SET.tplInvite = TPL_DEF.invite;
 if (!SET.tplReplay) SET.tplReplay = TPL_DEF.replay;
 // ancien rappel « notre appel » enregistré dans ⚙️ : c'est Anaïs qui prend l'appel, pas Alex
@@ -861,7 +896,6 @@ const TABS = [
   {id:'coach', lab:'Candidatures coaching'},
   {id:'clients', lab:'Clientes'},
   {id:'ambre', lab:'Ambre suivi client'},
-  {id:'exos', lab:'📝 Exercices rendus'},
   {id:'paie', lab:'Paiements'},
   {id:'ecole', lab:"Liste d'attente école"},
   {id:'webis', lab:'Webinaires', sub:[
@@ -876,12 +910,26 @@ const TABS = [
   {id:'compta', lab:'Compta'},
   {id:'data',  lab:'Datas'}
 ];
+// Vue Anaïs (demande Alex 23/09) : on ne garde que ce qui lui fait gagner de l'argent, gagner du temps,
+// ou mieux délivrer. Tout le reste (prospection, webinaires, sondage, bourse, datas) est le travail d'Alex.
+const ONGLETS_ANAIS = ['todo', 'calls', 'track', 'clients', 'ambre', 'paie', 'compta'];
+let VUE = store.get('vue', 'anais');
+const tabsVisibles = () => VUE === 'anais'
+  ? TABS.filter(t => ONGLETS_ANAIS.includes(t.id))
+  : TABS;
+function setVue(v){
+  VUE = v; store.set('vue', v);
+  renderTabs();
+  if (VUE === 'anais' && !ONGLETS_ANAIS.includes(tabOn) && !ONGLETS_ANAIS.includes(groupOf(tabOn) || '')) goTab('todo');
+}
 const LEAVES = TABS.flatMap(t => t.sub ? t.sub : [t]);           // onglets « feuilles » = panneaux
 const groupOf = id => (TABS.find(t => t.sub && t.sub.some(x => x.id === id)) || {}).id || null;
 let tabOn = store.get('tab','obj8');
 { const h = decodeURIComponent(location.hash.slice(1)); const hg = TABS.find(t => t.id === h && t.sub);
   if (hg) tabOn = hg.sub[0].id; else if (h && LEAVES.some(t => t.id === h)) tabOn = h; }   // lien direct console/#sondage
 if (!LEAVES.some(t => t.id === tabOn)) tabOn = 'obj8';
+// vue Anaïs : si l'onglet mémorisé fait partie de ceux qui lui sont masqués, on ouvre « To do » (23/09)
+if (VUE === 'anais' && !ONGLETS_ANAIS.includes(tabOn) && !ONGLETS_ANAIS.includes(groupOf(tabOn) || '')) tabOn = 'todo';
 function renderTabs(){
   const done = store.get('relwebi', {});
   const doneC = store.get('relcand', {});
@@ -904,10 +952,13 @@ function renderTabs(){
   const bCoach = ((DATA.coach && DATA.coach.subs) || []).filter(s => !cdone[s.id]).length;
   const bO8 = o8List().filter(p => !p.c && !p.b).length;
   const bSond = ((DATA.sondage && DATA.sondage.subs) || []).length;
-  const b = {live3:null, obj8:bO8, todo:todoItems().filter(t => !todoDone()[t.id]).length, sondage:bSond||null, live2:bLive2, live1:bLive1, webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, coach:bCoach, calls:bCalls, track:bTrack, leads:bLeads, clients:bCli, ambre:ambreManquants().length + eowNonAttribues().length + engATraiter().length, exos:exosList().filter(x => x.statut !== 'Corrigé').length, paie:bPaie, compta:null, data:null};
+  const b = {live3:null, obj8:bO8, todo:todoItems().filter(t => !todoDone()[t.id]).length, sondage:bSond||null, live2:bLive2, live1:bLive1, webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, coach:bCoach, calls:bCalls, track:bTrack, leads:bLeads, clients:bCli, ambre:ambreManquants().length + eowNonAttribues().length + engATraiter().length + clientes().map(effCli).filter(c => c.mail && ctrAttente(c)).length, paie:bPaie, compta:null, data:null};
   TABS.filter(t => t.sub).forEach(t => { b[t.id] = t.sub.reduce((n, x) => n + (b[x.id] || 0), 0); });
   const g = groupOf(tabOn);
-  $('tabs').innerHTML = TABS.map(t =>
+  $('vue-bascule').innerHTML = [['anais', '🌸 Vue Anaïs', 'les 7 onglets qui la concernent'], ['tout', '🛠️ Tout (Alex)', 'les ' + TABS.length + ' onglets']]
+    .map(([v, l, t]) => `<button class="vue-pill${VUE === v ? ' on' : ''}" onclick="setVue('${v}')" title="${t}">${l}</button>`).join('')
+    + `<span class="vue-note">${VUE === 'anais' ? 'Les onglets de prospection, webinaires, sondage, bourse et datas sont masqués. Ce réglage reste sur cet appareil.' : 'Tous les onglets sont affichés.'}</span>`;
+  $('tabs').innerHTML = tabsVisibles().map(t =>
     `<button class="tab${(t.id===tabOn || t.id===g)?' on':''}" data-t="${t.id}">${t.lab}${b[t.id]!==null&&b[t.id]!==undefined?` <span class="bdg">${b[t.id]}</span>`:''}</button>`).join('');
   const grp = TABS.find(t => t.id === g);
   $('subtabs').hidden = !grp;
@@ -2621,10 +2672,15 @@ function ambreFiche(c){
 function ambreManquants(){ return clientes().map(effCli).filter(c => c.mail && ambreFiche(c).manque); }
 function ambreMsg(c, f){
   const prenom = (c.n||'').trim().split(' ')[0];
+  const k = effCtr(c);
+  if (k && k.statut !== 'Signé') return (SET.tplCtrRelance || TPL_DEF.ctrRelance).replaceAll('{prenom}', prenom)
+    .replaceAll('{date}', (k.sent||'').split(' ')[0]).replaceAll('{lien}', CONTRAT_URL + '?t=' + (k.token || ''));
   if (f.manque) return SET.tplEowRelance.replaceAll('{prenom}', prenom).replaceAll('{lien}', eowLienPerso(c));
-  if (f.derniere && !f.derniere.present) return SET.tplAmbreAbsente.replaceAll('{prenom}', prenom).replaceAll('{date}', f.derniere.date);
+  if (f.derniere && !f.derniere.present) return SET.tplAmbreAbsente.replaceAll('{prenom}', prenom).replaceAll('{date}', f.derniere.date).replaceAll('{replay}', SET.replayCalls || REPLAY_CALLS_DEF);
   return SET.tplAmbreCheckin.replaceAll('{prenom}', prenom);
 }
+// vrai si le contrat est parti sans revenir signé (relance prioritaire d'Ambre)
+function ctrAttente(c){ const k = effCtr(c); return !!(k && k.statut !== 'Signé'); }
 const scoreChip = (lab, v) => v == null ? '' : `<span class="am-sc">${lab} <b>${v}/10</b></span>`;
 function bilanHtml(b){
   return `<div class="am-bilan"><div class="h"><b>${esc(b.date)}</b> · semaine ${esc(b.week.replace(/^\d+-W/, ''))}${b.presence ? ` · <span class="chip src-form">calls : ${esc(b.presence)}</span>` : ''}
@@ -2652,9 +2708,10 @@ function renderAmbre(){
     ['t', `Toutes <b>${tous.length}</b>`],
     ['m', `Bilan manquant <b>${manquants}</b>`],
     ['r', `Bilan reçu <b>${recus}</b>`],
+    ['k', `Contrat pas signé <b>${tous.filter(x => ctrAttente(x.c)).length}</b>`],
     ['x', `Terminées / en pause <b>${tous.length - actives.length}</b>`],
   ].map(([v,l]) => `<button class="pill${fAmbre===v?' on':''}" data-f="${v}">${l}</button>`).join('');
-  const liste = fAmbre === 'm' ? tous.filter(x => x.f.manque) : fAmbre === 'r' ? tous.filter(x => x.f.bilanSemaine) : fAmbre === 'x' ? tous.filter(x => !cliActive(x.c)) : tous;
+  const liste = fAmbre === 'm' ? tous.filter(x => x.f.manque) : fAmbre === 'r' ? tous.filter(x => x.f.bilanSemaine) : fAmbre === 'k' ? tous.filter(x => ctrAttente(x.c)) : fAmbre === 'x' ? tous.filter(x => !cliActive(x.c)) : tous;
   $('l-ambre').innerHTML = liste.length ? liste.map(({c, f}) => {
     const k = effCtr(c); const cc = closingCall(f.mail);
     const nbPres = f.pres.filter(p => p.present).length;
@@ -2667,7 +2724,7 @@ function renderAmbre(){
         ${f.derniere && !f.derniere.present ? ' <span class="chip src-webi">absente au call du ' + esc(f.derniere.date.slice(0,5)) + '</span>' : ''}</div></div>
       <div class="meta"><b>${c.date ? 'Signée le ' + esc(c.date) : ''}</b>${cc ? `Closing ${esc(quandUtc(cc.c.utc).txt)}${cc.t.q ? ' · qualif ' + cc.t.q + '/10' : ''}` : 'Pas de call iClosed rattaché'}</div>
       <div class="meta"><b>${ecoleCommencee() ? 'Semaine ' + f.semaine + ' / ' + ECOLE_SEMAINES : 'Démarre le 10/10'}</b><div class="am-prog"><i style="width:${Math.round(100*f.semaine/ECOLE_SEMAINES)}%"></i></div>${f.bilans.length} bilan${f.bilans.length>1?'s':''}${dern ? ' · dernier le ' + esc(dern.date.split(' ')[0]) : ''} · ${nbPres}/${f.pres.length || sess.length || 0} call${(f.pres.length||sess.length)>1?'s':''}</div>
-      <div class="actions">${c.tel ? `<a class="btn-wa" href="${waUrl(c.tel, ambreMsg(c, f))}" target="_blank" rel="noopener">${WA_SVG} ${f.manque ? 'Relancer le bilan' : (f.derniere && !f.derniere.present) ? 'Absente au call' : 'Prendre des nouvelles'}</a>` : ''} <button class="btn-ghost am-copy" data-lien="${esc(eowLienPerso(c))}" title="Lien perso du questionnaire hebdo">🔗 Lien bilan</button>${cc && cc.c.link ? ` <a class="btn-ghost" href="${esc(cc.c.link)}" target="_blank" rel="noopener">🎥 Visio du closing</a>` : ''}${bvBtn(c)}${intakeBloc(c)}</div>
+      <div class="actions">${c.tel ? `<a class="btn-wa" href="${waUrl(c.tel, ambreMsg(c, f))}" target="_blank" rel="noopener">${WA_SVG} ${ctrAttente(c) ? 'Relancer le contrat' : f.manque ? 'Relancer le bilan' : (f.derniere && !f.derniere.present) ? 'Absente au call' : 'Prendre des nouvelles'}</a>` : ''} <button class="btn-ghost am-copy" data-lien="${esc(eowLienPerso(c))}" title="Lien perso du questionnaire hebdo">🔗 Lien bilan</button>${cc && cc.c.link ? ` <a class="btn-ghost" href="${esc(cc.c.link)}" target="_blank" rel="noopener">🎥 Visio du closing</a>` : ''}${bvBtn(c)}${intakeBloc(c)}</div>
       ${dern ? `<div style="grid-column:1/-1">${dern.seances ? `<span class="am-sc">séances <b>${esc(dern.seances)}</b></span>` : ''}${scoreChip('Ressenti', dern.feel)}${scoreChip('Énergie', dern.energie)}${scoreChip('En séance', dern.ressentiSeances)}${scoreChip('Confiance', dern.confiance)}${scoreChip('Semaine', dern.note)}${dern.presence ? `<span class="am-sc">calls (déclaré) <b>${esc(dern.presence)}</b></span>` : ''}</div>` : ''}
       ${cc ? `<details class="sujet"><summary>📞 Call de closing du ${esc(quandUtc(cc.c.utc).txt)}${cc.c.closer ? ' · ' + esc(cc.c.closer) : ''}</summary>
         ${cc.c.link ? `<div class="rep"><b>Lien de la visio</b><a href="${esc(cc.c.link)}" target="_blank" rel="noopener">${esc(cc.c.link)}</a></div>` : ''}
@@ -2940,8 +2997,9 @@ function renderExos(){
       </div></div>`;
   }).join('') : `<div class="vide">${all.length ? 'Rien dans ce filtre.' : 'Aucun exercice rendu pour l\'instant. Ils arrivent ici dès qu\'une élève envoie le formulaire sous une leçon.'}</div>`;
 }
-$('f-exos').addEventListener('click', e => { const p = e.target.closest('.pill'); if (p){ fExo = p.dataset.f; store.set('exof', fExo); renderExos(); } });
-$('f-exos-mod').addEventListener('click', e => { const p = e.target.closest('.pill'); if (p){ mExo = p.dataset.m; store.set('exom', mExo); renderExos(); } });
+// (l'onglet Exercices rendus a été retiré le 23/09 : ces écouteurs ne s'installent que s'il revient)
+if ($('f-exos')) $('f-exos').addEventListener('click', e => { const p = e.target.closest('.pill'); if (p){ fExo = p.dataset.f; store.set('exof', fExo); renderExos(); } });
+if ($('f-exos-mod')) $('f-exos-mod').addEventListener('click', e => { const p = e.target.closest('.pill'); if (p){ mExo = p.dataset.m; store.set('exom', mExo); renderExos(); } });
 document.addEventListener('click', async e => {
   const card = e.target.closest('.exo'); if (!card) return;
   const x = exosList().find(y => y.id === card.dataset.id); if (!x) return;
@@ -3350,6 +3408,22 @@ function renderData(){
 
 /* ---------- compta ---------- */
 const EUR = n => n.toLocaleString('fr-FR', {maximumFractionDigits:0}) + ' €';
+document.addEventListener('click', async e => {
+  if (!e.target.closest('#pub-add')) return;
+  const d = $('pub-date').value || todayIso();
+  const mt = Number($('pub-mt').value || 0);
+  const lib = $('pub-lib').value.trim();
+  if (!mt) return toast('Indique le montant');
+  const note = (lib || 'Publicité') + ($('pub-mens').checked ? ' [mensuel]' : '');
+  $('pub-add').disabled = true;
+  try {
+    const rep = await fetch(PONT.url, { method: 'POST', body: JSON.stringify({ what: 'charge_add', key: PONT.key, date: d, poste: 'Publicité', montant: mt, note }) });
+    const r = await rep.json();
+    if (r && r.ok){ toast("Dépense ajoutée dans le Sheet. Elle s'affichera ici à la prochaine mise à jour"); $('pub-mt').value = ''; $('pub-lib').value = ''; }
+    else toast('Le pont a refusé : ' + ((r && r.error) || 'erreur'));
+  } catch (err){ toast('Pont injoignable'); }
+  $('pub-add').disabled = false;
+});
 function renderCompta(){
   const C = DATA.compta;
   if (!C.ok){
@@ -3399,6 +3473,21 @@ function renderCompta(){
     </div>`;
   }).join('') : `<div class="vide">Rien à additionner pour l'instant.</div>`;
 
+  // ---- publicité : ce que coûte un call et une cliente (demande Alex 23/09)
+  const estPub = c => /publicit|\bads?\b|meta|facebook|instagram|boost/i.test(String(c.poste || '') + ' ' + String(c.note || ''));
+  const pub = C.charges.filter(estPub);
+  const pubT = pub.reduce((n, c) => n + c.montant, 0);
+  const callsPris = DATA.icalls.calls.filter(c => !c.cancel && effTrk(c).s !== 'Call test').length;
+  $('pub-kpis').innerHTML = [
+    [EUR(pubT), 'de pub dépensée', pub.length + ' ligne' + (pub.length > 1 ? 's' : '')],
+    [callsPris ? EUR(Math.round(pubT / callsPris)) : '·', 'par call booké', callsPris + ' call' + (callsPris > 1 ? 's' : '') + ' au total'],
+    [cls.length ? EUR(Math.round(pubT / cls.length)) : '·', 'par cliente', cls.length + ' cliente' + (cls.length > 1 ? 's' : '')],
+    [pubT ? Math.round(10 * encaisse / pubT) / 10 + 'x' : '·', 'encaissé pour 1 € de pub', ''],
+  ].map(([v, l, p]) => `<div class="kpi"><div class="val">${v}</div><div class="lab">${l}</div>${p ? `<div class="plus">${p}</div>` : ''}</div>`).join('');
+  $('l-pub').innerHTML = pub.length ? pub.slice().sort((a, b) => String(b.ts||'').localeCompare(String(a.ts||''))).map(c =>
+    `<div class="srcligne" style="grid-template-columns:110px 1fr 90px"><span>${esc(String(c.date||'').split(' ')[0])}</span><span style="text-align:left">${esc(c.note || c.poste)}</span><span class="srcn">${EUR(c.montant)}</span></div>`
+  ).join('') : `<div class="vide">Aucune dépense de pub saisie. Tant que c'est vide, on ne sait pas ce que coûte une cliente.</div>`;
+
   const parPoste = {};
   C.charges.forEach(c => parPoste[c.poste] = (parPoste[c.poste]||0) + c.montant);
   const pk = Object.entries(parPoste).sort((a,b) => b[1]-a[1]);
@@ -3420,12 +3509,12 @@ $('btn-set').addEventListener('click', () => {
   $('s-tpl-cand').value = SET.tplCand; $('s-tpl-call').value = SET.tplCall; $('s-tpl-replay').value = SET.tplReplay; $('s-replay').value = SET.replay;
   $('s-tpl-schol-rel').value = SET.tplScholRel; $('s-tpl-schol-ok').value = SET.tplScholOk; $('s-tpl-coach').value = SET.tplCoach || TPL_DEF.coach; $('s-tpl-coach-rel').value = SET.tplCoachRel || TPL_DEF.coachRel; $('s-tpl-sond').value = SET.tplSond || TPL_DEF.sond; $('s-tpl-lead').value = SET.tplLead || TPL_DEF.lead;
   $('s-groupe').value = SET.groupe; $('s-iclosed').value = SET.iclosed;
-  $('s-tpl-eow').value = SET.tplEowRelance; $('s-tpl-ambre').value = SET.tplAmbreCheckin; $('s-tpl-ambre-abs').value = SET.tplAmbreAbsente; $('s-tpl-intake').value = SET.tplIntake || TPL_DEF.intake; $('s-tpl-exo').value = SET.tplExo; $('s-zoom3').value = SET.zoom3 || ZOOM3_DEF; $('s-tpl-live3j1').value = SET.tplLive3J1; $('s-tpl-live3h1').value = SET.tplLive3H1;
+  $('s-tpl-eow').value = SET.tplEowRelance; $('s-tpl-ambre').value = SET.tplAmbreCheckin; $('s-tpl-ctr').value = SET.tplCtrRelance || TPL_DEF.ctrRelance; $('s-tpl-ambre-abs').value = SET.tplAmbreAbsente; $('s-replay-calls').value = SET.replayCalls || REPLAY_CALLS_DEF; $('s-tpl-intake').value = SET.tplIntake || TPL_DEF.intake; $('s-tpl-exo').value = SET.tplExo; $('s-zoom3').value = SET.zoom3 || ZOOM3_DEF; $('s-tpl-live3j1').value = SET.tplLive3J1; $('s-tpl-live3h1').value = SET.tplLive3H1;
   openSet(true);
 });
 $('voile').addEventListener('click', () => openSet(false));
 $('s-save').addEventListener('click', () => {
-  SET = {tplWebi:$('s-tpl-webi').value, tplInvite:$('s-tpl-invite').value, tplWebiCoach:$('s-tpl-webi-coach').value, tplWebiEcole:$('s-tpl-webi-ecole').value, tplCand:$('s-tpl-cand').value, tplCall:$('s-tpl-call').value, tplReplay:$('s-tpl-replay').value, replay:($('s-replay').value.trim() || REPLAY_DEF), tplScholRel:$('s-tpl-schol-rel').value, tplScholOk:$('s-tpl-schol-ok').value, tplCoach:$('s-tpl-coach').value, tplCoachRel:$('s-tpl-coach-rel').value, tplSond:$('s-tpl-sond').value, tplLead:$('s-tpl-lead').value, groupe:$('s-groupe').value.trim(), iclosed:$('s-iclosed').value.trim(), tplEowRelance:$('s-tpl-eow').value, tplAmbreCheckin:$('s-tpl-ambre').value, tplAmbreAbsente:$('s-tpl-ambre-abs').value, tplIntake:$('s-tpl-intake').value, tplExo:$('s-tpl-exo').value, zoom3:$('s-zoom3').value.trim(), tplLive3J1:$('s-tpl-live3j1').value, tplLive3H1:$('s-tpl-live3h1').value};
+  SET = {tplWebi:$('s-tpl-webi').value, tplInvite:$('s-tpl-invite').value, tplWebiCoach:$('s-tpl-webi-coach').value, tplWebiEcole:$('s-tpl-webi-ecole').value, tplCand:$('s-tpl-cand').value, tplCall:$('s-tpl-call').value, tplReplay:$('s-tpl-replay').value, replay:($('s-replay').value.trim() || REPLAY_DEF), tplScholRel:$('s-tpl-schol-rel').value, tplScholOk:$('s-tpl-schol-ok').value, tplCoach:$('s-tpl-coach').value, tplCoachRel:$('s-tpl-coach-rel').value, tplSond:$('s-tpl-sond').value, tplLead:$('s-tpl-lead').value, groupe:$('s-groupe').value.trim(), iclosed:$('s-iclosed').value.trim(), tplEowRelance:$('s-tpl-eow').value, tplAmbreCheckin:$('s-tpl-ambre').value, tplCtrRelance:$('s-tpl-ctr').value, tplAmbreAbsente:$('s-tpl-ambre-abs').value, replayCalls:($('s-replay-calls').value.trim() || REPLAY_CALLS_DEF), tplIntake:$('s-tpl-intake').value, tplExo:$('s-tpl-exo').value, zoom3:$('s-zoom3').value.trim(), tplLive3J1:$('s-tpl-live3j1').value, tplLive3H1:$('s-tpl-live3h1').value};
   store.set('reglages', SET); openSet(false); renderWebi(); renderLive1(); renderCand(); renderAgenda(); renderSchol(); renderCoach(); renderSondage(); renderAmbre(); renderExos(); renderLive3(); renderLeads(); toast('Enregistré');
 });
 $('s-reset').addEventListener('click', () => {
@@ -3433,7 +3522,7 @@ $('s-reset').addEventListener('click', () => {
   $('s-tpl-cand').value = TPL_DEF.cand; $('s-tpl-call').value = TPL_DEF.call; $('s-tpl-replay').value = TPL_DEF.replay; $('s-replay').value = REPLAY_DEF;
   $('s-tpl-schol-rel').value = TPL_DEF.scholRel; $('s-tpl-schol-ok').value = TPL_DEF.scholOk; $('s-tpl-coach').value = TPL_DEF.coach; $('s-tpl-coach-rel').value = TPL_DEF.coachRel; $('s-tpl-sond').value = TPL_DEF.sond;
   $('s-groupe').value = DATA.webi.groupe;
-  $('s-tpl-eow').value = TPL_DEF.eowRelance; $('s-tpl-ambre').value = TPL_DEF.ambreCheckin; $('s-tpl-ambre-abs').value = TPL_DEF.ambreAbsente; $('s-tpl-intake').value = TPL_DEF.intake; $('s-tpl-exo').value = TPL_DEF.exo; $('s-tpl-live3j1').value = TPL_DEF.live3J1; $('s-tpl-live3h1').value = TPL_DEF.live3H1;
+  $('s-tpl-eow').value = TPL_DEF.eowRelance; $('s-tpl-ambre').value = TPL_DEF.ambreCheckin; $('s-tpl-ctr').value = TPL_DEF.ctrRelance; $('s-tpl-ambre-abs').value = TPL_DEF.ambreAbsente; $('s-replay-calls').value = REPLAY_CALLS_DEF; $('s-tpl-intake').value = TPL_DEF.intake; $('s-tpl-exo').value = TPL_DEF.exo; $('s-tpl-live3j1').value = TPL_DEF.live3J1; $('s-tpl-live3h1').value = TPL_DEF.live3H1;
 });
 
 /* ---------- mail du sondage à toute la liste (script Contrats, depuis selfty.academy@gmail.com) ---------- */
