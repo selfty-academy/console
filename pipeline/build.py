@@ -752,14 +752,23 @@ SOND_FORM = "VLKopa"
 SQ_MASTER, SQ_MASTER_SUJET, SQ_MASTER_LIBRE = "Une masterclass d", "Si oui, sur quel sujet", "Un autre sujet"
 SQ_SOMA, SQ_SUJET, SQ_PRENOM = "Une expérience somatique", "Le sujet que tu veux", "Ton prénom"
 # sujets de masterclass proposés -> libellé court pour le graphique (préfixe du choix)
-SOND_SUJETS = [("La critique interne", "Critique interne"), ("Le passage à l", "Passage à l'action"),
-               ("Les blessures inconscientes", "Blessures inconscientes"), ("Un autre sujet", "Autre sujet")]
+# (préfixe du choix, libellé court pour le graphique, libellé complet tel qu'il est écrit dans le Tally)
+SOND_SUJETS = [
+    ("La critique interne", "Critique interne",
+     "La critique interne : la voix qui te dit que tu n\u2019es pas l\u00e9gitime"),
+    ("Le passage à l", "Passage à l'action",
+     "Le passage \u00e0 l\u2019action : ce qui te fait repousser alors que tu sais quoi faire"),
+    ("Les blessures inconscientes", "Blessures inconscientes",
+     "Les blessures inconscientes : ce qui se rejoue quand tu te montres"),
+    ("Un autre sujet", "Autre sujet",
+     "Un autre sujet (je l\u2019\u00e9cris juste en dessous)"),
+]
 SOND_SOURCES = ["mail", "whatsapp", "story", "ecole"]
 sond_subs, sond_ok, sond_stats = [], False, {}
 
 
 def sond_court(lab):
-    for pre, court in SOND_SUJETS:
+    for pre, court, _long in SOND_SUJETS:
         if lab.startswith(pre):
             return court
     return lab[:40] if lab else ""
@@ -1495,7 +1504,8 @@ data = {
     "schol": {"ok": schol_ok, "url": "https://tally.so/r/Np1Gy0",
               "stats": schol_stats, "subs": schol_subs},
     "coach": {"ok": coach_ok, "url": f"https://tally.so/r/{COACH_FORM}", "subs": coach_subs},
-    "sondage": {"ok": sond_ok, "url": f"https://tally.so/r/{SOND_FORM}", "sujets": [c for _, c in SOND_SUJETS],
+    "sondage": {"ok": sond_ok, "url": f"https://tally.so/r/{SOND_FORM}", "sujets": [c for _, c, _l in SOND_SUJETS],
+                "sujetsLong": {c: l for _, c, l in SOND_SUJETS},
                 "sources": SOND_SOURCES, "subs": sond_subs,
                 "dest": sd_dest, "destSrc": dict(sd_src), "destExclus": len(sd_excl)},
     "obj8": obj8,

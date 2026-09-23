@@ -255,6 +255,16 @@ details.sujet .rep b{display:block;font-size:12px;text-transform:uppercase;lette
 .sd-oui{background:#DDEBE2;color:#2F5C40}.sd-non{background:#F4DDDD;color:#7E5252}
 .src-mail{background:#EAD9EA;color:#6E4A6E}.src-whatsapp{background:#DDEBE2;color:#2F5C40}.src-story{background:#F7E3CC;color:#8A5A1E}.src-ecole{background:#D6E3F2;color:#1F3A5F}.src-autre{border:1px solid var(--border);color:var(--muted);background:transparent;font-weight:500}
 #sd-chart svg{max-width:100%;height:auto}
+#sd-detail{margin-top:14px;display:grid;gap:10px}
+.sd-opt{border:1px solid #3A2A2A14;border-radius:12px;padding:10px 12px;background:#FFFDFB}
+.sd-opt.sd-top{border-color:var(--mauve);background:#FAEEEE}
+.sd-opt .sd-opt-h{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.sd-opt .sd-opt-lab{font-size:14.5px;color:var(--ink);font-weight:600;flex:1;min-width:220px}
+.sd-opt .sd-opt-n{font-size:13px;font-weight:700;color:var(--mauve);white-space:nowrap}
+.sd-opt .sd-opt-qui{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px}
+.sd-opt .sd-opt-qui .chip{background:#F4DDDD;color:#5E4242}
+.sd-opt .sd-opt-vide{margin-top:6px;font-size:13px;color:var(--mauve);opacity:.8}
+.sd-sujet-long{margin-top:2px;font-size:13px;color:#6B5252;line-height:1.35}
 .prep-alex{grid-column:1/-1;background:#FFF7E6;border:1px solid #F3D9A4;border-radius:10px;padding:8px 10px;margin-top:6px;white-space:pre-wrap}
 .prep-alex b{display:block;color:#8a5a00;margin-bottom:2px}
 /* onglet Objectif 8 */
@@ -470,7 +480,7 @@ body.raf-on .wrap{padding-bottom:210px}
 
 <!-- ===================== SONDAGE PROCHAIN LIVE ===================== -->
 <section class="panel" id="p-sondage">
-  <p class="intro">Les réponses au sondage « Le prochain live, c'est toi qui choisis » arrivent ici toutes seules depuis Tally : masterclass ou pas, quel sujet, envie de vivre l'expérience somatique, et le sujet qu'elle veut qu'Anaïs aborde. Filtre par canal d'envoi (mail, WhatsApp, story, école). Quand la personne est retrouvée dans les inscrites (même e-mail), le bouton WhatsApp est prêt avec son prénom et son sujet.</p>
+  <p class="intro">Les réponses au sondage « Le prochain live, c'est toi qui choisis » arrivent ici toutes seules depuis Tally : masterclass ou pas, quel sujet, envie de vivre l'expérience somatique, et le sujet qu'elle veut qu'Anaïs aborde. Sous le graphique, le détail de chaque choix : le libellé complet du sujet et qui a voté quoi. Filtre par canal d'envoi (mail, WhatsApp, story, école). Quand la personne est retrouvée dans les inscrites (même e-mail), le bouton WhatsApp est prêt avec son prénom et son sujet.</p>
   <div class="bandeau" id="bandeau-sondage"></div>
   <div class="carte" id="ml-carte">
     <h3 style="margin:0 0 6px">✉️ Le mail du sondage à toute la liste</h3>
@@ -483,7 +493,7 @@ body.raf-on .wrap{padding-bottom:210px}
   <div class="kpis kpis-mini" id="sd-kpis"></div>
   <div class="pills" id="f-sondage" style="align-items:center"></div>
   <div style="margin:-6px 0 14px"><button class="btn-raf" id="raf-sond" title="Ouvre WhatsApp pour chaque répondante joignable, dans l'ordre, et coche « Prévenue » à chaque « Suivant »">📲 Envoyer un par un</button></div>
-  <div class="carte" id="sd-chart-carte"><h3 style="margin:0 0 10px">Sujet de masterclass préféré</h3><div id="sd-chart"></div></div>
+  <div class="carte" id="sd-chart-carte"><h3 style="margin:0 0 10px">Sujet de masterclass préféré</h3><div id="sd-chart"></div><div id="sd-detail"></div></div>
   <div class="liste" id="l-sondage"></div>
 </section>
 
@@ -3206,6 +3216,13 @@ $('f-coach').addEventListener('click', e => { const p = e.target.closest('.pill'
 /* ---------- sondage prochain live (Tally VLKopa) ---------- */
 let fSond = 't', SD_CUR = [];   // SD_CUR = répondantes joignables pas encore prévenues (rafale WhatsApp)
 const SD_SRC = {mail:'Mail', whatsapp:'WhatsApp', story:'Story', ecole:'École', autre:'Autre'};
+// libellé complet d'un choix : celui du Tally (build) sinon celui écrit par une répondante, sinon le libellé court
+function sdLong(S, court, qui){
+  const dict = (S && S.sujetsLong) || {};
+  if (dict[court]) return dict[court];
+  const vrai = (qui || []).find(x => x.sujet);
+  return (vrai && vrai.sujet) || court;
+}
 function renderSondage(){
   const S = DATA.sondage || {ok:false, url:'', sujets:[], sources:[], subs:[]};
   $('bandeau-sondage').innerHTML = (S.ok
@@ -3244,6 +3261,21 @@ function renderSondage(){
         <rect x="${L}" y="${y+4}" width="${w}" height="22" fill="${i === votes.findIndex(v => v[1] === max) ? '#966868' : '#C9A3A3'}" rx="6"></rect>
         <text x="${L+w+8}" y="${y+19}" font-size="12.5" font-weight="600" fill="#3A2A2A">${n}${n ? ` · ${Math.round(100*n/total)} %` : ''}</text>`;
     }).join('') + '</svg>';
+    // détail : le libellé complet de chaque choix et QUI a voté quoi
+    const sansSujet = liste.filter(x => !x.sujetCourt);
+    $('sd-detail').innerHTML = votes.map(([su, n]) => {
+      const qui = liste.filter(x => x.sujetCourt === su);
+      const lab = sdLong(S, su, qui);
+      return `<div class="sd-opt${n === max && n ? ' sd-top' : ''}">
+        <div class="sd-opt-h"><div class="sd-opt-lab">${esc(lab)}</div>
+          <div class="sd-opt-n">${n} vote${n > 1 ? 's' : ''}${n ? ` · ${Math.round(100*n/total)} %` : ''}</div></div>
+        ${qui.length ? `<div class="sd-opt-qui">${qui.map(x => `<span class="chip" title="${esc([x.mail || 'pas d\'e-mail', SD_SRC[x.src || 'autre'], x.date, x.sujetLibre ? 'Autre sujet proposé : ' + x.sujetLibre : ''].filter(Boolean).join(' · '))}">${esc(x.prenom || 'Anonyme')}${x.sujetLibre ? (su === 'Autre sujet' ? ' : ' + esc(x.sujetLibre) : ' ✏️') : ''}</span>`).join('')}</div>`
+          : '<div class="sd-opt-vide">Personne pour l\'instant</div>'}
+      </div>`;
+    }).join('') + (sansSujet.length ? `<div class="sd-opt">
+        <div class="sd-opt-h"><div class="sd-opt-lab">N'a pas choisi de sujet de masterclass</div><div class="sd-opt-n">${sansSujet.length}</div></div>
+        <div class="sd-opt-qui">${sansSujet.map(x => `<span class="chip" title="${esc(x.mail || '')}">${esc(x.prenom || 'Anonyme')}</span>`).join('')}</div>
+      </div>` : '');
   }
   const link = SET.iclosed || 'https://app.iclosed.io/e/SelftyAcademy/clarity-call';
   const sdone = store.get('sonddone', {});
@@ -3259,7 +3291,7 @@ function renderSondage(){
       <div class="qui"><div class="nom">${esc(prenom)}</div>
         <div class="sub">${x.mail ? esc(x.mail) : 'pas d\'e-mail (lien sans hidden field)'}</div>
         <div style="margin-top:4px"><span class="chip src-${esc(x.src || 'autre')}">${SD_SRC[x.src || 'autre']}</span>${x.done ? '' : ' <span class="chip src-webi">Pas finie</span>'}</div></div>
-      <div class="meta">${x.master === null ? '' : `${oui(x.master)}Masterclass : ${x.master ? 'oui' : 'non'}</span> `}${x.soma === null ? '' : `${oui(x.soma)}Somatique : ${x.soma ? 'oui' : 'non'}</span>`}${x.sujetCourt ? `<div style="margin-top:4px">Sujet : <b>${esc(x.sujetCourt)}</b></div>` : ''}</div>
+      <div class="meta">${x.master === null ? '' : `${oui(x.master)}Masterclass : ${x.master ? 'oui' : 'non'}</span> `}${x.soma === null ? '' : `${oui(x.soma)}Somatique : ${x.soma ? 'oui' : 'non'}</span>`}${x.sujetCourt ? `<div style="margin-top:4px">Sujet : <b>${esc(x.sujetCourt)}</b><div class="sd-sujet-long">${esc(x.sujet || sdLong(S, x.sujetCourt, [x]))}</div></div>` : ''}</div>
       <div class="meta"><b>${x.tel ? '+'+x.tel : 'Numéro pas retrouvé'}</b>${esc(x.date)}</div>
       <div class="actions">${x.tel ? `<a class="btn-wa" href="${waUrl(x.tel, msg)}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}<label class="chk"><input type="checkbox" data-sonddone="${esc(x.id)}" ${sdone[x.id]?'checked':''}> Prévenue</label></div>
       ${x.texte ? `<div class="sd-texte"><b>Le sujet qu'elle veut au prochain live</b>${esc(x.texte)}</div>` : ''}
