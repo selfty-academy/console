@@ -960,19 +960,24 @@ O8_SEG = OrderedDict([
 ])
 O8_LVL = {s: i + 1 for i, s in enumerate(O8_SEG)}
 # messages de repli par segment (les messages perso de objectif8.json priment) : pas d'emoji (le lien wa.me les casse), pas de tiret cadratin.
-# 15/09 : chaque message annonce que l'agenda d'Anaïs est complet cette semaine (O8_DISPO) avant le lien.
-O8_DISPO = "Cette semaine, l'agenda d'Anaïs est complet. De nouveaux créneaux s'ouvrent dans quelques jours : réserve dès maintenant pour bloquer le tien.\n\n{link}"
-O8_SIGN = "Alex, l'associé d'Anaïs Brault"
-O8_TPL = {k: "Hello {p},\n\n" + v + "\n\n" + O8_DISPO + "\n\n" + O8_SIGN for k, v in {
-    "cand": "Merci pour ta candidature au coaching avec Anaïs. Elle l'a lue et veut en parler avec toi de vive voix : sa Selfty Academy ouvre le 10 octobre.",
-    "chaud": "On avait échangé sur l'école de coaching d'Anaïs : elle ouvre le 10 octobre et la première promo se remplit. Le plus simple pour savoir si c'est le bon moment, c'est un appel avec elle.",
-    "annule": "Ton appel avec Anaïs du {date} a été annulé, et l'école ouvre le 10 octobre. Si l'envie est toujours là, reprends un créneau avec elle.",
-    "bourse": "On a bien reçu ta candidature pour la bourse et Anaïs lit tout elle-même. Quelle que soit sa décision, elle veut t'entendre de vive voix : l'école ouvre le 10 octobre.",
-    "ecole": "Tu avais répondu au questionnaire de l'école de coaching d'Anaïs : elle ouvre le 10 octobre et je reprends contact avec toute la liste d'attente. Le plus simple, c'est un appel avec Anaïs.",
-    "webi2": "Tu as suivi deux lives d'Anaïs, donc le sujet te parle. Sa Selfty Academy ouvre le 10 octobre : un appel avec elle te dira si c'est fait pour toi.",
-    "webi1": "Tu avais pris ta place au live d'Anaïs du {live}. Sa Selfty Academy ouvre le 10 octobre : si devenir coach (ou aller plus loin dans ta pratique) te parle, un appel avec elle te dira vite si c'est fait pour toi.",
-    "lead": "Tu avais commencé ta candidature pour la Selfty Academy sans réserver ton appel avec Anaïs. L'école ouvre le 10 octobre : 45 minutes avec elle, sans engagement, pour voir si c'est fait pour toi.",
-    "froid": "On avait échangé au sujet de l'école de coaching d'Anaïs. Elle ouvre le 10 octobre : si c'est toujours d'actualité pour toi, un appel avec elle te dira si c'est le bon moment.",
+# 23/09 : format demandé par Alex : signature en haut, prise de nouvelles avec un choix (replay / présentation), lien iClosed ensuite, dispo pour un call, signé « Alex ».
+O8_HEAD = "Hello {p},\nC'est Alex, l'associé d'Anaïs Brault"
+O8_NEWS_CO = "Je viens aux nouvelles si je peux aider, tu aimerais voir le replay du coaching ou la présentation de la Selfty Academy ?"
+O8_NEWS_LI = "Je viens aux nouvelles si je peux aider, tu aimerais voir le replay du dernier live d'Anaïs ou la présentation de la Selfty Academy ?"
+O8_FIN = ("Sinon si tu veux échanger de vive voix avec Anaïs je te mets le lien pour voir directement avec elle : {link}\n"
+          "(cette semaine les créneaux étaient complets mais elle en a rouvert d'autres, normalement il doit en rester quelques-uns, sinon tu me dis)\n\n"
+          "Si tu as d'autres questions ou que tu veux qu'on échange tous les deux je suis dispo pour un call\n\n"
+          "Alex")
+O8_TPL = {k: O8_HEAD + "\n\n" + accroche + " " + news + "\n\n" + O8_FIN for k, (accroche, news) in {
+    "cand": ("Tu avais candidaté pour être coaché en direct par Anaïs.", O8_NEWS_CO),
+    "chaud": ("On avait échangé sur l'école de coaching d'Anaïs, elle ouvre le 10 octobre.", O8_NEWS_LI),
+    "annule": ("Ton appel avec Anaïs du {date} a été annulé et son école ouvre le 10 octobre.", O8_NEWS_LI),
+    "bourse": ("On a bien reçu ta candidature pour la bourse, Anaïs lit tout elle-même et son école ouvre le 10 octobre.", O8_NEWS_LI),
+    "ecole": ("Tu avais répondu au questionnaire de l'école de coaching d'Anaïs, elle ouvre le 10 octobre.", O8_NEWS_LI),
+    "webi2": ("Tu as suivi deux lives d'Anaïs et sa Selfty Academy ouvre le 10 octobre.", O8_NEWS_CO),
+    "webi1": ("Tu avais pris ta place au live d'Anaïs du {live} et sa Selfty Academy ouvre le 10 octobre.", O8_NEWS_CO),
+    "lead": ("Tu avais commencé ta candidature pour la Selfty Academy sans réserver ton appel avec Anaïs, l'école ouvre le 10 octobre.", O8_NEWS_LI),
+    "froid": ("On avait échangé au sujet de l'école de coaching d'Anaïs, elle ouvre le 10 octobre.", O8_NEWS_LI),
 }.items()}
 
 def o8_tel(v):
