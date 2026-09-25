@@ -352,6 +352,7 @@ body.raf-on .wrap{padding-bottom:210px}
   <div class="pills" id="f-o8-seg"></div>
   <div class="pills" id="f-o8"></div>
   <div style="margin:0 0 14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center"><input type="search" id="q-o8" class="search" placeholder="Chercher un prénom, un mail, un numéro…"><button class="btn-raf" id="raf-o8" title="Ouvre WhatsApp pour chaque personne à rappeler, dans l'ordre, et coche « Contactée » à chaque « Suivant »">📲 Envoyer un par un</button></div>
+  <div class="vue-bascule wa-mode" style="margin:0 0 14px"></div>
   <div class="liste" id="l-o8"></div>
 </section>
 
@@ -884,7 +885,12 @@ Object.keys(SET).forEach(k => { if (typeof SET[k] === 'string' && SET[k].include
 if (SET.tplSond && SET.tplSond.includes('🌸')) SET.tplSond = SET.tplSond.replace(/ ?🌸(?=\n)/g, '.').replace(/ ?🌸/g, '');
 
 function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),2200); }
-function waUrl(tel, msg){ return 'https://wa.me/'+tel+'?text='+encodeURIComponent(msg); }
+// Envoi WhatsApp : « web » = WhatsApp Web (wa.me, numéro Business) ; « mac » = l'appli WhatsApp du Mac (whatsapp://, numéro perso d'Alex).
+// En mode Mac, le message arrive déjà écrit dans la discussion : il reste à appuyer sur Entrée. Réglage propre à cet appareil (25/09).
+let WA_MODE = store.get('wamode', 'web');
+function waUrl(tel, msg){ return (WA_MODE === 'mac' ? 'whatsapp://send?phone=' : 'https://wa.me/') + tel + '?text=' + encodeURIComponent(msg); }
+function setWaMode(m){ WA_MODE = m; store.set('wamode', m); renderWaMode(); if (typeof renderObj8 === 'function') renderObj8(); if (RAF.on) rafRender(); toast(m === 'mac' ? 'Les messages s\'ouvrent dans l\'appli WhatsApp du Mac (numéro perso)' : 'Les messages s\'ouvrent dans WhatsApp Web'); }
+function renderWaMode(){ document.querySelectorAll('.wa-mode').forEach(el => { el.innerHTML = [['web', '🌐 WhatsApp Web'], ['mac', '💻 Appli Mac (perso)']].map(([m, l]) => `<button class="vue-pill${WA_MODE === m ? ' on' : ''}" onclick="setWaMode('${m}')">${l}</button>`).join('') + '<span class="vue-note">' + (WA_MODE === 'mac' ? 'Le message s\'ouvre déjà écrit dans l\'appli WhatsApp du Mac : Entrée pour l\'envoyer, puis « Suivant » ici.' : 'Le message s\'ouvre dans WhatsApp Web (numéro Business).') + '</span>'; }); }
 const WA_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2Zm5.4 14.1c-.2.7-1.3 1.3-1.9 1.4-.5.1-1.1.2-3.4-.7-2.9-1.2-4.7-4.1-4.9-4.3-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.4.6c-.1.2-.3.4-.1.7.1.3.7 1.2 1.6 1.9 1.1.9 2 1.2 2.3 1.4.3.1.5.1.6-.1l1-1.1c.2-.2.4-.2.6-.1l2 1c.3.1.5.2.5.3.1.1.1.7-.1 1.3Z"/></svg>';
 
 /* ---------- onglets ---------- */
@@ -914,14 +920,18 @@ const TABS = [
 // Vue Anaïs (demande Alex 23/09) : on ne garde que ce qui lui fait gagner de l'argent, gagner du temps,
 // ou mieux délivrer. Tout le reste (prospection, webinaires, sondage, bourse, datas) est le travail d'Alex.
 const ONGLETS_ANAIS = ['todo', 'calls', 'track', 'clients', 'ambre', 'paie', 'compta'];
-let VUE = store.get('vue', 'anais');
-const tabsVisibles = () => VUE === 'anais'
-  ? TABS.filter(t => ONGLETS_ANAIS.includes(t.id))
-  : TABS;
+// Vue Ambre (25/09) : le suivi des clientes, les relances (contrats, engagements, questionnaire) et les rappels Objectif 8 qu'elle envoie.
+const ONGLETS_AMBRE = ['obj8', 'clients', 'ambre'];
+const VUES = { anais: {lab:'🌸 Anaïs', tabs: ONGLETS_ANAIS, home:'todo', note:'Les onglets de prospection, webinaires, sondage, bourse et datas sont masqués. Ce réglage reste sur cet appareil.'},
+               ambre: {lab:'🤝 Ambre', tabs: ONGLETS_AMBRE, home:'ambre', note:'Suivi des clientes, relances et rappels Objectif 8. Ce réglage reste sur cet appareil.'},
+               tout:  {lab:'🛠️ Alex', tabs: null, home:'obj8', note:'Tous les onglets sont affichés.'} };
+let VUE = store.get('vue', 'anais'); if (!VUES[VUE]) VUE = 'anais';
+const vueOk = id => !VUES[VUE].tabs || VUES[VUE].tabs.includes(id) || VUES[VUE].tabs.includes(groupOf(id) || '');
+const tabsVisibles = () => VUES[VUE].tabs ? TABS.filter(t => VUES[VUE].tabs.includes(t.id)) : TABS;
 function setVue(v){
   VUE = v; store.set('vue', v);
   renderTabs();
-  if (VUE === 'anais' && !ONGLETS_ANAIS.includes(tabOn) && !ONGLETS_ANAIS.includes(groupOf(tabOn) || '')) goTab('todo');
+  if (!vueOk(tabOn)) goTab(VUES[VUE].home);
 }
 const LEAVES = TABS.flatMap(t => t.sub ? t.sub : [t]);           // onglets « feuilles » = panneaux
 const groupOf = id => (TABS.find(t => t.sub && t.sub.some(x => x.id === id)) || {}).id || null;
@@ -930,7 +940,7 @@ let tabOn = store.get('tab','obj8');
   if (hg) tabOn = hg.sub[0].id; else if (h && LEAVES.some(t => t.id === h)) tabOn = h; }   // lien direct console/#sondage
 if (!LEAVES.some(t => t.id === tabOn)) tabOn = 'obj8';
 // vue Anaïs : si l'onglet mémorisé fait partie de ceux qui lui sont masqués, on ouvre « To do » (23/09)
-if (VUE === 'anais' && !ONGLETS_ANAIS.includes(tabOn) && !ONGLETS_ANAIS.includes(groupOf(tabOn) || '')) tabOn = 'todo';
+if (!vueOk(tabOn)) tabOn = VUES[VUE].home;
 function renderTabs(){
   const done = store.get('relwebi', {});
   const doneC = store.get('relcand', {});
@@ -956,9 +966,9 @@ function renderTabs(){
   const b = {live3:null, obj8:bO8, todo:todoItems().filter(t => !todoDone()[t.id]).length, sondage:bSond||null, live2:bLive2, live1:bLive1, webi:bWebi, cand:bCand, ecole:bEcole, schol:bSchol, coach:bCoach, calls:bCalls, track:bTrack, leads:bLeads, clients:bCli, ambre:ambreManquants().length + eowNonAttribues().length + engATraiter().length + clientes().map(effCli).filter(c => c.mail && ctrAttente(c)).length, paie:bPaie, compta:null, data:null};
   TABS.filter(t => t.sub).forEach(t => { b[t.id] = t.sub.reduce((n, x) => n + (b[x.id] || 0), 0); });
   const g = groupOf(tabOn);
-  $('vue-bascule').innerHTML = [['anais', '🌸 Vue Anaïs', 'les 7 onglets qui la concernent'], ['tout', '🛠️ Tout (Alex)', 'les ' + TABS.length + ' onglets']]
-    .map(([v, l, t]) => `<button class="vue-pill${VUE === v ? ' on' : ''}" onclick="setVue('${v}')" title="${t}">${l}</button>`).join('')
-    + `<span class="vue-note">${VUE === 'anais' ? 'Les onglets de prospection, webinaires, sondage, bourse et datas sont masqués. Ce réglage reste sur cet appareil.' : 'Tous les onglets sont affichés.'}</span>`;
+  $('vue-bascule').innerHTML = '<span class="vue-note" style="flex:0;min-width:0">Vue</span>' + Object.entries(VUES)
+    .map(([v, o]) => `<button class="vue-pill${VUE === v ? ' on' : ''}" onclick="setVue('${v}')" title="${o.tabs ? o.tabs.length : TABS.length} onglets">${o.lab}</button>`).join('')
+    + `<span class="vue-note">${VUES[VUE].note}</span>`;
   $('tabs').innerHTML = tabsVisibles().map(t =>
     `<button class="tab${(t.id===tabOn || t.id===g)?' on':''}" data-t="${t.id}">${t.lab}${b[t.id]!==null&&b[t.id]!==undefined?` <span class="bdg">${b[t.id]}</span>`:''}</button>`).join('');
   const grp = TABS.find(t => t.id === g);
@@ -3144,6 +3154,7 @@ const o8List = () => (O8.list || []).map(effO8);
 let fO8 = 'a', segO8 = 't', qO8 = '', O8_CUR = [];   // O8_CUR = à rappeler, avec numéro, dans l'ordre (rafale WhatsApp)
 function renderObj8(){
   if (!$('l-o8')) return;
+  renderWaMode();
   const tous = o8List();
   const aFaire = tous.filter(p => !p.c && !p.b), contactees = tous.filter(p => p.c && !p.b), bookees = tous.filter(p => p.b);
   $('o8-kpis').innerHTML = [
@@ -3180,7 +3191,7 @@ function renderObj8(){
       <div class="meta"><b>${p.tel ? '+'+p.tel : 'Pas de numéro'}</b>${p.lastLab ? 'dernier signe le '+esc(p.lastLab) : ''}${p.rnote ? `<span class="sub" style="display:block;color:var(--muted);font-size:12.5px;white-space:pre-wrap">${esc(p.rnote)}</span>` : ''}</div>
       <div class="meta">${etat}</div>
       <div class="actions">
-        ${p.tel ? `<a class="btn-wa" href="${waUrl(p.tel, p.msg)}" target="_blank" rel="noopener">${WA_SVG} WhatsApp</a>` : ''}
+        ${p.tel ? `<a class="btn-wa" href="${waUrl(p.tel, p.msg)}" target="${WA_MODE === 'mac' ? '_self' : '_blank'}" rel="noopener">${WA_SVG} ${WA_MODE === 'mac' ? 'WhatsApp (appli Mac)' : 'WhatsApp'}</a>` : ''}
         <button class="btn-ghost o8-copy" data-k="${esc(p.k)}">Copier le message</button>
       </div>
       <details class="sujet"><summary>Voir le message${fiche ? ' et sa fiche' : ''}</summary>
@@ -3702,6 +3713,7 @@ function rafOpen(it){
   if (!it) return;
   const url = waUrl(it.tel, it.msg); $('raf-wa').href = url;
   if (RAF_MOBILE){ try { $('raf-wa').click(); } catch(e){} return; }   // mobile : l'appli WhatsApp s'ouvre, on revient ici après
+  if (WA_MODE === 'mac'){ location.href = url; return; }   // l'appli WhatsApp du Mac s'ouvre sur la discussion, message déjà écrit
   let w = null; try { w = window.open(url, 'selfty-wa'); } catch(e){}
   if (!w) toast('Pop-up bloquée : clique sur le bouton WhatsApp du bandeau');
 }
@@ -3712,7 +3724,8 @@ function rafRender(){
   $('raf-cnt').textContent = `${Math.min(RAF.i + 1, RAF.items.length)} / ${RAF.items.length}`;
   $('raf-who').innerHTML = it ? `${esc(it.n)}<small>+${esc(it.tel)} · ${RAF_SRC[RAF.src].lab}</small>` : 'Terminé';
   if (it) $('raf-wa').href = waUrl(it.tel, it.msg);
-  $('raf-wa').innerHTML = WA_SVG + (RAF_MOBILE ? ' Ouvrir WhatsApp' : ' Rouvrir WhatsApp');
+  $('raf-wa').innerHTML = WA_SVG + (RAF_MOBILE ? ' Ouvrir WhatsApp' : WA_MODE === 'mac' ? ' Rouvrir dans l\'appli Mac' : ' Rouvrir WhatsApp');
+  $('raf-wa').target = WA_MODE === 'mac' ? '_self' : 'selfty-wa';
   $('raf-next').textContent = RAF.src === 'o8' ? '✓ Envoyé, suivant (coche Contactée)' : '✓ Envoyé, suivant (coche Prévenue)';
   $('raf-pause').textContent = RAF.paused ? '▶ Reprendre' : 'Pause';
   $('raf-next').disabled = $('raf-skip').disabled = !it || RAF.paused;
@@ -3724,7 +3737,7 @@ function rafTick(){
   const s = last ? Math.floor((Date.now() - last) / 1000) : null;
   const chrono = s === null ? 'aucun envoi dans la dernière heure' : `dernier envoi il y a ${Math.floor(s/60)} min ${String(s%60).padStart(2,'0')} s`;
   const cls = L.length >= 20 ? 'd' : L.length >= 15 ? 'h' : '';
-  $('raf-info').innerHTML = `<span class="${cls}">${L.length} envoyé${L.length > 1 ? 's' : ''} dans la dernière heure</span> · ${chrono} · <b>15 à 20 messages par heure maximum</b> (WhatsApp bloque les numéros qui envoient trop vite)${L.length >= 20 ? ' · <span class="d">fais une pause</span>' : ''}${RAF_MOBILE ? '<br>Sur mobile : « Ouvrir WhatsApp » lance l\'appli, tu envoies, tu reviens ici et tu appuies sur « Suivant ».' : '<br>Le message part de WhatsApp Web dans l\'onglet à côté : envoie, reviens ici, « Suivant » ouvre la personne suivante au même endroit.'}`;
+  $('raf-info').innerHTML = `<span class="${cls}">${L.length} envoyé${L.length > 1 ? 's' : ''} dans la dernière heure</span> · ${chrono} · <b>15 à 20 messages par heure maximum</b> (WhatsApp bloque les numéros qui envoient trop vite)${L.length >= 20 ? ' · <span class="d">fais une pause</span>' : ''}${RAF_MOBILE ? '<br>Sur mobile : « Ouvrir WhatsApp » lance l\'appli, tu envoies, tu reviens ici et tu appuies sur « Suivant ».' : WA_MODE === 'mac' ? '<br>Le message est déjà écrit dans l\'appli WhatsApp du Mac (numéro perso) : Entrée pour l\'envoyer, reviens ici, « Suivant » ouvre la personne suivante.' : '<br>Le message part de WhatsApp Web dans l\'onglet à côté : envoie, reviens ici, « Suivant » ouvre la personne suivante au même endroit.'}`;
 }
 setInterval(rafTick, 1000);
 function rafStart(src, resumeKey){
